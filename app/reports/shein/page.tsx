@@ -47,7 +47,7 @@ const Page = () => {
 
 
     const [open, setOpen] = React.useState(false)
-    const [date, setDate] = React.useState<Date | undefined>(undefined)
+    const [date, setDate] = React.useState<Date | undefined>(dayjs().toDate());
     const [shift_type, setShift_type] = useState<string>("day")
     const [report_data, setReport_data] = useState<IEmployeeReport[] | null>(null)
 
@@ -152,6 +152,9 @@ const Page = () => {
                     shift_date: date,
                 };
 
+                const score_summ = data.rt_kubot_exc + data.rt_kubot_mini + data.rt_kubot_e2 + data.abnormal_locations + data.abnormal_cases;
+                console.log(score_summ / 50);
+
                 try {
                     const res = await fetch(`/api/user/add-employee-shift`, {
                         method: "POST",
@@ -180,17 +183,17 @@ const Page = () => {
 
             const doc = new jsPDF();
 
+            let yPosition = 40;
+
             doc.setFontSize(18);
             doc.text('SHEIN SHIFT REPORT', 14, 20);
 
             doc.setFontSize(10);
-            doc.text(`Generated: ${dayjs().format('DD/MM/YYYY HH:mm')} | ${shift_type.toUpperCase()}`, 14, 28);
-
-            let yPosition = 40;
-
-            doc.setFontSize(14);
-            doc.text('Summary Statistics', 14, yPosition);
-            yPosition += 8;
+            doc.text(`${shift_type.toUpperCase()} SHIFT - ${dayjs(date).format('DD/MM/YYYY')}`, 14, 28);
+            doc.setFontSize(8);
+            doc.setTextColor(128); // серый оттенок (0–255)
+            doc.text(`Generated: ${dayjs().format('DD/MM/YYYY HH:mm')}`, 14, 33);
+            doc.setTextColor(0); // серый оттенок (0–255)
 
             const totalStats = report_data.reduce((acc, item) => ({
                 rt_kubot_exc: acc.rt_kubot_exc + item.rt_kubot_exc,
@@ -206,18 +209,28 @@ const Page = () => {
                 abnormal_case: 0,
             });
 
-            doc.setFontSize(10);
+            /*doc.setFontSize(10);
             doc.text(`Total Employees: ${report_data.length}`, 14, yPosition);
-            yPosition += 6;
+            yPosition += 8;*/
+            yPosition += 8;
+
+            // увеличиваем шрифт для заголовка
+            doc.setFontSize(14);
+            doc.text("Robots exceptions was handled", 14, yPosition);
+            doc.setFontSize(10);
+
+            yPosition += 8;
             doc.text(`Total RT KUBOT: ${totalStats.rt_kubot_exc}`, 14, yPosition);
-            yPosition += 6;
-            doc.text(`Total RT KUBOT MINI: ${totalStats.rt_kubot_mini_exc}`, 14, yPosition);
-            yPosition += 6;
-            doc.text(`Total RT KUBOT E2: ${totalStats.rt_kubot_e2_exc}`, 14, yPosition);
-            yPosition += 6;
+            doc.text(`Total RT KUBOT MINI: ${totalStats.rt_kubot_mini_exc}`, 53, yPosition);
+            doc.text(`Total RT KUBOT E2: ${totalStats.rt_kubot_e2_exc}`, 100, yPosition);
+            yPosition += 12;
+
+            doc.setFontSize(14);
+            doc.text("Abnormal was handled", 14, yPosition);
+            doc.setFontSize(10);
+            yPosition += 8;
             doc.text(`Total Abnormal Locations: ${totalStats.abnormal_location}`, 14, yPosition);
-            yPosition += 6;
-            doc.text(`Total Abnormal Cases: ${totalStats.abnormal_case}`, 14, yPosition);
+            doc.text(`Total Abnormal Cases: ${totalStats.abnormal_case}`, 65, yPosition);
             yPosition += 15;
 
             doc.setFontSize(14);
@@ -236,7 +249,7 @@ const Page = () => {
                     item.abnormal_case,
                 ]),
                 theme: 'striped',
-                styles: { fontSize: 8 },
+                styles: { fontSize: 10 },
                 headStyles: { fillColor: [41, 128, 185], textColor: 255 },
             });
 
@@ -262,9 +275,9 @@ const Page = () => {
 
     return (
         <div className="max-w-[1200px] m-auto">
-            <div className={`flex justify-between items-center mb-6`}>
-                <h1 className="text-2xl">SHEIN REPORT PAGE</h1>
-                <div className={`flex items-center gap-2`}>
+            <div className={`mb-6`}>
+                <h1 className="text-2xl mb-4">SHEIN REPORT PAGE</h1>
+                <div className={`flex flex-wrap items-center gap-2`}>
                     <Button
                         onClick={generatePDFReport}
                         disabled={!report_data || report_data.length === 0}
@@ -272,7 +285,7 @@ const Page = () => {
                         Generate PDF Report
                     </Button>
                     <Select value={shift_type} onValueChange={(value) => setShift_type(value)}>
-                        <SelectTrigger className="w-[120px]">
+                        <SelectTrigger className="w-auto">
                             <SelectValue placeholder="Shift Type" />
                         </SelectTrigger>
                         <SelectContent>
@@ -288,7 +301,7 @@ const Page = () => {
                                 <Button
                                     variant="outline"
                                     id="date"
-                                    className="w-48 justify-between font-normal"
+                                    className="w-auto justify-between font-normal"
                                 >
                                     {date ? date.toLocaleDateString() : "Shift Date"}
                                     <ChevronDownIcon />
@@ -310,17 +323,14 @@ const Page = () => {
                 </div>
             </div>
             <Card>
-                <CardHeader>
-                    <CardTitle>Employee Report Card</CardTitle>
-                    <CardDescription>
-                        Enter all information about shift below and create PDF Report for client
-                    </CardDescription>
+                <CardHeader className={`flex flex-wrap  w-full justify-between items-center mb-6`}>
+                    <CardTitle className={`mb-4`}>Employee Report Card</CardTitle>
                     <CardAction>
-                        <div className={`flex items-center gap-2`}>
+                        <div className={`flex w-full items-center gap-2`}>
                             <Select
                                 value={card_data.employee_select}
                                 onValueChange={(value) => setCard_data((prev) => ({...prev, employee_select: value})) }>
-                                <SelectTrigger className="w-[180px]">
+                                <SelectTrigger className="w-full">
                                     <SelectValue placeholder="Select a employee"/>
                                 </SelectTrigger>
                                 <SelectContent>
@@ -335,73 +345,74 @@ const Page = () => {
                         </div>
                     </CardAction>
                 </CardHeader>
-                <div className={`px-6 flex flex-col gap-6`}>
-                    <div className={`grid grid-cols-3 gap-4`}>
-                        <div>
-                            <div className={`grid w-full max-w-sm items-center gap-3`}>
-                                <Label htmlFor="picture">RT KUBOT</Label>
-                                <Input
-                                    value={card_data.rt_kubot_exc}
-                                    onChange={(e) => setCard_data((prev) => ({...prev, rt_kubot_exc: Number(e.target.value)}))}
-                                    type={"number"}
-                                />
-                            </div>
-                        </div>
-                        <div>
-                            <div className={`grid w-full max-w-sm items-center gap-3`}>
-                                <Label htmlFor="picture">RT KUBOT MINI</Label>
-                                <Input
-                                    value={card_data.rt_kubot_mini_exc}
-                                    onChange={(e) => setCard_data((prev) => ({...prev, rt_kubot_mini_exc: Number(e.target.value)}))}
-                                    type={"number"}
-                                />
-                            </div>
-                        </div>
-                        <div>
-                            <div className={`grid w-full max-w-sm items-center gap-3`}>
-                                <Label htmlFor="picture">RT KUBOT E2</Label>
-                                <Input
-                                    value={card_data.rt_kubot_e2_exc}
-                                    onChange={(e) => setCard_data((prev) => ({...prev, rt_kubot_e2_exc: Number(e.target.value)}))}
-                                    type={"number"}
-                                />
-                            </div>
-                        </div>
-                        <p className={`col-span-3 text-neutral-500 text-xs`}>In this section, please record the number
-                            of robots of this type that you have solved during the shift.</p>
-                    </div>
-                    <div className={`flex flex-wrap items-center gap-4`}>
-                        <div>
-                            <div className={`grid w-full max-w-sm items-center gap-3`}>
-                                <Label htmlFor="picture">ABNORMAL LOCATION</Label>
-                                <Input
-                                    className={`w-full`}
-                                    value={card_data.abnormal_location}
-                                    onChange={(e) => setCard_data((prev) => ({...prev, abnormal_location: Number(e.target.value)}))}
-                                    type={"number"}
-                                />
-                            </div>
-                        </div>
-                        <div>
-                            <div className={`grid w-full max-w-sm items-center gap-3`}>
-                                <Label htmlFor="picture">ABNORMAL CASES</Label>
-                                <Input
-                                    className={`w-full`}
-                                    value={card_data.abnormal_case}
-                                    onChange={(e) => setCard_data((prev) => ({...prev, abnormal_case: Number(e.target.value)}))}
-                                    type={"number"}
-                                />
-                            </div>
-                        </div>
-                        <p className={`col-span-3 w-full text-neutral-500 text-xs`}>
-                            In this section, please record the number
-                            of abnormal position data.
-                        </p>
-                    </div>
-                </div>
+
                 <CardContent>
+                    <div className={`flex flex-col gap-6`}>
+                        <div className={`flex flex-wrap gap-4`}>
+                            <div>
+                                <div className={`grid  max-w-sm items-center gap-3`}>
+                                    <Label htmlFor="picture">RT KUBOT</Label>
+                                    <Input
+                                        value={card_data.rt_kubot_exc}
+                                        onChange={(e) => setCard_data((prev) => ({...prev, rt_kubot_exc: Number(e.target.value)}))}
+                                        type={"number"}
+                                    />
+                                </div>
+                            </div>
+                            <div>
+                                <div className={`grid max-w-sm items-center gap-3`}>
+                                    <Label htmlFor="picture">RT KUBOT MINI</Label>
+                                    <Input
+                                        value={card_data.rt_kubot_mini_exc}
+                                        onChange={(e) => setCard_data((prev) => ({...prev, rt_kubot_mini_exc: Number(e.target.value)}))}
+                                        type={"number"}
+                                    />
+                                </div>
+                            </div>
+                            <div>
+                                <div className={`grid max-w-sm items-center gap-3`}>
+                                    <Label htmlFor="picture">RT KUBOT E2</Label>
+                                    <Input
+                                        value={card_data.rt_kubot_e2_exc}
+                                        onChange={(e) => setCard_data((prev) => ({...prev, rt_kubot_e2_exc: Number(e.target.value)}))}
+                                        type={"number"}
+                                    />
+                                </div>
+                            </div>
+                            <p className={`col-span-3 text-neutral-500 text-xs`}>In this section, please record the number
+                                of robots of this type that you have solved during the shift.</p>
+                        </div>
+                        <div className={`flex flex-wrap items-center gap-4`}>
+                            <div>
+                                <div className={`grid w-full max-w-sm items-center gap-3`}>
+                                    <Label htmlFor="picture">ABNORMAL LOCATION</Label>
+                                    <Input
+                                        className={`w-full`}
+                                        value={card_data.abnormal_location}
+                                        onChange={(e) => setCard_data((prev) => ({...prev, abnormal_location: Number(e.target.value)}))}
+                                        type={"number"}
+                                    />
+                                </div>
+                            </div>
+                            <div>
+                                <div className={`grid w-full max-w-sm items-center gap-3`}>
+                                    <Label htmlFor="picture">ABNORMAL CASES</Label>
+                                    <Input
+                                        className={`w-full`}
+                                        value={card_data.abnormal_case}
+                                        onChange={(e) => setCard_data((prev) => ({...prev, abnormal_case: Number(e.target.value)}))}
+                                        type={"number"}
+                                    />
+                                </div>
+                            </div>
+                            <p className={`col-span-3 w-full text-neutral-500 text-xs`}>
+                                In this section, please record the number
+                                of abnormal position data.
+                            </p>
+                        </div>
+                    </div>
                 </CardContent>
-                <CardFooter className="flex items-center gap-2">
+                <CardFooter className="flex items-center justify-end gap-2">
                     <Button onClick={addReportCardHandle}>
                         Add to report
                     </Button>

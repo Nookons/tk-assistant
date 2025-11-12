@@ -2,7 +2,7 @@
 import React, {use, useEffect, useState} from 'react';
 import {useParams} from "next/navigation";
 import {IUser, IUserApiResponse} from "@/types/user/user";
-import {LoaderCircle, SquarePlus} from "lucide-react";
+import {LoaderCircle, SquarePlus, ThumbsDown} from "lucide-react";
 import {Button} from "@/components/ui/button";
 import {Card, CardAction, CardContent, CardDescription, CardFooter, CardHeader, CardTitle} from "@/components/ui/card";
 import {
@@ -32,6 +32,8 @@ import {Item, ItemActions, ItemContent, ItemDescription, ItemTitle} from "@/comp
 import EmployeeStats from "@/components/shared/dashboard/employeeStats/EmployeeStats";
 import EmployeeShiftsList from "@/components/shared/dashboard/employeeShiftsList/employeeShiftsList";
 import {Label} from "@/components/ui/label";
+import AdminShiftsList from "@/components/shared/dashboard/adminShiftsList/adminShiftsList";
+import AddRobot from "@/components/shared/dashboard/addRobot/AddRobot";
 
 const Page = () => {
     const params = useParams();
@@ -162,31 +164,33 @@ const Page = () => {
                 <div className={`mb-4`}>
                     <Dialog>
                         <DialogTrigger>
-                            <Button>Add Complain</Button>
+                            <div className={`mb-4`}>
+                                <Button variant={`outline`}><ThumbsDown /></Button>
+                            </div>
                         </DialogTrigger>
-                        <DialogContent>
+                        <DialogContent className="max-w-[90vw] sm:max-w-[425px] w-full max-h-[90vh] overflow-y-auto rounded-2xl">
                             <DialogHeader>
                                 <DialogTitle>Add complain to employee?</DialogTitle>
                                 <DialogDescription>
-                                    This action will be add complain to other worker and he will be have affect to his
-                                    score points
-                                    <div className={`mt-4 flex flex-col gap-2`}>
+                                    This action will add a complain to another worker and affect their score.
+                                    <div className="mt-4 flex flex-col gap-2">
                                         <Select value={who_complain} onValueChange={(value) => setWho_complain(value)}>
-                                            <SelectTrigger className="w-full">
-                                                <SelectValue placeholder="Employee"/>
+                                            <SelectTrigger className={`w-full`}>
+                                                <SelectValue placeholder="Employee" />
                                             </SelectTrigger>
                                             <SelectContent>
-                                                {employees_list.map((item, i) => (
-                                                    <SelectItem
-                                                        value={item.card_id.toString()}>{item.user_name}</SelectItem>
-                                                ))
-                                                }
+                                                {employees_list.map((item) => (
+                                                    <SelectItem key={item.card_id} value={item.card_id.toString()}>
+                                                        {item.user_name}
+                                                    </SelectItem>
+                                                ))}
                                             </SelectContent>
                                         </Select>
                                         <Textarea
+                                            className="w-full"
                                             value={why_complain}
                                             onChange={(e) => setWhy_complain(e.target.value)}
-                                            placeholder={`Why you add this complain?`}
+                                            placeholder="Why are you adding this complain?"
                                         />
                                         <Button onClick={complainHandle}>Add</Button>
                                     </div>
@@ -194,46 +198,39 @@ const Page = () => {
                             </DialogHeader>
                         </DialogContent>
                     </Dialog>
-                    <div className={`grid grid-cols-3 gap-2 mt-2`}>
-                        {employees_list.map((item, i) => {
-                            const min = -100;
-                            const max = 100;
-                            const value = item.score;
-                            const percent = ((value - min) / (max - min)) * 100; // преобразуем в 0–100%
+                    <div>
+                        <AdminShiftsList />
+                    </div>
+                    <div className={`my-4`}>
+                        <Label>Employees Stats</Label>
+                        <div className={`grid grid-cols-1 md:flex md:flex-wrap gap-2 mt-2`}>
+                            {employees_list.map((item, i) => {
+                                const min = -100;
+                                const max = 100;
+                                const value = item.score;
+                                const percent = ((value - min) / (max - min)) * 100; // преобразуем в 0–100%
 
-                            return (
-                                <Item variant="outline">
-                                    <ItemContent>
-                                        <ItemTitle>{item.user_name}</ItemTitle>
-                                        <ItemDescription>
-                                            {item.warehouse}
-                                            <div className="relative mt-4 h-2 w-full bg-foreground rounded-full overflow-hidden">
-                                                <div className="absolute left-1/2 top-0 bottom-0 w-0.25 bg-gray-400"/>
-                                                {/* Центр */}
-                                                <div
-                                                    className={`absolute top-0 h-full ${
-                                                        value >= 0 ? "bg-green-500" : "bg-red-500"
-                                                    }`}
-                                                    style={{
-                                                        left: value >= 0 ? "50%" : `${percent}%`,
-                                                        width: `${Math.abs(percent - 50)}%`,
-                                                    }}
-                                                />
-                                            </div>
-                                            <p className="text-sm text-right mt-1">{value > 0 ? `+${value}` : value}</p>
 
-                                        </ItemDescription>
-                                    </ItemContent>
-                                </Item>
-                            )
-                        })}
+                                return (
+                                    <Item variant="outline">
+                                        <ItemContent>
+                                            <ItemTitle>{item.user_name}</ItemTitle>
+                                            <ItemDescription>
+                                                {item.warehouse}
+                                                <p className="text-sm text-right mt-1">{value > 0 ? `+${value}` : value}</p>
+                                            </ItemDescription>
+                                        </ItemContent>
+                                    </Item>
+                                )
+                            })}
+                        </div>
                     </div>
                 </div>
             }
             <div className={`flex items-center border p-4 rounded-t-2xl justify-between`}>
                 <h1>Dashboard for {user_data.user_name}</h1>
                 <div className={`flex items-center gap-2`}>
-                    <Button variant={`outline`}><SquarePlus /> Add robot for repair</Button>
+                    <AddRobot card_id={card_id} />
                 </div>
             </div>
             <div className={` border p-4 rounded-b-2xl`}>

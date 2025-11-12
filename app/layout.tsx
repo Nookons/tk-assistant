@@ -1,9 +1,9 @@
 import type { Metadata } from "next";
 import "./globals.css";
-import {ThemeProvider} from "@/components/shared/theme/theme-provider";
-import {ThemeToggle} from "@/components/shared/theme/theme-toggle";
-import {Header} from "@/components/shared/header/header";
-import {Toaster} from "@/components/ui/sonner";
+import { ThemeProvider } from "@/components/shared/theme/theme-provider";
+import { Header } from "@/components/shared/header/header";
+import { Toaster } from "@/components/ui/sonner";
+import { QueryProvider } from "@/components/providers/query-provider";
 
 export const metadata: Metadata = {
     title: "Create Next App",
@@ -12,23 +12,23 @@ export const metadata: Metadata = {
 
 export default function RootLayout({
                                        children,
-                                   }: Readonly<{
-    children: React.ReactNode;
-}>) {
+                                   }: Readonly<{ children: React.ReactNode }>) {
     return (
         <html lang="en" suppressHydrationWarning>
-        <body className={`antialiased`}>
+        <body className="antialiased">
         <ThemeProvider
             attribute="class"
             defaultTheme="system"
             enableSystem
             disableTransitionOnChange
         >
-            <Toaster />
-            <div className={`px-8`}>
-                <Header />
-                {children}
-            </div>
+            <QueryProvider>
+                <Toaster />
+                <div className="px-4">
+                    <Header />
+                    {children}
+                </div>
+            </QueryProvider>
         </ThemeProvider>
         </body>
         </html>

@@ -27,8 +27,8 @@ const components: { title: string; href: string; description: string }[] = [
 export function Header() {
 
     return (
-        <div className={`py-4 flex justify-between items-center`}>
-            <NavigationMenu viewport={false}>
+        <div className={`py-4 z-50 flex justify-between items-center flex flex-wrap`}>
+            <NavigationMenu>
                 <NavigationMenuList className="flex-wrap">
                     <NavigationMenuItem>
                         <NavigationMenuTrigger>Home</NavigationMenuTrigger>
@@ -58,7 +58,7 @@ export function Header() {
                     <NavigationMenuItem>
                         <NavigationMenuTrigger>Documents</NavigationMenuTrigger>
                         <NavigationMenuContent>
-                            <ul className="grid gap-2 sm:w-[400px] md:w-[500px] md:grid-cols-2 lg:w-[600px]">
+                            <ul className="flex flex-wrap gap-2 sm:w-[400px] md:w-[500px] md:grid-cols-2 lg:w-[600px]">
                                 {components.map((component) => (
                                     <ListItem
                                         key={component.title}
@@ -71,10 +71,10 @@ export function Header() {
                             </ul>
                         </NavigationMenuContent>
                     </NavigationMenuItem>
-                    <NavigationMenuItem className="hidden md:block">
+                    <NavigationMenuItem>
                         <NavigationMenuTrigger>Reports</NavigationMenuTrigger>
                         <NavigationMenuContent>
-                            <ul className="grid w-[200px] gap-4">
+                            <ul className="grid w-[400px] gap-4">
                                 <li>
                                     <NavigationMenuLink asChild>
                                         <Link href="/reports/shein" className="flex-row items-center gap-2">

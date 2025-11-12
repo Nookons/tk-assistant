@@ -4,16 +4,11 @@ import {
 } from '@tanstack/react-query';
 import { getAllShifts } from "@/futures/shifts/getAllShifts";
 import ShiftsList from "@/components/shared/dashboard/employeeShiftsList/shiftsList";
-import {ParamValue} from "next/dist/server/request/params";
-import {getEmployeeShifts} from "@/futures/shifts/getEmployeeShifts";
 
-const EmployeeShiftsList = ({card_id}: {card_id: ParamValue}) => {
-
-    if (!card_id) return null;
-
+const AdminShiftsList = () => {
     const { data, error, isLoading } = useQuery({
-        queryKey: ['shifts', card_id.toString()], // better name than 'todos'
-        queryFn: () => getEmployeeShifts(card_id.toString()),
+        queryKey: ['shifts'], // better name than 'todos'
+        queryFn: getAllShifts,
     });
 
     if (isLoading) return <p>Loading shifts...</p>;
@@ -22,4 +17,4 @@ const EmployeeShiftsList = ({card_id}: {card_id: ParamValue}) => {
     return <ShiftsList data={data}/>
 };
 
-export default EmployeeShiftsList;
+export default AdminShiftsList;
