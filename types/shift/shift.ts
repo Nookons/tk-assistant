@@ -12,4 +12,5 @@ export interface IShift {
     abnormal_locations: number;
     abnormal_cases: number;
     shift_date: Timestamp;
+    full_employees?: string[];
 }

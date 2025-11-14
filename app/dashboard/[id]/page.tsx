@@ -2,19 +2,8 @@
 import React, {use, useEffect, useState} from 'react';
 import {useParams} from "next/navigation";
 import {IUser, IUserApiResponse} from "@/types/user/user";
-import {LoaderCircle, SquarePlus, ThumbsDown} from "lucide-react";
+import {LoaderCircle, SquarePlus, ThumbsDown, UserStar} from "lucide-react";
 import {Button} from "@/components/ui/button";
-import {Card, CardAction, CardContent, CardDescription, CardFooter, CardHeader, CardTitle} from "@/components/ui/card";
-import {
-    Table,
-    TableBody,
-    TableCaption,
-    TableCell,
-    TableHead,
-    TableHeader,
-    TableRow,
-} from "@/components/ui/table"
-import {Progress} from "@/components/ui/progress";
 import {
     Dialog,
     DialogContent,
@@ -34,6 +23,7 @@ import EmployeeShiftsList from "@/components/shared/dashboard/employeeShiftsList
 import {Label} from "@/components/ui/label";
 import AdminShiftsList from "@/components/shared/dashboard/adminShiftsList/adminShiftsList";
 import AddRobot from "@/components/shared/dashboard/addRobot/AddRobot";
+import {Badge} from "@/components/ui/badge";
 
 const Page = () => {
     const params = useParams();
@@ -228,20 +218,20 @@ const Page = () => {
                 </div>
             }
             <div className={`flex items-center border p-4 rounded-t-2xl justify-between`}>
-                <h1>Dashboard for {user_data.user_name}</h1>
                 <div className={`flex items-center gap-2`}>
-                    <AddRobot card_id={card_id} />
+                    <h1>Dashboard for {user_data.user_name}</h1>
+                </div>
+                <div className={`flex items-center gap-4`}>
+                    <UserStar size={24} />
+                    <Badge className={`text-base px-2`} variant={user_data.score < 0 ? `destructive` : "secondary"}>
+                        {user_data.score.toFixed(2)}
+                    </Badge>
                 </div>
             </div>
+            <div className={`border px-2 py-4`}>
+                <AddRobot card_id={card_id} />
+            </div>
             <div className={` border p-4 rounded-b-2xl`}>
-                <div className={``}>
-
-                    <EmployeeStats
-                        card_id={card_id}
-                        score={user_data.score}
-                    />
-
-                </div>
                 <div className={`mt-4 grid grid-cols-1 gap-4`}>
                     <div>
                         <Label className={`mb-4 text-neutral-500 text-xs`}>

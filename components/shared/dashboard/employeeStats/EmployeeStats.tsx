@@ -1,85 +1,62 @@
 'use client'
 import React, {useEffect, useState} from 'react';
-import {Timestamp} from "next/dist/server/lib/cache-handlers/types";
-import {Item, ItemActions, ItemContent, ItemDescription, ItemTitle} from "@/components/ui/item";
+import {Item, ItemContent, ItemDescription, ItemTitle} from "@/components/ui/item";
 import dayjs from "dayjs";
-import {Button} from "@/components/ui/button";
-import {ParamValue} from "next/dist/server/request/params";
+import {IShift} from "@/types/shift/shift";
 
-interface ILocalStats {
-    id: number;
-    created_at: Timestamp;
-    updated_at: Timestamp;
-    rt_kubot_exc: number;
-    rt_kubot_mini: number;
-    rt_kubot_e2: number;
-    abnormal_locations: number;
-    abnormal_cases: number;
-    card_id: number
-}
 
-const EmployeeStats = ({card_id, score} : {card_id: ParamValue, score: number}) => {
-    const [data, setData] = useState<ILocalStats | null>(null)
-
-    const getStatsData = async () => {
-        try {
-            const res = await fetch(`/api/user/get-employee-stats?card_id=${card_id}`, {
-                method: 'GET',
-                headers: {
-                    'Content-Type': 'application/json',
-                }
-            })
-            if (res.status !== 200) {
-                throw new Error("Something went wrong!");
-            }
-
-            const result = await res.json()
-            setData(result);
-        } catch (err) {
-            console.log(err);
-        }
-    }
+const EmployeeStats = ({ shifts }: { shifts: IShift[] }) => {
+    const [rt_kubot, setRt_kubot] = useState<number>(0);
+    const [rt_kubot_mini, setRt_kubot_mini] = useState<number>(0);
+    const [rt_kubot_e2, setRt_kubot_e2] = useState<number>(0);
+    const [abnormal_locations, setAbnormal_locations] = useState<number>(0);
+    const [abnormal_cases, setAbnormal_cases] = useState<number>(0);
 
     useEffect(() => {
-       if (card_id) {
-           getStatsData()
-       }
-    }, [card_id]);
+        if (shifts && shifts.length) {
 
-    const min = -100;
-    const max = 100;
-    const value = score;
-    const percent = ((value - min) / (max - min)) * 100; // преобразуем в 0–100%
+            const total_rt_kubot = shifts.reduce(
+                (sum, item) => sum + Number(item.rt_kubot_exc || 0),
+                0
+            );
+            const total_rt_kubot_mini = shifts.reduce(
+                (sum, item) => sum + Number(item.rt_kubot_mini || 0),
+                0
+            );
+            const total_rt_kubot_e2 = shifts.reduce(
+                (sum, item) => sum + Number(item.rt_kubot_e2 || 0),
+                0
+            );
+            const total_abnormal_locations = shifts.reduce(
+                (sum, item) => sum + Number(item.abnormal_locations || 0),
+                0
+            );
+            const total_abnormal_cases = shifts.reduce(
+                (sum, item) => sum + Number(item.abnormal_cases || 0),
+                0
+            );
+
+            setRt_kubot(total_rt_kubot);
+            setRt_kubot_mini(total_rt_kubot_mini)
+            setRt_kubot_e2(total_rt_kubot_e2)
+            setAbnormal_locations(total_abnormal_locations)
+            setAbnormal_cases(total_abnormal_cases)
+        } else {
+            setRt_kubot(0);
+        }
+    }, [shifts]);
+
+
+
+    if (!shifts) return null;
 
     return (
         <div>
-            <p className={`text-neutral-500 text-xs`}>Last Record: {dayjs(data?.updated_at).format('HH:mm · MMM D, YYYY') || "None"}</p>
+            <p className={`text-neutral-500 text-xs`}>Last Record: {dayjs(shifts[0]?.created_at).format('HH:mm · MMM D, YYYY') || "None"}</p>
             <div className={`flex flex-wrap gap-4 mt-4`}>
                 <Item variant="muted">
                     <ItemContent>
-                        <ItemTitle>
-                            <div className="relative h-2 w-64 bg-foreground rounded-full overflow-hidden">
-                                <div className="absolute left-1/2 top-0 bottom-0 w-0.25 bg-gray-400"/>
-                                    Центр
-                                <div
-                                    className={`absolute top-0 h-full ${
-                                        value >= 0 ? "bg-green-500" : "bg-red-500"
-                                    }`}
-                                    style={{
-                                        left: value >= 0 ? "50%" : `${percent}%`,
-                                        width: `${Math.abs(percent - 50)}%`,
-                                    }}
-                                />
-                            </div>
-                            </ItemTitle>
-                        <ItemDescription>
-                            <p className="text-sm text-right mt-1">{value > 0 ? `+${value}` : value}</p>
-                        </ItemDescription>
-                    </ItemContent>
-                </Item>
-                <Item variant="muted">
-                    <ItemContent>
-                        <ItemTitle>{data?.rt_kubot_exc.toLocaleString()}</ItemTitle>
+                        <ItemTitle>{rt_kubot}</ItemTitle>
                         <ItemDescription>
                             RT KUBOT
                         </ItemDescription>
@@ -87,7 +64,7 @@ const EmployeeStats = ({card_id, score} : {card_id: ParamValue, score: number}) 
                 </Item>
                 <Item variant="muted">
                     <ItemContent>
-                        <ItemTitle>{data?.rt_kubot_mini.toLocaleString()}</ItemTitle>
+                        <ItemTitle>{rt_kubot_mini}</ItemTitle>
                         <ItemDescription>
                             RT KUBOT MINI
                         </ItemDescription>
@@ -95,7 +72,7 @@ const EmployeeStats = ({card_id, score} : {card_id: ParamValue, score: number}) 
                 </Item>
                 <Item variant="muted">
                     <ItemContent>
-                        <ItemTitle>{data?.rt_kubot_e2.toLocaleString()}</ItemTitle>
+                        <ItemTitle>{rt_kubot_e2}</ItemTitle>
                         <ItemDescription>
                             RT KUBOT E2
                         </ItemDescription>
@@ -103,7 +80,7 @@ const EmployeeStats = ({card_id, score} : {card_id: ParamValue, score: number}) 
                 </Item>
                 <Item variant="muted">
                     <ItemContent>
-                        <ItemTitle>{data?.abnormal_locations.toLocaleString()}</ItemTitle>
+                        <ItemTitle>{abnormal_locations}</ItemTitle>
                         <ItemDescription>
                             Abnormal Location
                         </ItemDescription>
@@ -111,7 +88,7 @@ const EmployeeStats = ({card_id, score} : {card_id: ParamValue, score: number}) 
                 </Item>
                 <Item variant="muted">
                     <ItemContent>
-                        <ItemTitle>{data?.abnormal_cases.toLocaleString()}</ItemTitle>
+                        <ItemTitle>{abnormal_cases}</ItemTitle>
                         <ItemDescription>
                             Abnormal case
                         </ItemDescription>

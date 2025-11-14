@@ -17,10 +17,10 @@ import UserButton from "@/components/shared/header/userButton";
 
 const components: { title: string; href: string; description: string }[] = [
     {
-        title: "Hai ESS System",
-        href: "/docs/ess-beginners",
+        title: "SHEIN Report",
+        href: "/reports/shein",
         description:
-            "Hai Robotics ESS System Beginner's Guide",
+            "Create shift report for SHEIN in one click",
     },
 ]
 
@@ -55,6 +55,7 @@ export function Header() {
                             </ul>
                         </NavigationMenuContent>
                     </NavigationMenuItem>
+
                     <NavigationMenuItem>
                         <NavigationMenuTrigger>Documents</NavigationMenuTrigger>
                         <NavigationMenuContent>
@@ -71,10 +72,10 @@ export function Header() {
                             </ul>
                         </NavigationMenuContent>
                     </NavigationMenuItem>
-                    <NavigationMenuItem>
+                    {/*<NavigationMenuItem>
                         <NavigationMenuTrigger>Reports</NavigationMenuTrigger>
                         <NavigationMenuContent>
-                            <ul className="grid w-[400px] gap-4">
+                            <ul className="grid w-auto gap-4">
                                 <li>
                                     <NavigationMenuLink asChild>
                                         <Link href="/reports/shein" className="flex-row items-center gap-2">
@@ -85,7 +86,7 @@ export function Header() {
                                 </li>
                             </ul>
                         </NavigationMenuContent>
-                    </NavigationMenuItem>
+                    </NavigationMenuItem>*/}
                 </NavigationMenuList>
             </NavigationMenu>
             <div className={`flex items-center gap-2`}>

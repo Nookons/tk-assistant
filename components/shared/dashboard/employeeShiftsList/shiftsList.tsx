@@ -15,6 +15,8 @@ import { useMutation } from "@tanstack/react-query";
 import {removeShift} from "@/futures/shifts/removeShift";
 import {Tabs, TabsContent, TabsList, TabsTrigger} from "@/components/ui/tabs";
 import {Empty, EmptyContent, EmptyDescription, EmptyHeader, EmptyMedia, EmptyTitle} from "@/components/ui/empty";
+import {ShiftsChart} from "@/components/shared/dashboard/employeeShiftsList/ShiftChart";
+
 
 
 const ShiftsList = ({data}: { data: IShift[]}) => {
@@ -80,17 +82,11 @@ const ShiftsList = ({data}: { data: IShift[]}) => {
 
     return (
         <div>
-            <div className={`mb-4`}>
-                <Tabs onValueChange={(value) => setShift_type(value)}  defaultValue="account" className="w-[400px]">
-                    <TabsList>
-                        <TabsTrigger value="all">All</TabsTrigger>
-                        <TabsTrigger value="day">Day</TabsTrigger>
-                        <TabsTrigger value="night">Night</TabsTrigger>
-                    </TabsList>
-                    <TabsContent className={`text-neutral-500 text-xs p-1`} value="all">All shifts</TabsContent>
-                    <TabsContent className={`text-neutral-500 text-xs p-1`} value="day">Only day shifts</TabsContent>
-                    <TabsContent className={`text-neutral-500 text-xs p-1`} value="night">Only night shifts</TabsContent>
-                </Tabs>
+            <div className={`mb-6`}>
+                <ShiftsChart
+                    data={sorted_data}
+                    setShift_type={setShift_type}
+                />
             </div>
             <Table>
                 <TableCaption>A list of your recent Shifts.</TableCaption>

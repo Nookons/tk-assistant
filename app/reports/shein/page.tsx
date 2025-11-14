@@ -25,17 +25,19 @@ import { ChevronDownIcon } from "lucide-react";
 import { Calendar } from "@/components/ui/calendar";
 
 interface IEmployeeReport {
-    rt_kubot_exc: number;
-    rt_kubot_mini_exc: number;
-    rt_kubot_e2_exc: number;
-    abnormal_location: number;
-    abnormal_case: number;
+    rt_kubot_exc: string;
+    rt_kubot_mini_exc: string;
+    rt_kubot_e2_exc: string;
+    abnormal_location: string;
+    abnormal_case: string;
     employee_select: string;
 }
 
 const Page = () => {
     const [employee_at_shift, setEmployee_at_shift] = useState<number>(1)
     const [employees_list, setEmployees_list] = useState<IUser[]>([])
+
+    const [isLoading, setIsLoading] = useState<boolean>(false);
 
     const [saved_user, setSaved_user] = useState<IUserApiResponse | null>(() => {
         if (typeof window !== 'undefined') {
@@ -52,11 +54,11 @@ const Page = () => {
     const [report_data, setReport_data] = useState<IEmployeeReport[] | null>(null)
 
     const [card_data, setCard_data] = useState({
-        rt_kubot_exc: 0,
-        rt_kubot_mini_exc: 0,
-        rt_kubot_e2_exc: 0,
-        abnormal_location: 0,
-        abnormal_case: 0,
+        rt_kubot_exc: "0",
+        rt_kubot_mini_exc: "0",
+        rt_kubot_e2_exc: "0",
+        abnormal_location: "0",
+        abnormal_case: "0",
         employee_select: "",
     })
 
@@ -101,41 +103,7 @@ const Page = () => {
         }
 
         try {
-
-            const promises = report_data.map(async (item) => {
-                const card_id = item.employee_select.split("-")[1];
-
-                const data = {
-                    card_id: card_id,
-                    rt_kubot_exc: item.rt_kubot_exc,
-                    rt_kubot_mini: item.rt_kubot_mini_exc,
-                    rt_kubot_e2: item.rt_kubot_e2_exc,
-                    abnormal_locations: item.abnormal_location,
-                    abnormal_cases: item.abnormal_case,
-                };
-
-                try {
-                    const res = await fetch(`/api/user/update-user-stats`, {
-                        method: "POST",
-                        headers: {
-                            "Content-Type": "application/json"
-                        },
-                        body: JSON.stringify(data)
-                    });
-
-                    if (!res.ok) {
-                        throw new Error(`HTTP error! status: ${res.status}`);
-                    }
-
-                    const result = await res.json();
-                    console.log(result);
-                    return result;
-                } catch (err) {
-                    console.error('Error updating stats for card_id:', card_id, err);
-                    return null;
-                }
-            });
-
+            setIsLoading(true);
             const promises_shifts = report_data.map(async (item) => {
                 const user_name = item.employee_select.split("-")[0];
                 const card_id = item.employee_select.split("-")[1];
@@ -152,11 +120,21 @@ const Page = () => {
                     shift_date: date,
                 };
 
-                const score_summ = data.rt_kubot_exc + data.rt_kubot_mini + data.rt_kubot_e2 + data.abnormal_locations + data.abnormal_cases;
-                console.log(score_summ / 50);
-
+                const score_summ = Number(data.rt_kubot_exc) + Number(data.rt_kubot_mini) + Number(data.rt_kubot_e2) + Number(data.abnormal_locations) + Number(data.abnormal_cases);
+                const new_score = score_summ / 100
                 try {
-                    const res = await fetch(`/api/user/add-employee-shift`, {
+                    const res = await fetch(`/api/user/update-user-score`, {
+                        method: "POST",
+                        headers: {
+                            "Content-Type": "application/json"
+                        },
+                        body: JSON.stringify({
+                            card_id: card_id,
+                            value: new_score
+                        })
+                    });
+
+                    const res_shift = await fetch(`/api/user/add-employee-shift`, {
                         method: "POST",
                         headers: {
                             "Content-Type": "application/json"
@@ -168,16 +146,18 @@ const Page = () => {
                         throw new Error(`HTTP error! status: ${res.status}`);
                     }
 
+                    if (!res_shift.ok) {
+                        throw new Error(`HTTP error! status: ${res.status}`);
+                    }
+
                     const result = await res.json();
                     console.log(result);
                     return result;
                 } catch (err) {
                     console.error('Error updating stats for card_id:', card_id, err);
-                    return null;
                 }
             });
 
-            await Promise.all(promises);
             await Promise.all(promises_shifts);
             console.log('All updates completed!');
 
@@ -196,18 +176,19 @@ const Page = () => {
             doc.setTextColor(0); // серый оттенок (0–255)
 
             const totalStats = report_data.reduce((acc, item) => ({
-                rt_kubot_exc: acc.rt_kubot_exc + item.rt_kubot_exc,
-                rt_kubot_mini_exc: acc.rt_kubot_mini_exc + item.rt_kubot_mini_exc,
-                rt_kubot_e2_exc: acc.rt_kubot_e2_exc + item.rt_kubot_e2_exc,
-                abnormal_location: acc.abnormal_location + item.abnormal_location,
-                abnormal_case: acc.abnormal_case + item.abnormal_case,
+                rt_kubot_exc: Number(acc.rt_kubot_exc) + Number(item.rt_kubot_exc),
+                rt_kubot_mini_exc: Number(acc.rt_kubot_mini_exc) + Number(item.rt_kubot_mini_exc),
+                rt_kubot_e2_exc: Number(acc.rt_kubot_e2_exc) + Number(item.rt_kubot_e2_exc),
+                abnormal_location: Number(acc.abnormal_location) + Number(item.abnormal_location),
+                abnormal_case: Number(acc.abnormal_case) + Number(item.abnormal_case),
             }), {
                 rt_kubot_exc: 0,
                 rt_kubot_mini_exc: 0,
                 rt_kubot_e2_exc: 0,
                 abnormal_location: 0,
-                abnormal_case: 0,
+                abnormal_case: 0
             });
+
 
             /*doc.setFontSize(10);
             doc.text(`Total Employees: ${report_data.length}`, 14, yPosition);
@@ -265,8 +246,8 @@ const Page = () => {
 
             logoImg.src = shift_type === "day" ? '/ico/sun.png' : '/ico/moon.png';
 
-
             toast.success("PDF Report generated successfully!");
+            setIsLoading(false);
         } catch (error) {
             console.error('Error generating PDF:', error);
             toast.error("Failed to generate PDF report");
@@ -280,7 +261,7 @@ const Page = () => {
                 <div className={`flex flex-wrap items-center gap-2`}>
                     <Button
                         onClick={generatePDFReport}
-                        disabled={!report_data || report_data.length === 0}
+                        disabled={!report_data || report_data.length === 0 || isLoading}
                     >
                         Generate PDF Report
                     </Button>
@@ -350,11 +331,12 @@ const Page = () => {
                     <div className={`flex flex-col gap-6`}>
                         <div className={`flex flex-wrap gap-4`}>
                             <div>
-                                <div className={`grid  max-w-sm items-center gap-3`}>
+                                <div className={`grid items-center gap-3`}>
                                     <Label htmlFor="picture">RT KUBOT</Label>
                                     <Input
+                                        className={`max-w-[100px]`}
                                         value={card_data.rt_kubot_exc}
-                                        onChange={(e) => setCard_data((prev) => ({...prev, rt_kubot_exc: Number(e.target.value)}))}
+                                        onChange={(e) => setCard_data((prev) => ({...prev, rt_kubot_exc: e.target.value}))}
                                         type={"number"}
                                     />
                                 </div>
@@ -363,8 +345,9 @@ const Page = () => {
                                 <div className={`grid max-w-sm items-center gap-3`}>
                                     <Label htmlFor="picture">RT KUBOT MINI</Label>
                                     <Input
+                                        className={`max-w-[100px]`}
                                         value={card_data.rt_kubot_mini_exc}
-                                        onChange={(e) => setCard_data((prev) => ({...prev, rt_kubot_mini_exc: Number(e.target.value)}))}
+                                        onChange={(e) => setCard_data((prev) => ({...prev, rt_kubot_mini_exc:e.target.value}))}
                                         type={"number"}
                                     />
                                 </div>
@@ -373,8 +356,9 @@ const Page = () => {
                                 <div className={`grid max-w-sm items-center gap-3`}>
                                     <Label htmlFor="picture">RT KUBOT E2</Label>
                                     <Input
+                                        className={`max-w-[100px]`}
                                         value={card_data.rt_kubot_e2_exc}
-                                        onChange={(e) => setCard_data((prev) => ({...prev, rt_kubot_e2_exc: Number(e.target.value)}))}
+                                        onChange={(e) => setCard_data((prev) => ({...prev, rt_kubot_e2_exc:e.target.value}))}
                                         type={"number"}
                                     />
                                 </div>
@@ -387,9 +371,9 @@ const Page = () => {
                                 <div className={`grid w-full max-w-sm items-center gap-3`}>
                                     <Label htmlFor="picture">ABNORMAL LOCATION</Label>
                                     <Input
-                                        className={`w-full`}
+                                        className={`max-w-[155px]`}
                                         value={card_data.abnormal_location}
-                                        onChange={(e) => setCard_data((prev) => ({...prev, abnormal_location: Number(e.target.value)}))}
+                                        onChange={(e) => setCard_data((prev) => ({...prev, abnormal_location:e.target.value}))}
                                         type={"number"}
                                     />
                                 </div>
@@ -398,9 +382,9 @@ const Page = () => {
                                 <div className={`grid w-full max-w-sm items-center gap-3`}>
                                     <Label htmlFor="picture">ABNORMAL CASES</Label>
                                     <Input
-                                        className={`w-full`}
+                                        className={`max-w-[155px]`}
                                         value={card_data.abnormal_case}
-                                        onChange={(e) => setCard_data((prev) => ({...prev, abnormal_case: Number(e.target.value)}))}
+                                        onChange={(e) => setCard_data((prev) => ({...prev, abnormal_case:e.target.value}))}
                                         type={"number"}
                                     />
                                 </div>
@@ -427,12 +411,12 @@ const Page = () => {
                 {report_data?.map((item, index) => (
                     <Item key={index} variant={`outline`} className={`flex flex-col items-start gap-4`}>
                         <h5>{item.employee_select}</h5>
-                        <div className={`flex items-center gap-2`}>
-                            <Badge variant={`outline`}>RT_KUBOT: {item.rt_kubot_exc}</Badge>
-                            <Badge variant={`outline`}>RT_KUBOT_MINI: {item.rt_kubot_mini_exc}</Badge>
-                            <Badge variant={`outline`}>RT_KUBOT_E2: {item.rt_kubot_e2_exc}</Badge>
-                            <Badge variant={`outline`}>ABNORMAL_LOCATIONS: {item.abnormal_location}</Badge>
-                            <Badge variant={`outline`}>ABNORMAL_CASE: {item.abnormal_case}</Badge>
+                        <div className={`grid grid-cols-2 items-center gap-2`}>
+                            <Badge variant={`secondary`}>RT_KUBOT: {item.rt_kubot_exc}</Badge>
+                            <Badge variant={`secondary`}>RT_KUBOT_MINI: {item.rt_kubot_mini_exc}</Badge>
+                            <Badge variant={`secondary`}>RT_KUBOT_E2: {item.rt_kubot_e2_exc}</Badge>
+                            <Badge variant={`secondary`}>ABNORMAL_LOCATIONS: {item.abnormal_location}</Badge>
+                            <Badge variant={`secondary`}>ABNORMAL_CASE: {item.abnormal_case}</Badge>
                         </div>
                     </Item>
                 ))}

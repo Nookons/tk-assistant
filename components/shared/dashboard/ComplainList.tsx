@@ -85,7 +85,7 @@ const ComplainList = ({user_data} : {user_data: IUser}) => {
                     return (
                         <TableRow key={complain.id}>
                             <TableCell className="font-medium">{complain.id}</TableCell>
-                            <TableCell>{complain.type.toUpperCase()}</TableCell>
+                            <TableCell>{complain.type}</TableCell>
                             <TableCell>{dayjs(complain.created_at).format("HH:mm · MMM D, YYYY")}</TableCell>
                             <TableCell>{complain.description}</TableCell>
                             <TableCell className="text-right">{complain.value}</TableCell>
