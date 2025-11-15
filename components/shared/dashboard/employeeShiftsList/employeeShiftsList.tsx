@@ -19,7 +19,7 @@ const EmployeeShiftsList = ({card_id}: {card_id: ParamValue}) => {
     if (isLoading) return <p>Loading shifts...</p>;
     if (error) return <p>Error: {error.message}</p>;
 
-    return <ShiftsList data={data}/>
+    return <ShiftsList data={data} list_type={'employee'}/>
 };
 
 export default EmployeeShiftsList;

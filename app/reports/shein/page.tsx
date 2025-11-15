@@ -13,25 +13,18 @@ import {
     SelectTrigger,
     SelectValue
 } from "@/components/ui/select";
-import {Card, CardAction, CardContent, CardDescription, CardFooter, CardHeader, CardTitle} from "@/components/ui/card";
+import {Card, CardAction, CardContent, CardFooter, CardHeader, CardTitle} from "@/components/ui/card";
 import {toast} from "sonner";
 import dayjs from "dayjs";
 import {Item} from "@/components/ui/item";
 import {Badge} from "@/components/ui/badge";
-import jsPDF from 'jspdf';
-import autoTable from 'jspdf-autotable';
 import {Popover, PopoverContent, PopoverTrigger} from "@/components/ui/popover";
-import { ChevronDownIcon } from "lucide-react";
+import {ChevronDownIcon, Loader, LoaderPinwheel} from "lucide-react";
 import { Calendar } from "@/components/ui/calendar";
+import {generateShiftReport} from "@/futures/PDF/shiftReport";
+import {IEmployeeReport} from "@/types/shift/Report";
 
-interface IEmployeeReport {
-    rt_kubot_exc: string;
-    rt_kubot_mini_exc: string;
-    rt_kubot_e2_exc: string;
-    abnormal_location: string;
-    abnormal_case: string;
-    employee_select: string;
-}
+
 
 const Page = () => {
     const [employee_at_shift, setEmployee_at_shift] = useState<number>(1)
@@ -48,8 +41,10 @@ const Page = () => {
     });
 
 
+    const initialDate = dayjs().format("YYYY-MM-DD"); // только дата
+
     const [open, setOpen] = React.useState(false)
-    const [date, setDate] = React.useState<Date | undefined>(dayjs().toDate());
+    const [date, setDate] = React.useState<Date | undefined>(dayjs(initialDate).toDate());
     const [shift_type, setShift_type] = useState<string>("day")
     const [report_data, setReport_data] = useState<IEmployeeReport[] | null>(null)
 
@@ -159,95 +154,12 @@ const Page = () => {
             });
 
             await Promise.all(promises_shifts);
-            console.log('All updates completed!');
+            await generateShiftReport({report_data, date, shift_type})
 
-            const doc = new jsPDF();
+            setTimeout(() => {
+                setIsLoading(false);
+            }, 250)
 
-            let yPosition = 40;
-
-            doc.setFontSize(18);
-            doc.text('SHEIN SHIFT REPORT', 14, 20);
-
-            doc.setFontSize(10);
-            doc.text(`${shift_type.toUpperCase()} SHIFT - ${dayjs(date).format('DD/MM/YYYY')}`, 14, 28);
-            doc.setFontSize(8);
-            doc.setTextColor(128); // серый оттенок (0–255)
-            doc.text(`Generated: ${dayjs().format('DD/MM/YYYY HH:mm')}`, 14, 33);
-            doc.setTextColor(0); // серый оттенок (0–255)
-
-            const totalStats = report_data.reduce((acc, item) => ({
-                rt_kubot_exc: Number(acc.rt_kubot_exc) + Number(item.rt_kubot_exc),
-                rt_kubot_mini_exc: Number(acc.rt_kubot_mini_exc) + Number(item.rt_kubot_mini_exc),
-                rt_kubot_e2_exc: Number(acc.rt_kubot_e2_exc) + Number(item.rt_kubot_e2_exc),
-                abnormal_location: Number(acc.abnormal_location) + Number(item.abnormal_location),
-                abnormal_case: Number(acc.abnormal_case) + Number(item.abnormal_case),
-            }), {
-                rt_kubot_exc: 0,
-                rt_kubot_mini_exc: 0,
-                rt_kubot_e2_exc: 0,
-                abnormal_location: 0,
-                abnormal_case: 0
-            });
-
-
-            /*doc.setFontSize(10);
-            doc.text(`Total Employees: ${report_data.length}`, 14, yPosition);
-            yPosition += 8;*/
-            yPosition += 8;
-
-            // увеличиваем шрифт для заголовка
-            doc.setFontSize(14);
-            doc.text("Robots exceptions was handled", 14, yPosition);
-            doc.setFontSize(10);
-
-            yPosition += 8;
-            doc.text(`Total RT KUBOT: ${totalStats.rt_kubot_exc}`, 14, yPosition);
-            doc.text(`Total RT KUBOT MINI: ${totalStats.rt_kubot_mini_exc}`, 53, yPosition);
-            doc.text(`Total RT KUBOT E2: ${totalStats.rt_kubot_e2_exc}`, 100, yPosition);
-            yPosition += 12;
-
-            doc.setFontSize(14);
-            doc.text("Abnormal was handled", 14, yPosition);
-            doc.setFontSize(10);
-            yPosition += 8;
-            doc.text(`Total Abnormal Locations: ${totalStats.abnormal_location}`, 14, yPosition);
-            doc.text(`Total Abnormal Cases: ${totalStats.abnormal_case}`, 65, yPosition);
-            yPosition += 15;
-
-            doc.setFontSize(14);
-            doc.text('Employee Details', 14, yPosition);
-            yPosition += 8;
-
-            autoTable(doc, {
-                startY: yPosition,
-                head: [['Employee', 'RT KUBOT', 'RT MINI', 'RT E2', 'ABN LOC', 'ABN CASE']],
-                body: report_data.map(item => [
-                    item.employee_select,
-                    item.rt_kubot_exc,
-                    item.rt_kubot_mini_exc,
-                    item.rt_kubot_e2_exc,
-                    item.abnormal_location,
-                    item.abnormal_case,
-                ]),
-                theme: 'striped',
-                styles: { fontSize: 10 },
-                headStyles: { fillColor: [41, 128, 185], textColor: 255 },
-            });
-
-            const logoImg = new Image();
-            logoImg.onload = function() {
-                const pageWidth = doc.internal.pageSize.getWidth();
-                doc.addImage(logoImg, 'PNG', pageWidth - 20, 10, 10, 10); // x, y, width, height
-
-                // Сохраняем PDF только после загрузки картинки
-                const fileName = `SHEIN_Report_${shift_type.toUpperCase()}_${dayjs(date).format('YYYY-MM-DD_HH-mm')}.pdf`;
-                doc.save(fileName);
-            };
-
-            logoImg.src = shift_type === "day" ? '/ico/sun.png' : '/ico/moon.png';
-
-            toast.success("PDF Report generated successfully!");
-            setIsLoading(false);
         } catch (error) {
             console.error('Error generating PDF:', error);
             toast.error("Failed to generate PDF report");
@@ -263,6 +175,7 @@ const Page = () => {
                         onClick={generatePDFReport}
                         disabled={!report_data || report_data.length === 0 || isLoading}
                     >
+                        {isLoading && <Loader className={`animate-spin`} /> }
                         Generate PDF Report
                     </Button>
                     <Select value={shift_type} onValueChange={(value) => setShift_type(value)}>

@@ -24,6 +24,7 @@ import {Label} from "@/components/ui/label";
 import AdminShiftsList from "@/components/shared/dashboard/adminShiftsList/adminShiftsList";
 import AddRobot from "@/components/shared/dashboard/addRobot/AddRobot";
 import {Badge} from "@/components/ui/badge";
+import RobotListProvider from "@/components/shared/dashboard/robotsList/robotListProvider";
 
 const Page = () => {
     const params = useParams();
@@ -217,6 +218,9 @@ const Page = () => {
                     </div>
                 </div>
             }
+            <div>
+                <RobotListProvider card_id={card_id} />
+            </div>
             <div className={`flex items-center border p-4 rounded-t-2xl justify-between`}>
                 <div className={`flex items-center gap-2`}>
                     <h1>Dashboard for {user_data.user_name}</h1>

@@ -23,7 +23,7 @@ export default function RootLayout({
             disableTransitionOnChange
         >
             <QueryProvider>
-                <Toaster />
+                <Toaster richColors position="bottom-right" />
                 <div className="px-4 pb-8">
                     <Header />
                     {children}

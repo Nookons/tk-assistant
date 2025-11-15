@@ -19,7 +19,7 @@ import {ShiftsChart} from "@/components/shared/dashboard/employeeShiftsList/Shif
 
 
 
-const ShiftsList = ({data}: { data: IShift[]}) => {
+const ShiftsList = ({data, list_type}: { data: IShift[], list_type: string}) => {
     const [shifts, setShifts] = useState<IShift[]>([...data].sort((a, b) => dayjs(b.shift_date).valueOf() - dayjs(a.shift_date).valueOf()));
 
     const [shift_type, setShift_type] = useState<string>('all')
@@ -28,7 +28,7 @@ const ShiftsList = ({data}: { data: IShift[]}) => {
     const deleteShiftMutation = useMutation({
         mutationFn: async (shift_id: number) => removeShift(shift_id),
         onSuccess: (_, shift_id) => {
-            setShifts(prev => prev.filter(s => s.id !== shift_id));
+            setSorted_data(prev => prev.filter(s => s.id !== shift_id));
         },
     });
 

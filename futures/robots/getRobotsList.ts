@@ -1,5 +1,5 @@
-export const getEmployeeShifts = async (card_id: string | string[]) => {
-    const res = await fetch(`/api/shifts/get-employee-shifts?card_id=${card_id}`, {
+export const getRobotsList = async () => {
+    const res = await fetch(`/api/robots/get-robots-list`, {
         method: 'GET',
         headers: {
             "Content-Type": "application/json"
