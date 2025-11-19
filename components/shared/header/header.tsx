@@ -22,6 +22,12 @@ const components: { title: string; href: string; description: string }[] = [
         description:
             "Create shift report for SHEIN in one click",
     },
+    {
+        title: "Weekly Report",
+        href: "/reports/weekly",
+        description:
+            "Weekly report for HAI ",
+    },
 ]
 
 export function Header() {
@@ -44,13 +50,13 @@ export function Header() {
                                                 Tk Service
                                             </div>
                                             <p className="text-muted-foreground text-sm leading-tight">
-                                                Beautifully designed components built with Tailwind CSS.
+                                                Beautiful company built with you.
                                             </p>
                                         </a>
                                     </NavigationMenuLink>
                                 </li>
-                                <ListItem href="/docs" title="Employee">
-                                    Employee data.
+                                <ListItem href="/exceptions-parsing" title="Exceptions parsing">
+                                    Exceptions parsing from chat to the list of exceptions.
                                 </ListItem>
                             </ul>
                         </NavigationMenuContent>
