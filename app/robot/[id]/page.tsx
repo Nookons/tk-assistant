@@ -5,16 +5,16 @@ import {IRobotApiResponse} from "@/types/robot/robot";
 import {Label} from "@/components/ui/label";
 import {Badge} from "@/components/ui/badge";
 import dayjs from "dayjs";
-import {Select, SelectContent, SelectItem, SelectTrigger, SelectValue} from "@/components/ui/select";
-import {Boxes, Dot, FileBox, Laugh, Settings} from "lucide-react";
+import {Boxes, Check, ChevronDown, Dot, FileBox, Laugh, Settings} from "lucide-react";
 import AddCommentRobot from "@/components/shared/robot/addComment/AddCommentRobot";
 import CommentsList from "@/components/shared/robot/commentsList/CommentsList";
-import {Button} from "@/components/ui/button";
+
+import PartsPicker from "@/components/shared/robot/changeStatus/partsPicker";
 
 
 const UserCard = ({title, user}: any) => (
     <div className="rounded-xl ">
-        <p><span className="font-semibold">Added By:</span></p>
+        <p><span className="font-semibold">{title}:</span></p>
         <p><span className="font-semibold">Name:</span> {user.user_name}</p>
         <p><span className="font-semibold">Warehouse:</span> {user.warehouse}</p>
         <p><span className="font-semibold">Phone:</span> {user.phone}</p>
@@ -26,6 +26,7 @@ const Page = () => {
     const robot_id = params?.id;
 
     const [robot_data, setRobotData] = useState<IRobotApiResponse | null>(null);
+
 
     const getRobotData = async () => {
         try {
@@ -58,9 +59,9 @@ const Page = () => {
     if (!robot_data) return null;
 
     return (
-        <div className="max-w-[1200px] m-auto grid md:grid-cols-[1fr_450px] gap-4 px-4">
+        <div className="max-w-[1200px] m-auto grid md:grid-cols-[1fr_350px] gap-8 px-4">
             {/* ROBOT INFO */}
-            <div className="flex flex-col gap-3 mt-4 py-2">
+            <div className="flex flex-col gap-3 mt-4 bg-muted/50 p-2 rounded">
                 <div className={`flex items-center justify-between gap-4`}>
                     <div>
                         <Label
@@ -72,19 +73,15 @@ const Page = () => {
                     </div>
                 </div>
                 <hr/>
-                <Label className={`text-muted-foreground text-xs`}>Last Update
-                    Time: {dayjs(robot_data.updated_at).format("HH:mm · MMM D, YYYY")}</Label>
 
-                <div className={`grid grid-cols-2 gap-2`}>
-                    <Button variant={`outline`}><FileBox/>Add Part</Button>
-                    <Button className="group" variant="outline">
-                        <Settings className="transition-transform group-hover:animate-spin" />
-                        Change Status
-                    </Button>
+                <div className={`grid grid-cols-1 gap-2`}>
+                    <PartsPicker
+                        robot={robot_data}
+                    />
                 </div>
 
                 <div className="flex flex-col items-start gap-3">
-                    <p className="md:text-2xl">{robot_data.problem_note}</p>
+                    <p className="">{robot_data.problem_note}</p>
                     <div className="mt-4">
                         <Label>Problems List</Label>
                         <div className={`flex gap-2 flex-wrap mt-4`}>
@@ -96,20 +93,24 @@ const Page = () => {
                         </div>
                     </div>
 
-                    <div
-                        className={`gap-4 w-full mt-12 grid ${robot_data.updated_by ? "grid-cols-[1fr_1fr]" : "grid-cols-[1fr]"}`}>
-                        <UserCard title="Added By" user={robot_data.add_by}/>
-                        {robot_data.updated_by && <UserCard title="Updated By" user={robot_data.updated_by}/>}
-                    </div>
+                    <div className={`gap-2 w-full mt-12 grid ${robot_data.updated_by ? "md:grid-cols-[1fr_1fr]" : "md:grid-cols-[1fr]"}`}>
 
-                    <div>
-                        <Label
-                            className={`text-muted-foreground text-xs`}>Created: {dayjs(robot_data.created_at).format("HH:mm · MMM D, YYYY")}</Label>
+                        {robot_data.updated_by &&
+                            <div className={`bg-muted p-2 rounded`}>
+                                <UserCard title="Updated By" user={robot_data.updated_by}/>
+                                <Label className={`text-muted-foreground text-xs mt-2`}>{dayjs(robot_data.updated_at).format("HH:mm · MMM D, YYYY")}</Label>
+                            </div>
+                        }
+
+                        <div className={`bg-muted p-2 rounded`}>
+                            <UserCard title="Added By" user={robot_data.add_by}/>
+                            <Label className={`text-muted-foreground text-xs mt-2`}>{dayjs(robot_data.created_at).format("HH:mm · MMM D, YYYY")}</Label>
+                        </div>
                     </div>
                 </div>
             </div>
 
-            <div>
+            <div className={`p-2 rounded`}>
                 <AddCommentRobot
                     robot_data={robot_data}
                 />

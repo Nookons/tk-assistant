@@ -17,7 +17,7 @@ export async function POST(request: Request) {
 
     const { data, error } = await supabase
         .from('robots_maintenance_list')
-        .insert([{add_by: card_id, robot_number, robot_type, type_problem, problem_note, status: "wait"}])
+        .insert([{add_by: card_id, robot_number, robot_type, type_problem, problem_note, status: "waiting_check"}])
         .select();
 
     console.log('Supabase data:', data);
