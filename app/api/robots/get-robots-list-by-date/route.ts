@@ -10,7 +10,7 @@ export async function GET(request: NextRequest) {
     const endDate = `${date}T23:59:59Z`;
 
     const { data, error } = await supabase
-        .from('robots_maintance_list')
+        .from('robots_maintenance_list')
         .select('*')
         .gte('created_at', startDate)
         .lte('created_at', endDate);

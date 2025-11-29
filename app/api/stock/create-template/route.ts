@@ -5,23 +5,16 @@ export async function POST(request: Request) {
     const body = await request.json();
     console.log('Полученные данные:', body);
 
-    console.log('SUPABASE_URL:', process.env.NEXT_PUBLIC_SUPABASE_URL);
-    console.log('SERVICE_ROLE_KEY exists:', !!process.env.SUPABASE_SERVICE_ROLE_KEY);
-
-    const {card_id, robot_number, robot_type, type_problem, problem_note } = body;
+    const {card_id, material_number, description_orginall, description_eng, part_type} = body;
 
     const now = new Date();
     const offsetMs = now.getTimezoneOffset() * 60000; // смещение в мс
     const updated_at = new Date(now.getTime() - offsetMs).toISOString().slice(0, -1);
-    const created_at = new Date(now.getTime() - offsetMs).toISOString().slice(0, -1);
 
     const { data, error } = await supabase
-        .from('robots_maintenance_list')
-        .insert([{add_by: card_id, robot_number, robot_type, type_problem, problem_note, status: "wait"}])
+        .from('stock_items_template')
+        .insert([{add_by: card_id, created_at: updated_at, updated_at, material_number, description_orginall, description_eng, part_type}])
         .select();
-
-    console.log('Supabase data:', data);
-    console.log('Supabase error:', error);
 
     if (error) {
         return NextResponse.json({ error: error.message }, { status: 500 });

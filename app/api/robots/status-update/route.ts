@@ -19,7 +19,7 @@ export async function POST(request: Request) {
         const updated_at = new Date(now.getTime() - offsetMs).toISOString().slice(0, -1);
 
         const { data, error } = await supabase
-            .from('robots_maintance_list')
+            .from('robots_maintenance_list')
             .update({
                 status: new_status,
                 updated_at,

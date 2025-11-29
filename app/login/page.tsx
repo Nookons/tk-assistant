@@ -2,7 +2,7 @@
 import React, { useState } from 'react';
 import { Item, ItemContent, ItemDescription, ItemTitle } from "@/components/ui/item";
 import { Input } from "@/components/ui/input";
-import { LogIn, Phone, Lock, User, AlertCircle } from "lucide-react";
+import {LogIn, Phone, Lock, User, AlertCircle, IdCardLanyard} from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
 import { PasswordInput } from "@/components/ui/passwordInput";
@@ -26,7 +26,6 @@ const Page = () => {
     const [isPasswordReset, setIsPasswordReset] = useState<boolean>(false);
     const [error, setError] = useState<string>('');
 
-    const setUser = useUserStore(state => state.set_user);
     const router = useRouter();
 
     // Fetch user by phone
@@ -91,12 +90,18 @@ const Page = () => {
 
             if (res.ok) {
                 data = await res.json();
-                setUser(data);
+
                 toast.success('Login successful!');
-                localStorage.setItem('user', JSON.stringify({
-                    ...data,
-                    loginTime: dayjs().valueOf()
-                }));
+
+                localStorage.setItem(
+                    'user',
+                    JSON.stringify({
+                        ...data,
+                        loginTime: dayjs().valueOf(),
+                    })
+                );
+
+                window.dispatchEvent(new Event("authChange"));
                 router.push(`/dashboard/${data.user.card_id}`);
             } else {
                 data = await res.json().catch(() => ({}));
@@ -139,7 +144,7 @@ const Page = () => {
                             TK Service Login
                         </h1>
                         <p className="text-sm">
-                            Enter your phone number to continue
+                            Enter your ID Card number to continue
                         </p>
                     </div>
 
@@ -163,8 +168,8 @@ const Page = () => {
                         {/* Phone Number Input */}
                         <div className="space-y-3">
                             <label className="flex items-center gap-2 text-sm font-semibold">
-                                <Phone className="w-4 h-4" />
-                                SHEIN ID Number
+                                <IdCardLanyard className="w-4 h-4" />
+                                CARD ID
                             </label>
                             <Input
                                 value={card_id}

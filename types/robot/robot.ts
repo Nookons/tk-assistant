@@ -29,7 +29,7 @@ export interface IRobotApiResponse {
     updated_at: Timestamp;
     robot_number: number;
     robot_type: string;
-    type_problem: string;
+    type_problem: string[];
     problem_note: string | null;
     status: string;
     updated_by: IJoinEmployee;

@@ -3,7 +3,7 @@ import { supabase } from '@/lib/supabaseClient';
 
 export async function GET(request: Request) {
     const { data, error } = await supabase
-        .from('robots_maintance_list')
+        .from('robots_maintenance_list')
         .select('*')
 
     if (error) {

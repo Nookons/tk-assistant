@@ -167,7 +167,7 @@ const Page = () => {
     }
 
     return (
-        <div className="max-w-[1200px] m-auto">
+        <div className="max-w-[1200px] px-4 m-auto">
             <div className={`mb-6`}>
                 <h1 className="text-2xl mb-4">SHEIN REPORT PAGE</h1>
                 <div className={`flex flex-wrap items-center gap-2`}>

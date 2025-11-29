@@ -5,16 +5,19 @@ export async function GET(request: NextRequest) {
     try {
         const robot_id = request.nextUrl.searchParams.get('robot_id');
 
-        let query = supabase
-            .from('robots_maintenance_list')
+        if (!robot_id) {
+            return NextResponse.json({ error: 'robot_id is required' }, { status: 400 });
+        }
+
+        // Получаем все ключи из другой таблицы
+        const { data, error } = await supabase
+            .from('robots_comments')
             .select(`
                 *,
-                add_by:employees!add_by(user_name, card_id, email, phone, warehouse, position),
-                updated_by:employees!updated_by(user_name, card_id, email, phone, warehouse, position)
-            `).eq('id', robot_id).single();
+                employees(*)   -- users это таблица с юзерами, связанная по user_id
+              `)
+            .eq('robot_record', robot_id);
 
-
-        const { data, error } = await query;
 
         if (error) {
             console.error('Supabase error:', error);
@@ -25,9 +28,6 @@ export async function GET(request: NextRequest) {
 
     } catch (err: any) {
         console.error('Server error:', err);
-        return NextResponse.json(
-            { error: 'Server error' },
-            { status: 500 }
-        );
+        return NextResponse.json({ error: 'Server error' }, { status: 500 });
     }
 }

@@ -150,7 +150,7 @@ const Page = () => {
 
 
     return (
-        <div>
+        <div className={`px-4`}>
             {user_data.position === 'leader' &&
                 <div className={`mb-4`}>
                     <Dialog>

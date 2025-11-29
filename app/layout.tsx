@@ -24,7 +24,7 @@ export default function RootLayout({
         >
             <QueryProvider>
                 <Toaster richColors position="bottom-right" />
-                <div className="px-4 pb-8">
+                <div className=" pb-8">
                     <Header />
                     {children}
                 </div>

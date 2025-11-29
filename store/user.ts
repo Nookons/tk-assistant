@@ -1,5 +1,5 @@
 import { create } from 'zustand'
-import { IUser } from '@/types/user/user'
+import {IUser, IUserApiResponse} from '@/types/user/user'
 
 type UserState = {
     current_user: IUser | null

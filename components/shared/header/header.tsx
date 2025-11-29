@@ -1,124 +1,204 @@
 "use client"
 import * as React from "react"
 import Link from "next/link"
-import {CircleCheckIcon, CircleHelpIcon, CircleIcon, FileSpreadsheet, LogIn} from "lucide-react"
-import {
-    NavigationMenu,
-    NavigationMenuContent,
-    NavigationMenuItem,
-    NavigationMenuLink,
-    NavigationMenuList,
-    NavigationMenuTrigger,
-    navigationMenuTriggerStyle,
-} from "@/components/ui/navigation-menu"
-import {ThemeToggle} from "@/components/shared/theme/theme-toggle";
-import {Button} from "@/components/ui/button";
-import UserButton from "@/components/shared/header/userButton";
+import {Menu, X, FileText, Home, Package, ChevronRight, LucideIcon, CalendarArrowDown, WandSparkles} from "lucide-react"
+import { ThemeToggle } from "@/components/shared/theme/theme-toggle"
+import { Button } from "@/components/ui/button"
+import UserButton from "@/components/shared/header/userButton"
+import Image from "next/image"
+import { cn } from "@/lib/utils"
 
-const components: { title: string; href: string; description: string }[] = [
+interface NavigationItem {
+    name: string
+    href: string
+    description: string
+    featured?: boolean
+    icon?: LucideIcon
+}
+
+interface NavigationSection {
+    name: string
+    items: NavigationItem[]
+}
+
+const navigation: NavigationSection[] = [
     {
-        title: "SHEIN Report",
-        href: "/reports/shein",
-        description:
-            "Create shift report for SHEIN in one click",
+        name: "Home",
+        items: [
+            {
+                name: "Exceptions Parsing",
+                href: "/exceptions-parsing",
+                description: "Parse exceptions from chat to list",
+                icon: WandSparkles
+            },
+        ]
     },
     {
-        title: "Weekly Report",
-        href: "/reports/weekly",
-        description:
-            "Weekly report for HAI ",
+        name: "Documents",
+        items: [
+            {
+                name: "SHEIN Report",
+                href: "/reports/shein",
+                description: "Create shift report for SHEIN in one click",
+                icon: FileText
+            },
+            {
+                name: "Weekly Report",
+                href: "/reports/weekly",
+                description: "Weekly report for HAI",
+                icon: CalendarArrowDown
+            },
+        ]
+    },
+    {
+        name: "Inventory",
+        items: [
+            {
+                name: "Inventory Stock",
+                href: "/stock",
+                description: "Manage warehouse inventory",
+                icon: Package
+            },
+        ]
     },
 ]
 
 export function Header() {
+    const [mobileMenuOpen, setMobileMenuOpen] = React.useState<boolean>(false)
+    const [activeDropdown, setActiveDropdown] = React.useState<string | null>(null)
 
     return (
-        <div className={`py-4 z-50 flex justify-between items-center flex flex-wrap`}>
-            <NavigationMenu>
-                <NavigationMenuList className="flex-wrap">
-                    <NavigationMenuItem>
-                        <NavigationMenuTrigger>Home</NavigationMenuTrigger>
-                        <NavigationMenuContent>
-                            <ul className="grid gap-2 md:w-[400px] lg:w-[500px] lg:grid-cols-[.75fr_1fr]">
-                                <li className="row-span-3">
-                                    <NavigationMenuLink asChild>
-                                        <a
-                                            className="from-muted/50 to-muted flex h-full w-full flex-col justify-end rounded-md bg-linear-to-b p-4 no-underline outline-hidden transition-all duration-200 select-none focus:shadow-md md:p-6"
-                                            href="/"
-                                        >
-                                            <div className="mb-2 text-lg font-medium sm:mt-4">
-                                                Tk Service
-                                            </div>
-                                            <p className="text-muted-foreground text-sm leading-tight">
-                                                Beautiful company built with you.
-                                            </p>
-                                        </a>
-                                    </NavigationMenuLink>
-                                </li>
-                                <ListItem href="/exceptions-parsing" title="Exceptions parsing">
-                                    Exceptions parsing from chat to the list of exceptions.
-                                </ListItem>
-                            </ul>
-                        </NavigationMenuContent>
-                    </NavigationMenuItem>
-
-                    <NavigationMenuItem>
-                        <NavigationMenuTrigger>Documents</NavigationMenuTrigger>
-                        <NavigationMenuContent>
-                            <ul className="flex flex-wrap gap-2 sm:w-[400px] md:w-[500px] md:grid-cols-2 lg:w-[600px]">
-                                {components.map((component) => (
-                                    <ListItem
-                                        key={component.title}
-                                        title={component.title}
-                                        href={component.href}
-                                    >
-                                        {component.description}
-                                    </ListItem>
-                                ))}
-                            </ul>
-                        </NavigationMenuContent>
-                    </NavigationMenuItem>
-                    {/*<NavigationMenuItem>
-                        <NavigationMenuTrigger>Reports</NavigationMenuTrigger>
-                        <NavigationMenuContent>
-                            <ul className="grid w-auto gap-4">
-                                <li>
-                                    <NavigationMenuLink asChild>
-                                        <Link href="/reports/shein" className="flex-row items-center gap-2">
-                                            <FileSpreadsheet />
-                                            SHEIN
-                                        </Link>
-                                    </NavigationMenuLink>
-                                </li>
-                            </ul>
-                        </NavigationMenuContent>
-                    </NavigationMenuItem>*/}
-                </NavigationMenuList>
-            </NavigationMenu>
-            <div className={`flex items-center gap-2`}>
-                <UserButton />
-                <ThemeToggle />
-            </div>
-        </div>
-    )
-}
-
-function ListItem({
-                      title,
-                      children,
-                      href,
-                      ...props
-                  }: React.ComponentPropsWithoutRef<"li"> & { href: string }) {
-    return (
-        <li {...props}>
-            <NavigationMenuLink asChild>
-                <Link href={href}>
-                    <div className="text-sm leading-none font-medium">{title}</div>
-                    <p className="text-muted-foreground line-clamp-2 text-sm leading-snug">
-                        {children}
-                    </p>
+        <header className="sticky bg-muted-foreground/5 backdrop-blur-2xl mb-2 top-0 z-50 w-full">
+            <div className="flex justify-between py-4 px-2">
+                {/* Logo */}
+                <Link href="/" className="flex items-center gap-3">
+                    <div className="bg-white rounded-lg shadow-sm p-1.5 flex items-center">
+                        <Image
+                            alt="Tk Service Logo"
+                            src="/img/logo_short.png"
+                            width={75}
+                            height={75}
+                        />
+                    </div>
                 </Link>
-            </NavigationMenuLink>
-        </li>
+
+                {/* Desktop Navigation */}
+                <nav className="hidden lg:flex items-center gap-1 px-4">
+                    {navigation.map((section) => (
+                        <div
+                            key={section.name}
+                            className="relative"
+                            onMouseEnter={() => setActiveDropdown(section.name)}
+                            onMouseLeave={() => setActiveDropdown(null)}
+                        >
+                            <Button
+                                variant="ghost"
+                                className="gap-1"
+                            >
+                                {section.name}
+                                <ChevronRight className={cn(
+                                    "h-4 w-4 transition-transform",
+                                    activeDropdown === section.name && "rotate-90"
+                                )} />
+                            </Button>
+
+                            {/* Dropdown */}
+                            {activeDropdown === section.name && (
+                                <div className="absolute top-full left-0 w-80  backdrop-blur-2xl bg-muted-foreground/25 shadow-lg animate-in fade-in-0 zoom-in-95">
+                                    <div className="">
+                                        {section.items.map((item) => (
+                                            <Link
+                                                key={item.href}
+                                                href={item.href}
+                                                className={cn(
+                                                    "block p-3 transition-colors hover:bg-accent",
+                                                    item.featured && "bg-muted"
+                                                )}
+                                            >
+                                                <div className="flex items-start gap-3">
+                                                    {item.icon && <item.icon className="h-5 w-5 mt-0.5 text-muted-foreground" />}
+                                                    <div className="flex-1">
+                                                        <div className="font-medium text-sm mb-0.5">
+                                                            {item.name}
+                                                        </div>
+                                                        <div className="text-xs text-muted-foreground leading-relaxed">
+                                                            {item.description}
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                            </Link>
+                                        ))}
+                                    </div>
+                                </div>
+                            )}
+                        </div>
+                    ))}
+                </nav>
+
+                {/* Right Side Controls */}
+                <div className="flex items-end gap-2">
+                    <div className="hidden sm:flex items-center gap-2">
+                        <UserButton />
+                        <ThemeToggle />
+                    </div>
+
+                    {/* Mobile Menu Button */}
+                    <Button
+                        variant="ghost"
+                        size="icon"
+                        className="lg:hidden"
+                        onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
+                    >
+                        {mobileMenuOpen ? (
+                            <X className="h-5 w-5" />
+                        ) : (
+                            <Menu className="h-5 w-5" />
+                        )}
+                    </Button>
+                </div>
+            </div>
+
+            {/* Mobile Menu */}
+            {mobileMenuOpen && (
+                <div className="lg:hidden  border-t mb-4 bg-background animate-in slide-in-from-top-2">
+                    <div className="container py-4 px-2 bg-muted space-y-4">
+                        {/* Mobile User Controls - Only shown on smallest screens */}
+                        <div className="flex sm:hidden items-center justify-end gap-2 pb-4 border-b">
+                            <UserButton />
+                            <ThemeToggle />
+                        </div>
+
+                        {/* Navigation Sections */}
+                        {navigation.map((section) => (
+                            <div key={section.name} className="space-y-2">
+                                <div className="text-sm font-semibold text-muted-foreground px-2">
+                                    {section.name}
+                                </div>
+                                <div className="space-y-1">
+                                    {section.items.map((item) => (
+                                        <Link
+                                            key={item.href}
+                                            href={item.href}
+                                            onClick={() => setMobileMenuOpen(false)}
+                                            className="flex items-start gap-3 rounded-md p-3 transition-colors hover:bg-accent"
+                                        >
+                                            {item.icon && <item.icon className="h-5 w-5 mt-0.5 text-muted-foreground flex-shrink-0" />}
+                                            <div className="flex-1 min-w-0">
+                                                <div className="font-medium text-sm">
+                                                    {item.name}
+                                                </div>
+                                                <div className="text-xs text-muted-foreground mt-0.5">
+                                                    {item.description}
+                                                </div>
+                                            </div>
+                                        </Link>
+                                    ))}
+                                </div>
+                            </div>
+                        ))}
+                    </div>
+                </div>
+            )}
+        </header>
     )
 }

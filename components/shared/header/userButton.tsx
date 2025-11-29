@@ -5,11 +5,16 @@ import { LayoutDashboard, LogIn, LogOut } from "lucide-react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { IUser } from "@/types/user/user";
+import {useUserStore} from "@/store/user";
+import {Label} from "@/components/ui/label";
 
 const UserButton = () => {
     const router = useRouter();
     const [user, setUser] = useState<IUser | null>(null);
     const [loading, setLoading] = useState(true);
+
+    const setUserStore = useUserStore(state => state.set_user)
+
 
     // Проверяем токен и получаем данные пользователя с сервера
     const fetchUser = async () => {
@@ -18,7 +23,9 @@ const UserButton = () => {
             const res = await fetch("/api/auth/me");
             if (res.ok) {
                 const data = await res.json();
+                console.log(data);
                 setUser(data.user || null);
+                setUserStore(data.user || null);
             } else {
                 setUser(null); // не авторизован
             }
@@ -29,6 +36,12 @@ const UserButton = () => {
             setLoading(false);
         }
     }
+
+    useEffect(() => {
+        const handler = () => fetchUser(); // перезагружаем данные пользователя
+        window.addEventListener("authChange", handler);
+        return () => window.removeEventListener("authChange", handler);
+    }, []);
 
     useEffect(() => {
         fetchUser();
