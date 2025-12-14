@@ -1,124 +1,107 @@
 'use client'
 import React, {useEffect, useState} from 'react';
 import {useParams} from "next/navigation";
-import {IRobotApiResponse} from "@/types/robot/robot";
+import {IRobot, IRobotApiResponse} from "@/types/robot/robot";
 import {Label} from "@/components/ui/label";
-import {Badge} from "@/components/ui/badge";
 import dayjs from "dayjs";
-import {Boxes, Check, ChevronDown, Dot, FileBox, Laugh, Settings} from "lucide-react";
+import {
+    CirclePlus, Dot, Frown, Laugh,
+    Phone, RefreshCw,
+    Warehouse
+} from "lucide-react";
+import {useUserStore} from "@/store/user";
+import RobotHistory from "@/components/shared/robot/changedParts/RobotHistory";
+import PartsPicker from "@/components/shared/robot/addNewParts/partsPicker";
 import AddCommentRobot from "@/components/shared/robot/addComment/AddCommentRobot";
 import CommentsList from "@/components/shared/robot/commentsList/CommentsList";
+import Image from "next/image";
+import ChangeRobotStatus from "@/components/shared/robot/changeStatus/ChangeRobotStatus";
+import {useRobotsStore} from "@/store/robotsStore";
 
-import PartsPicker from "@/components/shared/robot/changeStatus/partsPicker";
-
-
-const UserCard = ({title, user}: any) => (
-    <div className="rounded-xl ">
-        <p><span className="font-semibold">{title}:</span></p>
-        <p><span className="font-semibold">Name:</span> {user.user_name}</p>
-        <p><span className="font-semibold">Warehouse:</span> {user.warehouse}</p>
-        <p><span className="font-semibold">Phone:</span> {user.phone}</p>
-    </div>
-);
 
 const Page = () => {
     const params = useParams();
     const robot_id = params?.id;
 
-    const [robot_data, setRobotData] = useState<IRobotApiResponse | null>(null);
+    const robots_list = useRobotsStore(state => state.robots)
 
-
-    const getRobotData = async () => {
-        try {
-            const res = await fetch(`/api/robots/get-robot?robot_id=${robot_id}`);
-
-            if (!res.ok) {
-                throw new Error(`HTTP error! status: ${res.status}`);
-            }
-
-            const response = await res.json();
-
-            setRobotData({
-                ...response,
-                type_problem: JSON.parse(response.type_problem)
-            });
-
-        } catch (error) {
-            console.log(error);
-        }
-    };
+    const [current_Robot, setCurrent_Robot] = useState<IRobot | null>(null)
 
     useEffect(() => {
-        if (robot_id) getRobotData();
-    }, [robot_id]);
+        if (robots_list) {
+            const robot_data = robots_list.find(item => item.id === Number(robot_id))
+            if (robot_data) setCurrent_Robot(robot_data)
+        }
+    }, [robots_list])
 
-    const updateRobotStatus = async (id: number, value: string) => {
+    const user_store = useUserStore(state => state.current_user)
 
-    };
-
-    if (!robot_data) return null;
+    if (!current_Robot) return null;
 
     return (
-        <div className="max-w-[1200px] m-auto grid md:grid-cols-[1fr_350px] gap-8 px-4">
+        <div className="max-w-[1600px] m-auto grid md:grid-cols-[1fr_650px] gap-8 px-4">
             {/* ROBOT INFO */}
-            <div className="flex flex-col gap-3 mt-4 bg-muted/50 p-2 rounded">
-                <div className={`flex items-center justify-between gap-4`}>
-                    <div>
-                        <Label
-                            className={`font-bold text-base md:text-2xl`}>{robot_data.robot_type} - {robot_data.robot_number}</Label>
-                    </div>
-                    <div className={`flex items-center gap-2`}>
-                        <Dot className="text-green-500 animate-ping inline"/>
-                        <Label>{robot_data.status.toUpperCase()}</Label>
-                    </div>
-                </div>
-                <hr/>
+            <div className="">
+                <div className={`grid md:grid-cols-2 gap-4 py-4`}>
 
-                <div className={`grid grid-cols-1 gap-2`}>
-                    <PartsPicker
-                        robot={robot_data}
-                    />
-                </div>
-
-                <div className="flex flex-col items-start gap-3">
-                    <p className="">{robot_data.problem_note}</p>
-                    <div className="mt-4">
-                        <Label>Problems List</Label>
-                        <div className={`flex gap-2 flex-wrap mt-4`}>
-                            {robot_data.type_problem.map((item: string) => (
-                                <Badge>
-                                    <Label className={`text-xs md:text-base px-2`}>{item}</Label>
-                                </Badge>
-                            ))}
+                    <div className={`flex justify-between md:justify-start items-center gap-2`}>
+                        <div className={`flex items-center gap-2`}>
+                            <Image src={`/img/A42T_Green.svg`} alt={`robot image`} width={35} height={35}/>
+                            <Label
+                                className={`font-bold text-base md:text-2xl`}>{current_Robot.robot_number}</Label>
+                        </div>
+                        <div className={`flex items-center gap-2`}>
+                            <Dot className="text-green-500 animate-ping inline"/>
+                            <Label>{current_Robot.status.toUpperCase()}</Label>
                         </div>
                     </div>
 
-                    <div className={`gap-2 w-full mt-12 grid ${robot_data.updated_by ? "md:grid-cols-[1fr_1fr]" : "md:grid-cols-[1fr]"}`}>
+                    <div className={`flex w-full md:justify-end justify-between items-center gap-4`}>
+                        <PartsPicker
+                            robot={current_Robot}
+                        />
+                        <ChangeRobotStatus
+                            robot={current_Robot}
+                        />
+                    </div>
+                </div>
 
-                        {robot_data.updated_by &&
-                            <div className={`bg-muted p-2 rounded`}>
-                                <UserCard title="Updated By" user={robot_data.updated_by}/>
-                                <Label className={`text-muted-foreground text-xs mt-2`}>{dayjs(robot_data.updated_at).format("HH:mm · MMM D, YYYY")}</Label>
+                <hr className={`my-4`} />
+
+                <div className="">
+                    <div className={`flex flex-col-reverse md:grid md:grid-cols-2  items-start gap-4`}>
+                        <div className={`w-full`}>
+                            <div className={`rounded mb-4 w-full`}>
+                                <AddCommentRobot
+                                    robot_data={current_Robot}
+                                />
                             </div>
-                        }
+                            <div className={`w-full`}>
+                                <CommentsList
+                                    robot_id={current_Robot.id}
+                                />
+                            </div>
+                        </div>
 
-                        <div className={`bg-muted p-2 rounded`}>
-                            <UserCard title="Added By" user={robot_data.add_by}/>
-                            <Label className={`text-muted-foreground text-xs mt-2`}>{dayjs(robot_data.created_at).format("HH:mm · MMM D, YYYY")}</Label>
+                        <div className={`flex flex-col gap-2 flex-wrap w-full`}>
+                            {/*{robot_data.type_problem.map((item: string) => (
+                                <div className={`p-2 border border-dashed rounded bg-red-500/20`}>
+                                    <Label className={`text-xs md:text-xs px-2`}>{item}</Label>
+                                </div>
+                            ))}*/}
+                            <div className={`border border-dashed rounded p-2 w-full`}>
+                                <Label className="text-xs text-muted-foreground mb-4">Note:</Label>
+                                <Label className="">{current_Robot.problem_note}</Label>
+                            </div>
                         </div>
                     </div>
+
                 </div>
             </div>
-
-            <div className={`p-2 rounded`}>
-                <AddCommentRobot
-                    robot_data={robot_data}
+            <div>
+                <RobotHistory
+                    robot={current_Robot}
                 />
-                <div className={`mt-6`}>
-                    <CommentsList
-                        robot_id={robot_data.id}
-                    />
-                </div>
             </div>
         </div>
     );

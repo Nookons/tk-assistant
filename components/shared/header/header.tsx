@@ -104,18 +104,18 @@ export function Header() {
 
                             {/* Dropdown */}
                             {activeDropdown === section.name && (
-                                <div className="absolute top-full left-0 w-80  backdrop-blur-2xl bg-muted-foreground/25 shadow-lg animate-in fade-in-0 zoom-in-95">
+                                <div className="absolute top-full left-0 w-80  backdrop-blur-2xl bg-muted/50 shadow-lg animate-in fade-in-0 zoom-in-95">
                                     <div className="">
                                         {section.items.map((item) => (
                                             <Link
                                                 key={item.href}
                                                 href={item.href}
                                                 className={cn(
-                                                    "block p-3 transition-colors hover:bg-accent",
-                                                    item.featured && "bg-muted"
+                                                    "block backdrop-blur-2xl bg-muted/50 p-3 transition-colors hover:bg-accent",
+                                                    item.featured && "bg-muted "
                                                 )}
                                             >
-                                                <div className="flex items-start gap-3">
+                                                <div className="flex  items-start gap-3">
                                                     {item.icon && <item.icon className="h-5 w-5 mt-0.5 text-muted-foreground" />}
                                                     <div className="flex-1">
                                                         <div className="font-medium text-sm mb-0.5">
@@ -160,8 +160,8 @@ export function Header() {
 
             {/* Mobile Menu */}
             {mobileMenuOpen && (
-                <div className="lg:hidden  border-t mb-4 bg-background animate-in slide-in-from-top-2">
-                    <div className="container py-4 px-2 bg-muted space-y-4">
+                <div className="lg:hidden absolute w-full mb-4 animate-in slide-in-from-top-2">
+                    <div className="container py-4 px-2 bg-muted/90 backdrop-blur-2xl  space-y-4">
                         {/* Mobile User Controls - Only shown on smallest screens */}
                         <div className="flex sm:hidden items-center justify-end gap-2 pb-4 border-b">
                             <UserButton />

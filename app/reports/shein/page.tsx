@@ -19,26 +19,19 @@ import dayjs from "dayjs";
 import {Item} from "@/components/ui/item";
 import {Badge} from "@/components/ui/badge";
 import {Popover, PopoverContent, PopoverTrigger} from "@/components/ui/popover";
-import {ChevronDownIcon, Loader, LoaderPinwheel} from "lucide-react";
+import {ChevronDownIcon, Loader} from "lucide-react";
 import { Calendar } from "@/components/ui/calendar";
 import {generateShiftReport} from "@/futures/PDF/shiftReport";
 import {IEmployeeReport} from "@/types/shift/Report";
-
+import SheinReportFile from "@/components/shared/reports/sheinReportFile/SheinReportFile";
+import {useRobotsStore} from "@/store/robotsStore";
+import {IHistoryParts, IHistoryStatus} from "@/types/robot/robot";
 
 
 const Page = () => {
-    const [employee_at_shift, setEmployee_at_shift] = useState<number>(1)
     const [employees_list, setEmployees_list] = useState<IUser[]>([])
 
     const [isLoading, setIsLoading] = useState<boolean>(false);
-
-    const [saved_user, setSaved_user] = useState<IUserApiResponse | null>(() => {
-        if (typeof window !== 'undefined') {
-            const saved = localStorage.getItem('user');
-            return saved ? JSON.parse(saved) : null;
-        }
-        return null;
-    });
 
 
     const initialDate = dayjs().format("YYYY-MM-DD"); // только дата
@@ -47,6 +40,46 @@ const Page = () => {
     const [date, setDate] = React.useState<Date | undefined>(dayjs(initialDate).toDate());
     const [shift_type, setShift_type] = useState<string>("day")
     const [report_data, setReport_data] = useState<IEmployeeReport[] | null>(null)
+
+    const robots = useRobotsStore(state => state.robots)
+
+    const [history_status, setHistory_status] = useState<IHistoryStatus[]>([])
+    const [history_parts, setHistory_parts] = useState<IHistoryParts[]>([])
+
+    useEffect(() => {
+        if (robots) {
+            const filtered = robots.filter(item => dayjs(item.updated_at).format("YYYY-MM-DD") === initialDate)
+
+            let status_items: IHistoryStatus[] = [];
+            let parts_items: IHistoryParts[] = [];
+
+            filtered.forEach((el, index) => {
+
+                const status_history_today = el.status_history.filter(item => dayjs(item.created_at).format("YYYY-MM-DD") === initialDate)
+
+                if (status_history_today.length > 0) {
+                    status_history_today.forEach((i) => {
+                        status_items.push(i)
+                    })
+                }
+            })
+
+            filtered.forEach((el, index) => {
+
+                const status_history_today = el.parts_history.filter(item => dayjs(item.created_at).format("YYYY-MM-DD") === initialDate)
+
+                if (status_history_today.length > 0) {
+                    status_history_today.forEach((i) => {
+                        parts_items.push(i)
+                    })
+                }
+            })
+
+            setHistory_status(status_items);
+            setHistory_parts(parts_items);
+        }
+    }, [robots])
+
 
     const [card_data, setCard_data] = useState({
         rt_kubot_exc: "0",
@@ -154,7 +187,7 @@ const Page = () => {
             });
 
             await Promise.all(promises_shifts);
-            await generateShiftReport({report_data, date, shift_type})
+            await generateShiftReport({report_data, date, shift_type, history_status, history_parts})
 
             setTimeout(() => {
                 setIsLoading(false);
@@ -170,6 +203,11 @@ const Page = () => {
         <div className="max-w-[1200px] px-4 m-auto">
             <div className={`mb-6`}>
                 <h1 className="text-2xl mb-4">SHEIN REPORT PAGE</h1>
+
+                <div className={`mb-4`}>
+                    <SheinReportFile />
+                </div>
+
                 <div className={`flex flex-wrap items-center gap-2`}>
                     <Button
                         onClick={generatePDFReport}

@@ -4,39 +4,73 @@ import { supabase } from '@/lib/supabaseClient';
 export async function POST(request: Request) {
     try {
         const body = await request.json();
-        const { id, new_status, card_id } = body;
+        const {old_status, new_status, card_id, robot_number, robot_id} = body;
 
-        if (!id || !new_status || !card_id) {
+        // --- 1. Validation Check ---
+        if (!new_status || !card_id || !robot_id) {
             return NextResponse.json(
-                { error: 'Missing required fields (id, new_status, card_id)' },
+                // Added robot_id to missing fields list
+                { error: 'Missing required fields (new_status, card_id, robot_id)' },
                 { status: 400 }
             );
         }
 
-        const now = new Date();
-
-        const { data, error } = await supabase
-            .from('robots_maintenance_list')
-            .update({
-                status: new_status,
-                updated_at: now,
-                updated_by: card_id,
+        // --- 2. Log Status Change (History Table) ---
+        const { data: log_data, error: log_error } = await supabase
+            .from('change_status_robots')
+            .insert({
+                robot_number: robot_number,
+                robot_id: robot_id,
+                new_status: new_status,
+                old_status: old_status,
+                add_by: card_id,
             })
-            .eq('id', id)
-            .select()  // <-- ensures data is returned
-            .single(); // <-- ensures you get one object instead of array
+            .select()
+            .single();
 
-        console.log('Supabase data:', data);
-        console.log('Supabase error:', error);
+        console.log('Supabase Log Insert Data:', log_data);
 
-        if (error) {
-            return NextResponse.json({ error: error.message }, { status: 500 });
+        // --- 3. Check for Log Insertion Error ---
+        if (log_error) {
+            console.error('Supabase Log Insert Error:', log_error);
+            return NextResponse.json(
+                { error: `Failed to log status change: ${log_error.message}` },
+                { status: 500 }
+            );
         }
 
-        return NextResponse.json(data, { status: 200 });
+        // --- 4. Update Current Robot Status (Primary Table) ---
+        const { data: robot_data, error: robot_error } = await supabase
+            .from('robots_maintenance_list')
+            .update({
+                status: new_status, // Assuming the column is named 'status' or 'new_status'
+                updated_at: new Date().toISOString(), // Use ISO string for consistency
+                updated_by: card_id, // Use ISO string for consistency
+            })
+            .eq('id', robot_id)
+            .select()
+            .single();
 
-    } catch (err: any) {
+        console.log('Supabase Robot Update Data:', robot_data);
+
+        // --- 5. Check for Robot Update Error ---
+        if (robot_error) {
+            console.error('Supabase Robot Update Error:', robot_error);
+            return NextResponse.json(
+                {
+                    error: `Failed to update robot status: ${robot_error.message}`,
+                    log_entry_successful: true // Optional context
+                },
+                { status: 500 }
+            );
+        }
+
+        // --- 6. Success Response ---
+        return NextResponse.json(robot_data, { status: 200 });
+
+    } catch (err) {
+        const errorMessage = err instanceof Error ? err.message : 'Unknown server error';
         console.error('Server error:', err);
-        return NextResponse.json({ error: 'Invalid JSON or server error' }, { status: 500 });
+        return NextResponse.json({ error: `Invalid JSON or server error: ${errorMessage}` }, { status: 500 });
     }
 }

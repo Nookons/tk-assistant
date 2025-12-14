@@ -1,21 +1,20 @@
 
-interface ILocalData {
-    id: number;
-    new_status: string;
-    card_id: number;
-}
 
-export const changeRobotStatus = async ({data}: {data: ILocalData}) => {
-
+export const changeRobotStatus = async (
+    {robot_id, card_id, new_status, old_status, robot_number}:
+    {robot_id: number, card_id: number, new_status: string, old_status: string, robot_number: number,}) =>
+{
     const res = await fetch(`/api/robots/status-update`, {
         method: 'POST',
         headers: {
             "Content-Type": "application/json"
         },
         body: JSON.stringify({
-            id: data.id,
-            new_status: data.new_status,
-            card_id: data.card_id,
+            card_id: card_id,
+            robot_number: robot_number,
+            robot_id: robot_id,
+            new_status,
+            old_status
         })
     });
 
@@ -23,6 +22,5 @@ export const changeRobotStatus = async ({data}: {data: ILocalData}) => {
         throw new Error(`Could not update robot status. (status: ${res.status})`);
     }
 
-    const response = await res.json();
-    return response; // optional but usually useful
+    return await res.json(); // optional but usually useful
 };

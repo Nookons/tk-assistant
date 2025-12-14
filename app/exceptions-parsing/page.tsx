@@ -14,52 +14,85 @@ dayjs.extend(utc);
 const errors_data = [
     {
         id: 1,
-        employee_title: "驱动组件异常 Driver component exception",
-        first_column: "行走异常Unable to drive",
-        second_column: "驱动组件异常 Driver component exception",
-        recovery_title: "Check drive module and reboot",
+        employee_title: "地面码脏污 Ground code dirty",
+        first_column: "识别不到地面码DM Code Error",
+        second_column: "地面码脏污 Ground code dirty",
+        issue_description: "Robot is unable to drive dm code is dirty",
+        recovery_title: "Clean the dm code and recover the robot",
+
+        device_type: "Ground code",
+        issue_type: "环境Environment",
         solving_time: 2
     },
     {
         id: 2,
-        employee_title: "取放箱位置错误 Wrong pick and place box position",
-        first_column: "取放货异常Abnormal pick-up and delivery",
-        second_column: "取放箱位置错误Wrong pick and place box position",
-        recovery_title: "Recalibrate pick/place position and retry",
-        solving_time: 4
+        employee_title: "地面码缺失 Ground code missing",
+        first_column: "识别不到地面码DM Code Error",
+        second_column: "地面码缺失 Ground code missing",
+        issue_description: "Robot is unable to drive dm code is missing",
+        recovery_title: "Reprinted the dm code and set robot on QR code then recovery the robot",
+
+        device_type: "Ground code",
+        issue_type: "环境Environment",
+        solving_time: 8
     },
     {
         id: 3,
-        employee_title: "物料超高 Material super high",
-        first_column: "掉箱子或掉落件Drop Box or items",
-        second_column: "物料超高 Material super high",
-        recovery_title: "Remove over-height material and reset task",
-        solving_time: 2
+        employee_title: "急停按钮损坏 Emergency stop button is damaged",
+
+        device_type: "None",
+        issue_type: "设备Equipment",
+
+        first_column: "机器人安全装置触发Robot safety device triggered",
+        second_column: "急停按钮损坏 Emergency stop button is damaged",
+        issue_description: "Emergency button on robot is damaged and triggered the safety system",
+        recovery_title: "Change the emergency button to new and recovery the robot",
+
+        solving_time: 8
     },
     {
         id: 4,
-        employee_title: "地面码脏污 Ground code dirty",
+        employee_title: "异常无法恢复 Abnormal cannot be recovered",
+
+        device_type: "None",
+        issue_type: "设备Equipment",
+
         first_column: "行走异常Unable to drive",
-        second_column: "地面码脏污 Ground code dirty",
-        recovery_title: "Clean the ground code and retry",
-        solving_time: 1
+        second_column: "异常无法恢复 Abnormal cannot be recovered",
+        issue_description: "Problem is can't be found at this time",
+        recovery_title: "Robot sent to maintenance area for repairing",
+
+        solving_time: 4
     },
     {
         id: 5,
-        employee_title: "充电异常 Abnormal charging",
-        first_column: "充电异常Abnormal charging",
-        second_column: "无法定义异常Problom Cannot located",
-        recovery_title: "Move out robot from charging station and retry",
+        employee_title: "地面异物 Foreign objects on the ground",
+
+        device_type: "Ground code",
+        issue_type: "环境Environment",
+
+        first_column: "行走异常Unable to drive",
+        second_column: "地面异物Foreign objects on the ground",
+        issue_description: "Items fell from the tote and lay on the floor ",
+        recovery_title: "Took out items from floor and recover the robot",
+
         solving_time: 2
     },
     {
-        id: 6,
-        employee_title: "机器人安全装置触发Robot safety device triggered",
-        first_column: "机器人安全装置触发Robot safety device triggered",
-        second_column: "硬件损坏 Hardware damage",
-        recovery_title: "Check safety device and reboot",
-        solving_time: 4
-    }
+        id: 5,
+        employee_title: "取放箱位置错误 Wrong pick and place box position",
+
+        device_type: "Ground code",
+        issue_type: "设备Equipment",
+
+        first_column: "取放货异常Abnormal pick-up and delivery",
+        second_column: "取放箱位置错误 Wrong pick and place box position",
+        issue_description: "Items fell from the tote and lay on the floor ",
+        recovery_title: "Took out items from floor and recover the robot",
+
+        solving_time: 3
+    },
+
 ];
 
 const employees_data = [
@@ -79,6 +112,9 @@ interface ILocalIssue {
     error_end_time: any;
     recovery_title: string;
     solving_time: number;
+    device_type: string;
+    issue_type: string;
+    issue_description: string;
 }
 
 const Page = () => {
@@ -113,7 +149,7 @@ const Page = () => {
                             recovery_title: error.recovery_title,
                             solving_time: error.solving_time,
                         };
-                        local_data.push(obj);
+                        local_data.push(obj as any);
                     }
                 });
             }
@@ -130,7 +166,7 @@ const Page = () => {
         ];
 
         const rows = data.map(error => [
-            dayjs().format('DD/MM/YYYY'),
+            dayjs().format('MM/DD/YYYY'),
             "Inventory Warehouse",
             Number(error.error_robot) < 150 ? "A42T-E1 Clamp" : "K50H",
             error.error_robot,
@@ -143,7 +179,7 @@ const Page = () => {
             error.employee,
             dayjs(error.error_start_time).format("HH:mm"),
             dayjs(error.error_end_time).format("HH:mm"),
-            dayjs.duration(dayjs(error.error_end_time).diff(dayjs(error.error_start_time))).format("HH:mm"),
+            dayjs.duration(dayjs(error.error_end_time).diff(dayjs(error.error_start_time))).format("mm"),
             error.employee,
             "已处理Processed"
         ]);
@@ -167,7 +203,7 @@ const Page = () => {
     return (
         <div className="container mx-auto p-6 max-w-[1600px]">
             <div className="mb-6">
-                <h1 className="text-3xl font-bold mb-2">Robot Error Parser</h1>
+                <h1 className="text-3xl font-bold mb-2">Robot Error Parser GLPC</h1>
                 <p className="text-gray-600">Parse robot error logs and export to spreadsheet</p>
             </div>
 
@@ -233,7 +269,7 @@ const Page = () => {
                             <TableHeader>
                                 <TableRow className="">
                                     <TableHead className="font-semibold">Date</TableHead>
-                                    <TableHead className="font-semibold">Warehouse</TableHead>
+                                    {/*<TableHead className="font-semibold">Warehouse</TableHead>*/}
                                     <TableHead className="font-semibold">Robot Type</TableHead>
                                     <TableHead className="font-semibold">Robot Number</TableHead>
                                     <TableHead className="font-semibold">Type</TableHead>
@@ -256,17 +292,18 @@ const Page = () => {
                                         <TableCell className="whitespace-nowrap">
                                             {dayjs().format('DD/MM/YYYY')}
                                         </TableCell>
-                                        <TableCell className="whitespace-nowrap">
+                                        {/*<TableCell className="whitespace-nowrap">
                                             Inventory Warehouse
-                                        </TableCell>
+                                        </TableCell>*/}
                                         <TableCell className="whitespace-nowrap">
+                                            {error.device_type}
                                             {Number(error.error_robot) < 150 ? "A42T-E1 Clamp" : "K50H"}
                                         </TableCell>
                                         <TableCell className="text-center font-medium">
                                             {error.error_robot}
                                         </TableCell>
                                         <TableCell className="whitespace-nowrap">
-                                            设备Equipment
+                                            {error.issue_type}
                                         </TableCell>
                                         <TableCell className="max-w-[350px]">
                                             {error.first_column}

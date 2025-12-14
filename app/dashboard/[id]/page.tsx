@@ -1,30 +1,15 @@
 'use client'
-import React, {use, useEffect, useState} from 'react';
+import React, {useEffect, useState} from 'react';
 import {useParams} from "next/navigation";
 import {IUser, IUserApiResponse} from "@/types/user/user";
-import {LoaderCircle, SquarePlus, ThumbsDown, UserStar} from "lucide-react";
-import {Button} from "@/components/ui/button";
-import {
-    Dialog,
-    DialogContent,
-    DialogDescription,
-    DialogHeader,
-    DialogTitle,
-    DialogTrigger
-} from "@/components/ui/dialog";
-import {Select, SelectContent, SelectItem, SelectTrigger, SelectValue} from "@/components/ui/select";
-import {Textarea} from "@/components/ui/textarea";
 import {toast} from "sonner";
-import ComplainList from "@/components/shared/dashboard/ComplainList";
 import dayjs from "dayjs";
-import {Item, ItemActions, ItemContent, ItemDescription, ItemTitle} from "@/components/ui/item";
-import EmployeeStats from "@/components/shared/dashboard/employeeStats/EmployeeStats";
-import EmployeeShiftsList from "@/components/shared/dashboard/employeeShiftsList/employeeShiftsList";
-import {Label} from "@/components/ui/label";
-import AdminShiftsList from "@/components/shared/dashboard/adminShiftsList/adminShiftsList";
 import AddRobot from "@/components/shared/dashboard/addRobot/AddRobot";
 import {Badge} from "@/components/ui/badge";
 import RobotListProvider from "@/components/shared/dashboard/robotsList/robotListProvider";
+import {getUserData} from "@/futures/user/getUserData";
+import {LoaderCircle, UserStar} from "lucide-react";
+import {Label} from "@/components/ui/label";
 
 const Page = () => {
     const params = useParams();
@@ -61,27 +46,6 @@ const Page = () => {
     }, [saved_user]);
 
 
-    const getUserData = async () => {
-        try {
-            const res = await fetch(`/api/user/get-user-by-phone?phone=${card_id}`, {
-                method: 'GET',
-                headers: {
-                    "Content-Type": "application/json",
-                }
-            });
-
-
-            if (!res.ok) {
-                throw new Error(`HTTP error! status: ${res.status}`);
-            }
-
-            const result = await res.json(); // исправлено
-            setUser_data(result)
-        } catch (error) {
-            console.error('Failed to fetch user data:', error);
-            return null;
-        }
-    };
 
     const getEmployeesList = async () => {
         try {
@@ -105,125 +69,31 @@ const Page = () => {
         }
     }
 
-    useEffect(() => {
-        getUserData()
-        getEmployeesList()
-    }, [])
-
-    const complainHandle = async () => {
-        toast.info(who_complain)
-        toast.info(why_complain)
-
+    const getStartData = async () => {
         try {
+            const user_data = await getUserData(card_id)
 
-            if (!user_data?.card_id) return null
-
-            const res = await fetch(`/api/complain/add`, {
-                method: 'POST',
-                headers: {
-                    "Content-Type": "application/json",
-                },
-                body: JSON.stringify({
-                    card_id: Number(who_complain),
-                    type: "complain",
-                    description: why_complain,
-                    add_by: user_data.card_id,
-                    value: -1
-                })
-            });
-
-
-            if (!res.ok) {
-                throw new Error(`HTTP error! status: ${res.status}`);
+            if (user_data) {
+                setUser_data(user_data)
             }
-
-            const result = await res.json(); // исправлено
-            console.log(result);
-        } catch (error) {
-            console.error('Failed to fetch user data:', error);
-            return null;
+            getEmployeesList()
+        } catch (err) {
+            console.log(err);
         }
     }
+
+    useEffect(() => {
+        getStartData()
+    }, []);
 
 
     if (!user_data) return <LoaderCircle className={`animate-spin w-full`}/>
 
-
     return (
         <div className={`px-4`}>
-            {user_data.position === 'leader' &&
-                <div className={`mb-4`}>
-                    <Dialog>
-                        <DialogTrigger>
-                            <div className={`mb-4`}>
-                                <Button variant={`outline`}><ThumbsDown /></Button>
-                            </div>
-                        </DialogTrigger>
-                        <DialogContent className="max-w-[90vw] sm:max-w-[425px] w-full max-h-[90vh] overflow-y-auto rounded-2xl">
-                            <DialogHeader>
-                                <DialogTitle>Add complain to employee?</DialogTitle>
-                                <DialogDescription>
-                                    This action will add a complain to another worker and affect their score.
-                                    <div className="mt-4 flex flex-col gap-2">
-                                        <Select value={who_complain} onValueChange={(value) => setWho_complain(value)}>
-                                            <SelectTrigger className={`w-full`}>
-                                                <SelectValue placeholder="Employee" />
-                                            </SelectTrigger>
-                                            <SelectContent>
-                                                {employees_list.map((item) => (
-                                                    <SelectItem key={item.card_id} value={item.card_id.toString()}>
-                                                        {item.user_name}
-                                                    </SelectItem>
-                                                ))}
-                                            </SelectContent>
-                                        </Select>
-                                        <Textarea
-                                            className="w-full"
-                                            value={why_complain}
-                                            onChange={(e) => setWhy_complain(e.target.value)}
-                                            placeholder="Why are you adding this complain?"
-                                        />
-                                        <Button onClick={complainHandle}>Add</Button>
-                                    </div>
-                                </DialogDescription>
-                            </DialogHeader>
-                        </DialogContent>
-                    </Dialog>
-                    <div>
-                        <AdminShiftsList />
-                    </div>
-                    <div className={`my-4`}>
-                        <Label>Employees Stats</Label>
-                        <div className={`grid grid-cols-1 md:flex md:flex-wrap gap-2 mt-2`}>
-                            {employees_list.map((item, i) => {
-                                const min = -100;
-                                const max = 100;
-                                const value = item.score;
-                                const percent = ((value - min) / (max - min)) * 100; // преобразуем в 0–100%
-
-
-                                return (
-                                    <Item variant="outline">
-                                        <ItemContent>
-                                            <ItemTitle>{item.user_name}</ItemTitle>
-                                            <ItemDescription>
-                                                {item.warehouse}
-                                                <p className="text-sm text-right mt-1">{value > 0 ? `+${value}` : value}</p>
-                                            </ItemDescription>
-                                        </ItemContent>
-                                    </Item>
-                                )
-                            })}
-                        </div>
-                    </div>
-                </div>
-            }
-            <div>
-                <RobotListProvider card_id={card_id} />
-            </div>
             <div className={`flex items-center border p-4 rounded-t-2xl justify-between`}>
                 <div className={`flex items-center gap-2`}>
-                    <h1>Dashboard for {user_data.user_name}</h1>
+                    <Label className={`text-base`}>{user_data.user_name}</Label>
                 </div>
                 <div className={`flex items-center gap-4`}>
                     <UserStar size={24} />
@@ -232,24 +102,18 @@ const Page = () => {
                     </Badge>
                 </div>
             </div>
-            <div className={`border px-2 py-4`}>
+            <div className="border grid grid-cols-1 place-items-stretch px-2 py-4">
                 <AddRobot card_id={card_id} />
             </div>
             <div className={` border p-4 rounded-b-2xl`}>
                 <div className={`mt-4 grid grid-cols-1 gap-4`}>
                     <div>
-                        <Label className={`mb-4 text-neutral-500 text-xs`}>
-                            SHIFTS HISTORY
-                        </Label>
-                        <EmployeeShiftsList card_id={card_id} />
-                    </div>
-                    <div>
-                        <Label className={`mb-4 text-neutral-500 text-xs`}>
-                            COMPLAINS LIST
-                        </Label>
-                        <ComplainList user_data={user_data}/>
+                        {/*<EmployeeShiftsList card_id={card_id} />*/}
                     </div>
                 </div>
+            </div>
+            <div className={`mt-4`}>
+                <RobotListProvider card_id={card_id} />
             </div>
         </div>
     );

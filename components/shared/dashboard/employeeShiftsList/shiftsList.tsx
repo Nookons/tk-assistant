@@ -105,7 +105,7 @@ const ShiftsList = ({data, list_type}: { data: IShift[], list_type: string}) => 
                     </TableRow>
                 </TableHeader>
                 <TableBody>
-                    {sorted_data.slice(0, 5).map((shift, index) => (
+                    {sorted_data.slice(0, 55).map((shift, index) => (
                         <TableRow key={shift.id}>
                             <TableCell className="font-medium">{index + 1}</TableCell>
                             <TableCell className="font-medium">{shift.shift_type.toUpperCase()}</TableCell>

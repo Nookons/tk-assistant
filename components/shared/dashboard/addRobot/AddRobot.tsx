@@ -26,8 +26,9 @@ import {
     CommandList,
     CommandSeparator
 } from "@/components/ui/command";
+import {addRobotToMaintenance} from "@/futures/robots/addRobotToMaintenance";
 
-const AddRobot = ({card_id} : {card_id: ParamValue}) => {
+const AddRobot = ({card_id}: { card_id: ParamValue }) => {
     const [isOpen, setIsOpen] = useState<boolean>(false);
     const [isLoading, setIsLoading] = useState<boolean>(false);
 
@@ -37,6 +38,8 @@ const AddRobot = ({card_id} : {card_id: ParamValue}) => {
 
     const [open, setOpen] = useState(false)
     const [selected, setSelected] = useState<string[]>([])
+
+    const [value, setValue] = useState<string>("")
 
     const options = [
         "安全控制器问题/Safety controller issues",
@@ -74,50 +77,19 @@ const AddRobot = ({card_id} : {card_id: ParamValue}) => {
         try {
             setIsLoading(true)
 
-            if (!robot_number) {
-                toast.error('Please input robot number')
-                return
-            }
-
-            if (!robot_type) {
-                toast.error('Please input robot type')
-                return
-            }
-
-            if (!selected) {
-                toast.error('Please input problem type')
-                return
-            }
-
-
-            const res = await fetch(`/api/robots/add-robot`, {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ card_id, robot_number, robot_type, type_problem: selected, problem_note }),
+            const robot_res = await addRobotToMaintenance({
+                card_id,
+                robot_number,
+                robot_type,
+                type_problem: selected,
+                problem_note,
             });
 
-
-            const res_user = await fetch(`/api/user/update-user-score`, {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ card_id, value: 0.15}),
-            });
-
-            if (!res.ok) {
-                const data = await res.json();
-                throw new Error(data?.message || 'Failed to add robot');
+            if (robot_res) {
+                addRobotToStore(robot_res)
             }
 
-            if (!res_user.ok) {
-                const data = await res.json();
-                throw new Error(data?.message || 'Failed to add robot');
-            }
-
-            const response = await res.json()
-            addRobotToStore(response as IRobot)
-            toast.success('Robot added successfully')
-        }
-        catch (error: any) {
+        } catch (error: any) {
             console.log(error);
         } finally {
             setTimeout(() => {
@@ -132,104 +104,106 @@ const AddRobot = ({card_id} : {card_id: ParamValue}) => {
 
 
     return (
-        <Dialog open={isOpen} onOpenChange={() => setIsOpen(!isOpen)}>
-            <DialogTrigger>
-                <div className={`mb-4`}>
-                    <Button variant={`outline`}><SquarePlus /> Add robot for repair</Button>
-                </div>
-            </DialogTrigger>
-            <DialogContent className="w-[95vw] max-w-md max-h-[85vh] flex flex-col rounded-xl">
-                <DialogHeader>
-                    <DialogTitle>Add robot to maintenance?</DialogTitle>
-                </DialogHeader>
-
-                <div className="overflow-y-auto flex-1 px-1">
-                    <DialogDescription className="sr-only">
-                        This action will add a robot to maintenance area and guys who fix them will be know about this.
-                    </DialogDescription>
-
-                    <div className="flex flex-col gap-2 py-2">
-                        <Input
-                            type={`number`}
-                            placeholder={`Please input robot number`}
-                            value={robot_number}
-                            onChange={(e) => setRobot_number(e.target.value)}
-                        />
-                        <Select value={robot_type} onValueChange={(value) => setRobot_type(value)}>
-                            <SelectTrigger className={`w-full`}>
-                                <SelectValue placeholder="Robot Type" />
-                            </SelectTrigger>
-                            <SelectContent>
-                                <SelectItem value={`A42T`} key={`A42T`}>
-                                    A42T
-                                </SelectItem>
-                                <SelectItem value={`K50H`} key={`K50H`}>
-                                    K50H
-                                </SelectItem>
-                            </SelectContent>
-                        </Select>
-
-                        <Popover open={open} onOpenChange={setOpen}>
-                            <PopoverTrigger asChild>
-                                <Button
-                                    variant={'outline'}
-                                    className="w-full border p-2 rounded-md flex justify-between items-center gap-2"
-                                >
-                            <span className="truncate text-left flex-1">
-                                {selected.length ? selected.join(", ") : "Problems"}
-                            </span>
-                                    <ChevronDown className="h-4 w-4 shrink-0 opacity-50" />
-                                </Button>
-                            </PopoverTrigger>
-
-                            <PopoverContent
-                                className="w-[var(--radix-popover-trigger-width)] p-0"
-                                align="start"
-                                sideOffset={5}
-                            >
-                                <Command className="rounded-lg border shadow-md">
-                                    <CommandInput
-                                        placeholder="Type a problem or select..."
-                                        className="h-9"
-                                    />
-                                    <CommandList className="max-h-[200px] overflow-y-auto">
-                                        <CommandEmpty>No results found.</CommandEmpty>
-                                        <CommandGroup heading="Hai Box Modules">
-                                            {options.map((item) => (
-                                                <CommandItem
-                                                    key={item}
-                                                    onSelect={() => toggleValue(item)}
-                                                    className="flex items-center justify-between gap-2 cursor-pointer"
-                                                >
-                                                    <span className="flex-1 truncate">{item}</span>
-                                                    <Check
-                                                        className={`h-4 w-4 shrink-0 transition-opacity ${
-                                                            selected.includes(item)
-                                                                ? "opacity-100"
-                                                                : "opacity-0"
-                                                        }`}
-                                                    />
-                                                </CommandItem>
-                                            ))}
-                                        </CommandGroup>
-                                    </CommandList>
-                                </Command>
-                            </PopoverContent>
-                        </Popover>
-
-                        <Textarea
-                            className="w-full min-h-[80px]"
-                            value={problem_note}
-                            onChange={(e) => setProblem_note(e.target.value)}
-                            placeholder="Why are you adding this robot to repair?"
-                        />
-                        <Button disabled={isLoading} onClick={() => addRobotHandle()}>
-                            <Bot className={`${isLoading && 'animate-ping'}`} /> Add
-                        </Button>
+        <div className={`w-full`}>
+            <Dialog open={isOpen} onOpenChange={() => setIsOpen(!isOpen)}>
+                <DialogTrigger>
+                    <div className={`mb-4`}>
+                        <Button variant={`outline`}><SquarePlus/> Add robot for repair</Button>
                     </div>
-                </div>
-            </DialogContent>
-        </Dialog>
+                </DialogTrigger>
+                <DialogContent className="w-[95vw] max-w-md max-h-[85vh] flex flex-col rounded-xl">
+                    <DialogHeader>
+                        <DialogTitle>Add robot to maintenance?</DialogTitle>
+                    </DialogHeader>
+
+                    <div className="overflow-y-auto flex-1 px-1">
+                        <DialogDescription className="sr-only">
+                            This action will add a robot to maintenance area and guys who fix them will be know about this.
+                        </DialogDescription>
+
+                        <div className="flex flex-col gap-2 py-2">
+                            <Input
+                                type={`number`}
+                                placeholder={`Please input robot number`}
+                                value={robot_number}
+                                onChange={(e) => setRobot_number(e.target.value)}
+                            />
+                            <Select value={robot_type} onValueChange={(value) => setRobot_type(value)}>
+                                <SelectTrigger className={`w-full`}>
+                                    <SelectValue placeholder="Robot Type"/>
+                                </SelectTrigger>
+                                <SelectContent>
+                                    <SelectItem value={`A42T`} key={`A42T`}>
+                                        A42T
+                                    </SelectItem>
+                                    <SelectItem value={`K50H`} key={`K50H`}>
+                                        K50H
+                                    </SelectItem>
+                                </SelectContent>
+                            </Select>
+
+                            <Popover open={open} onOpenChange={setOpen}>
+                                <PopoverTrigger asChild className="w-full">
+                                    <Button
+                                        variant={'outline'}
+                                        className="w-full justify-between" // добавьте justify-between
+                                    >
+            <span className="truncate text-left flex-1">
+                {selected.length ? selected.join(", ") : "Problems"}
+            </span>
+                                        <ChevronDown className="h-4 w-4 shrink-0 opacity-50"/>
+                                    </Button>
+                                </PopoverTrigger>
+
+                                <PopoverContent
+                                    className="w-[var(--radix-popover-trigger-width)] p-0"
+                                    align="start"
+                                    sideOffset={5}
+                                >
+                                    <Command className="rounded-lg border shadow-md">
+                                        <CommandInput
+                                            placeholder="Type a problem or select..."
+                                            className="h-9"
+                                        />
+                                        <CommandList className="max-h-[200px] overflow-y-auto">
+                                            <CommandEmpty>No results found.</CommandEmpty>
+                                            <CommandGroup heading="Hai Box Modules">
+                                                {options.map((item) => (
+                                                    <CommandItem
+                                                        key={item}
+                                                        onSelect={() => toggleValue(item)}
+                                                        className="flex items-center justify-between gap-2 cursor-pointer"
+                                                    >
+                                                        <span className="flex-1 truncate">{item}</span>
+                                                        <Check
+                                                            className={`h-4 w-4 shrink-0 transition-opacity ${
+                                                                selected.includes(item)
+                                                                    ? "opacity-100"
+                                                                    : "opacity-0"
+                                                            }`}
+                                                        />
+                                                    </CommandItem>
+                                                ))}
+                                            </CommandGroup>
+                                        </CommandList>
+                                    </Command>
+                                </PopoverContent>
+                            </Popover>
+
+                            <Textarea
+                                className="w-full min-h-[80px]"
+                                value={problem_note}
+                                onChange={(e) => setProblem_note(e.target.value)}
+                                placeholder="Why are you adding this robot to repair?"
+                            />
+                            <Button disabled={isLoading} onClick={() => addRobotHandle()}>
+                                <Bot className={`${isLoading && 'animate-ping'}`}/> Add
+                            </Button>
+                        </div>
+                    </div>
+                </DialogContent>
+            </Dialog>
+        </div>
     );
 };
 

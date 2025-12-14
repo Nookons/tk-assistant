@@ -25,20 +25,19 @@ const Page = () => {
     const [description_eng, setDescription_eng] = useState<string>("")
 
     const [part_type, setPart_type] = useState<string>("A42T")
-
     const [isLoading, setIsLoading] = useState<boolean>(false)
 
     const user = useUserStore(state => state.current_user)
 
-    const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
-        e.preventDefault();
+    const [value, setValue] = useState<string>("")
+
+    const handleSubmit = async (
+        {part_type, part_number, description_chinese, description_eng} :
+        {part_type: string, part_number: string, description_chinese: string, description_eng: string}) =>
+    {
         setIsLoading(true)
-        console.log(part_type);
-        console.log(user);
 
-        if (!user) return;
-
-        console.log(part_type);
+        if (!user) return
 
         try {
             const res = await fetch(`/api/stock/create-template`, {
@@ -52,30 +51,52 @@ const Page = () => {
                     description_orginall: description_chinese || null,
                     description_eng: description_eng || null,
                     part_type: part_type || null,
-                })
+                }),
             })
 
             await res.json()
 
-            if (res.ok) {
-                toast.success("Item template created successfully!")
-                setPart_number("")
-                setDescription_chinese("")
-                setDescription_eng("")
-            } else {
-                toast.error(res.statusText.toString() || "Failed to create item template")
+            if (!res.ok) {
+                toast.error(res.statusText || "Failed to create item template")
             }
-
         } catch (error) {
             toast.error("Failed to create item template")
-            console.log(error);
+            console.log(error)
         } finally {
             setIsLoading(false)
         }
     }
 
+
+    const handleClick = async () => {
+        const rows = value.split("\n")
+
+        for (const el of rows) {
+            const [part_type, part_number, description_chinese, description_eng] =
+                el.split("\t")
+
+            await handleSubmit({
+                part_type,
+                part_number,
+                description_chinese,
+                description_eng,
+            })
+        }
+
+        toast.success("All items processed")
+    }
+
+
+
     return (
         <div className={`px-4`}>
+            {/*<div>
+                <Textarea
+                    value={value}
+                    onChange={(e) => setValue(e.target.value)}
+                />
+                <Button onClick={handleClick}>CLick</Button>
+            </div>*/}
             <Dialog>
                 <form>
                     <DialogTrigger asChild>
@@ -139,7 +160,7 @@ const Page = () => {
                             <DialogClose asChild>
                                 <Button variant="outline">Cancel</Button>
                             </DialogClose>
-                            <Button disabled={isLoading} onClick={(e: any) => handleSubmit(e)} type="submit">
+                            <Button disabled={isLoading}>
                                 {isLoading ? <Loader className={`animate-spin`} /> : <FilePlusCorner />}
                                  Create Item
                             </Button>

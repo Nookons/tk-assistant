@@ -9,28 +9,14 @@ import {Empty, EmptyContent, EmptyDescription, EmptyHeader, EmptyMedia, EmptyTit
 import {Bot} from "lucide-react";
 import {IRobot} from "@/types/robot/robot";
 import {useRobotsStore} from "@/store/robotsStore";
+import ListStats from "@/components/shared/dashboard/robotsList/ListStats";
 
 const robotsListProvider = ({card_id}: {card_id: ParamValue}) => {
     if (!card_id) return null;
 
-    const {robots, setRobots} = useRobotsStore()
+    const robots_list = useRobotsStore(state => state.robots)
 
-    const { data, error, isLoading } = useQuery({
-        queryKey: ['robots-list'], // better name than 'todos'
-        queryFn: () => getRobotsList(),
-    });
-
-    useEffect(() => {
-        if (data) {
-            const filtered = data.filter((item: IRobot) => item.status !== 'done')
-            setRobots(filtered)
-        }
-    }, [data])
-
-    if (isLoading) return <p>Loading robots...</p>;
-    if (error) return <p>Error: {error.message}</p>;
-
-    if (robots.length < 1) return (
+    if (!robots_list) return (
         <Empty className="from-muted/50 to-background h-full bg-gradient-to-b from-30%">
             <EmptyHeader>
                 <EmptyMedia variant="icon">
@@ -47,7 +33,12 @@ const robotsListProvider = ({card_id}: {card_id: ParamValue}) => {
         </Empty>
     );
 
-    return <RobotsList card_id={card_id} />
+    return (
+        <div>
+            <ListStats robots={robots_list} />
+            <RobotsList card_id={card_id} />
+        </div>
+    )
 };
 
 export default robotsListProvider;
