@@ -2,7 +2,7 @@
 
 export const changeRobotStatus = async (
     {robot_id, card_id, new_status, old_status, robot_number}:
-    {robot_id: number, card_id: number, new_status: string, old_status: string, robot_number: number,}) =>
+    {robot_id: number, card_id: number, new_status: string, old_status: string, robot_number: number}) =>
 {
     const res = await fetch(`/api/robots/status-update`, {
         method: 'POST',
