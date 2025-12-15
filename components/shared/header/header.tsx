@@ -1,12 +1,14 @@
 "use client"
 import * as React from "react"
 import Link from "next/link"
-import {Menu, X, FileText, Home, Package, ChevronRight, LucideIcon, CalendarArrowDown, WandSparkles} from "lucide-react"
+import {Menu, X, FileText, Package, ChevronRight, LucideIcon, CalendarArrowDown, WandSparkles} from "lucide-react"
 import { ThemeToggle } from "@/components/shared/theme/theme-toggle"
 import { Button } from "@/components/ui/button"
 import UserButton from "@/components/shared/header/userButton"
 import Image from "next/image"
 import { cn } from "@/lib/utils"
+
+// Removed unused import: Home
 
 interface NavigationItem {
     name: string
@@ -67,11 +69,21 @@ export function Header() {
     const [mobileMenuOpen, setMobileMenuOpen] = React.useState<boolean>(false)
     const [activeDropdown, setActiveDropdown] = React.useState<string | null>(null)
 
+    // Using useCallback for a stable toggle function
+    const toggleMobileMenu = React.useCallback(() => {
+        setMobileMenuOpen(prev => !prev);
+    }, []);
+
+    // Function to close menu on navigation click
+    const handleNavigationClick = React.useCallback(() => {
+        setMobileMenuOpen(false);
+    }, []);
+
     return (
         <header className="sticky bg-muted-foreground/5 backdrop-blur-2xl mb-2 top-0 z-50 w-full">
             <div className="flex justify-between py-4 px-2">
                 {/* Logo */}
-                <Link href="/" className="flex items-center gap-3">
+                <Link href="/" className="flex items-center gap-3" aria-label="Go to Homepage">
                     <div className="bg-white rounded-lg shadow-sm p-1.5 flex items-center">
                         <Image
                             alt="Tk Service Logo"
@@ -94,6 +106,9 @@ export function Header() {
                             <Button
                                 variant="ghost"
                                 className="gap-1"
+                                // Add aria-expanded for accessibility
+                                aria-expanded={activeDropdown === section.name}
+                                aria-controls={`dropdown-${section.name}`}
                             >
                                 {section.name}
                                 <ChevronRight className={cn(
@@ -104,12 +119,17 @@ export function Header() {
 
                             {/* Dropdown */}
                             {activeDropdown === section.name && (
-                                <div className="absolute top-full left-0 w-80  backdrop-blur-2xl bg-muted/50 shadow-lg animate-in fade-in-0 zoom-in-95">
+                                <div
+                                    id={`dropdown-${section.name}`}
+                                    className="absolute top-full left-0 w-80 backdrop-blur-2xl bg-muted/50 shadow-lg animate-in fade-in-0 zoom-in-95"
+                                >
                                     <div className="">
                                         {section.items.map((item) => (
                                             <Link
                                                 key={item.href}
                                                 href={item.href}
+                                                // Close dropdown on click to navigate
+                                                onClick={() => setActiveDropdown(null)}
                                                 className={cn(
                                                     "block backdrop-blur-2xl bg-muted/50 p-3 transition-colors hover:bg-accent",
                                                     item.featured && "bg-muted "
@@ -138,7 +158,7 @@ export function Header() {
                 {/* Right Side Controls */}
                 <div className="flex items-end gap-2">
                     <div className="hidden sm:flex items-center gap-2">
-                        <UserButton />
+                        <UserButton setMobileMenuOpen={setMobileMenuOpen} />
                         <ThemeToggle />
                     </div>
 
@@ -147,7 +167,9 @@ export function Header() {
                         variant="ghost"
                         size="icon"
                         className="lg:hidden"
-                        onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
+                        onClick={toggleMobileMenu}
+                        aria-label={mobileMenuOpen ? "Close menu" : "Open menu"}
+                        aria-expanded={mobileMenuOpen}
                     >
                         {mobileMenuOpen ? (
                             <X className="h-5 w-5" />
@@ -164,7 +186,8 @@ export function Header() {
                     <div className="container py-4 px-2 bg-muted/90 backdrop-blur-2xl  space-y-4">
                         {/* Mobile User Controls - Only shown on smallest screens */}
                         <div className="flex sm:hidden items-center justify-end gap-2 pb-4 border-b">
-                            <UserButton />
+                            {/* 🔥 FIX: Pass the required prop here as well */}
+                            <UserButton setMobileMenuOpen={setMobileMenuOpen} />
                             <ThemeToggle />
                         </div>
 
@@ -179,7 +202,8 @@ export function Header() {
                                         <Link
                                             key={item.href}
                                             href={item.href}
-                                            onClick={() => setMobileMenuOpen(false)}
+                                            // Use the stable handler
+                                            onClick={handleNavigationClick}
                                             className="flex items-start gap-3 rounded-md p-3 transition-colors hover:bg-accent"
                                         >
                                             {item.icon && <item.icon className="h-5 w-5 mt-0.5 text-muted-foreground flex-shrink-0" />}

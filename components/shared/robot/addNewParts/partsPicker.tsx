@@ -141,7 +141,7 @@ const PartsPicker = ({robot}: {robot: IRobot}) => {
                                 <Command className="rounded-lg border shadow-md">
                                     <CommandInput
                                         placeholder="Type a problem or select..."
-                                        className="h-9"
+                                        className="h-9 text-base"
                                     />
                                     <CommandList
                                         className="max-h-[400px] overflow-y-auto"

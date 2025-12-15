@@ -35,7 +35,7 @@ const robotsListProvider = ({card_id}: {card_id: ParamValue}) => {
 
     return (
         <div>
-            <ListStats robots={robots_list} />
+            {/*<ListStats robots={robots_list} />*/}
             <RobotsList card_id={card_id} />
         </div>
     )

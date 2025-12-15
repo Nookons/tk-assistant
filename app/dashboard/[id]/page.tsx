@@ -102,16 +102,6 @@ const Page = () => {
                     </Badge>
                 </div>
             </div>
-            <div className="border grid grid-cols-1 place-items-stretch px-2 py-4">
-                <AddRobot card_id={card_id} />
-            </div>
-            <div className={` border p-4 rounded-b-2xl`}>
-                <div className={`mt-4 grid grid-cols-1 gap-4`}>
-                    <div>
-                        {/*<EmployeeShiftsList card_id={card_id} />*/}
-                    </div>
-                </div>
-            </div>
             <div className={`mt-4`}>
                 <RobotListProvider card_id={card_id} />
             </div>

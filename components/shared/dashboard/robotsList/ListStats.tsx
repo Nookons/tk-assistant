@@ -37,9 +37,9 @@ const ListStats = ({robots}: {robots: IRobot[]}) => {
         const a42tE2Robots = robots.filter(robot => robot.robot_type === 'A42T E2');
 
         // --- Calculating broken units (where status is not 'online') ---
-        const k50h_broken = k50hRobots.filter(robot => robot.status !== 'online');
-        const a42t_broken = a42tRobots.filter(robot => robot.status !== 'online');
-        const a42tE2_broken = a42tE2Robots.filter(robot => robot.status !== 'online');
+        const k50h_broken = k50hRobots.filter(robot => robot.status !== '在线 | ONLINE');
+        const a42t_broken = a42tRobots.filter(robot => robot.status !== '在线 | ONLINE');
+        const a42tE2_broken = a42tE2Robots.filter(robot => robot.status !== '在线 | ONLINE');
 
         // --- Updating states ---
         setK50h({
