@@ -102,7 +102,7 @@ const Page = () => {
                     </Badge>
                 </div>
             </div>
-            <div className={`mt-4`}>
+            <div className={``}>
                 <RobotListProvider card_id={card_id} />
             </div>
         </div>

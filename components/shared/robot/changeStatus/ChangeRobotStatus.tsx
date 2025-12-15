@@ -94,7 +94,7 @@ const ChangeRobotStatus = ({robot}: { robot: IRobot}) => {
             <SheetTrigger asChild>
                 <Button
                     variant="outline"
-                    className="group relative flex items-center gap-2"
+                    className="group w-full relative flex items-center gap-2"
                 >
                     {/* Simplified Icon Block - Using robot.status to determine initial icon */}
                     <div className="relative w-5 h-5">

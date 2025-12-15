@@ -56,7 +56,7 @@ const Page = () => {
                         </div>
                     </div>
 
-                    <div className={`flex w-full md:justify-end justify-between items-center gap-4`}>
+                    <div className={`grid grid-cols-2 gap-1`}>
                         <PartsPicker
                             robot={current_Robot}
                         />

@@ -83,7 +83,7 @@ const PartsPicker = ({robot}: {robot: IRobot}) => {
             <SheetTrigger asChild>
                 <Button
                     variant="outline"
-                    className="group relative flex items-center gap-2"
+                    className="group w-full relative flex items-center gap-2"
                 >
                     {/* Блок с иконками */}
                     <div className="relative w-5 h-5">
@@ -110,9 +110,9 @@ const PartsPicker = ({robot}: {robot: IRobot}) => {
                     <span>Add New Part</span>
                 </Button>
             </SheetTrigger>
-            <SheetContent className={`w-full`}>
+            <SheetContent className={`w-full md:min-w-[550px]`}>
                 <SheetHeader>
-                    <SheetTitle>Add new part/s for robot</SheetTitle>
+                    <SheetTitle>Add new part(s) for robot</SheetTitle>
                     <SheetDescription>
                         Make changes to robot here. Click save when you&apos;re done.
                     </SheetDescription>
@@ -157,9 +157,9 @@ const PartsPicker = ({robot}: {robot: IRobot}) => {
                                                     onSelect={() => toggleValue(item.material_number)}
                                                     className="flex items-center justify-between gap-2 cursor-pointer"
                                                 >
-                                <span className="flex-1 truncate min-w-0">
-                                    {item.description_orginall}-{item.description_eng}
-                                </span>
+                                                    <span className="flex-1 truncate min-w-0">
+                                                        {item.description_orginall} - {item.description_eng} - {item.material_number}
+                                                    </span>
                                                     <Check
                                                         className={`h-4 w-4 shrink-0 transition-opacity ${
                                                             selected.includes(item.material_number)
