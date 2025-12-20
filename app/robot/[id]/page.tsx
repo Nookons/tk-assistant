@@ -48,7 +48,7 @@ const Page = () => {
                         <div className={`flex items-center gap-2`}>
                             {current_Robot.robot_type === "K50H"
                                 ?   <Image src={`/img/K50H_green.svg`} alt={`robot_img`} width={30} height={30} />
-                                :   <Image src={`/img/A42T_green.svg`} alt={`robot_img`} width={30} height={30} />
+                                :   <Image src={`/img/A42T_Green.svg`} alt={`robot_img`} width={30} height={30} />
                             }
                             <Label
                                 className={`font-bold text-base md:text-2xl`}>{current_Robot.robot_number}</Label>

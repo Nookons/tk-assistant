@@ -217,7 +217,7 @@ const RobotsList = ({card_id}: { card_id: ParamValue }) => {
                                 <div className="flex items-center gap-3">
                                     {item.robot_type === "K50H"
                                         ?   <Image src={`/img/K50H_green.svg`} alt={`robot_img`} width={30} height={30} />
-                                        :   <Image src={`/img/A42T_green.svg`} alt={`robot_img`} width={30} height={30} />
+                                        :   <Image src={`/img/A42T_Green.svg`} alt={`robot_img`} width={30} height={30} />
                                     }
                                     <div>
                                         <Link href={`/robot/${item.id}`} className="font-medium">{item.robot_number}</Link>

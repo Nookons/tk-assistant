@@ -115,7 +115,7 @@ const ChangedParts = ({ robots }: { robots: IRobot[] }) => {
                                                 <div className="p-1.5 sm:p-2">
                                                     {robot.robot_type === "K50H"
                                                         ?   <Image src={`/img/K50H_green.svg`} alt={`robot_img`} width={30} height={30} />
-                                                        :   <Image src={`/img/A42T_green.svg`} alt={`robot_img`} width={30} height={30} />
+                                                        :   <Image src={`/img/A42T_Green.svg`} alt={`robot_img`} width={30} height={30} />
                                                     }
                                                 </div>
                                                 <div>
