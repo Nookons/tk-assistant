@@ -10,6 +10,17 @@ export async function POST(request: Request) {
         .insert([{parts_numbers: parts, card_id, robot_id}])
         .select();
 
+    // --- 4. Update Current Robot Status (Primary Table) ---
+    const { data: robot_data, error: robot_error } = await supabase
+        .from('robots_maintenance_list')
+        .update({
+            updated_at: new Date().toISOString(), // Use ISO string for consistency
+            updated_by: card_id, // Use ISO string for consistency
+        })
+        .eq('id', robot_id)
+        .select()
+        .single();
+
     console.log('Supabase data:', data);
     console.log('Supabase error:', error);
 

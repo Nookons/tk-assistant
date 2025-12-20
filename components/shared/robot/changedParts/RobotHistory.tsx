@@ -9,7 +9,7 @@ import {
     BrushCleaning,
     Combine,
     MoveRight,
-    PackageMinus
+    PackageMinus, Trash2
 } from "lucide-react";
 import {Card, CardContent} from "@/components/ui/card";
 import {Label} from "@/components/ui/label";
@@ -25,6 +25,15 @@ import {
 import {IRobot} from "@/types/robot/robot";
 import {Timestamp} from "next/dist/server/lib/cache-handlers/types";
 import {Button} from "@/components/ui/button";
+import {
+    AlertDialog, AlertDialogAction, AlertDialogCancel,
+    AlertDialogContent, AlertDialogDescription, AlertDialogFooter,
+    AlertDialogHeader,
+    AlertDialogTitle,
+    AlertDialogTrigger
+} from "@/components/ui/alert-dialog";
+import {removeParts} from "@/futures/robots/remove-parts";
+import {useUserStore} from "@/store/user";
 
 interface StatusHistoryItem {
     id: number;
@@ -53,6 +62,8 @@ type HistoryEvent = StatusHistoryItem | PartsHistoryItem;
 const RobotHistory = ({robot}: { robot: IRobot }) => {
     const [filtered, setFiltered] = useState<HistoryEvent[]>([]);
 
+    const user = useUserStore(state => state.current_user)
+
     useEffect(() => {
         const statusHistory = robot.status_history?.map(item => ({
             ...item,
@@ -72,6 +83,18 @@ const RobotHistory = ({robot}: { robot: IRobot }) => {
         console.log('Sorted history:', sorted);
     }, [robot]);
 
+    const getPartsRemove = async (parts_id: number) => {
+        try {
+            const res = await removeParts(parts_id.toString())
+
+            if (res) {
+                window.location.reload();
+            }
+        } catch (err) {
+            console.log(err);
+        }
+    }
+
     if (filtered.length === 0) {
         return (
             <Empty className="border border-dashed">
@@ -89,7 +112,7 @@ const RobotHistory = ({robot}: { robot: IRobot }) => {
     }
 
     return (
-        <div className="w-full max-w-2xl mx-auto p-6">
+        <div className="w-full max-w-2xl mx-auto p-2">
             <div className="relative border-l-2 border-gray-300">
                 {filtered.slice(0, 25).map((event, index) => (
                     <div key={`${event.type}-${event.id}`} className="mb-2 ml-6">
@@ -108,9 +131,35 @@ const RobotHistory = ({robot}: { robot: IRobot }) => {
                                     <Label className="text-xs text-neutral-500">
                                         {dayjs(event.created_at).format('HH:mm · MMM D, YYYY')}
                                     </Label>
-                                    <Label className="text-xs text-neutral-500">
-                                        {event.user?.user_name || 'Unknown User'}
-                                    </Label>
+                                    <div className={`flex items-center gap-2`}>
+                                        <Label className="text-xs text-neutral-500">
+                                            {event.user?.user_name || 'Unknown User'}
+                                        </Label>
+                                        {event.type === 'parts' && (
+                                            <>
+                                                {event.card_id === user?.card_id && (
+                                                    <AlertDialog>
+                                                        <AlertDialogTrigger asChild>
+                                                            <Button variant={`ghost`}><Trash2 /></Button>
+                                                        </AlertDialogTrigger>
+                                                        <AlertDialogContent>
+                                                            <AlertDialogHeader>
+                                                                <AlertDialogTitle>Are you absolutely sure?</AlertDialogTitle>
+                                                                <AlertDialogDescription>
+                                                                    This action cannot be undone. This will permanently delete your
+                                                                    history.
+                                                                </AlertDialogDescription>
+                                                            </AlertDialogHeader>
+                                                            <AlertDialogFooter>
+                                                                <AlertDialogCancel>Cancel</AlertDialogCancel>
+                                                                <AlertDialogAction onClick={() => getPartsRemove(event.id)}>Continue</AlertDialogAction>
+                                                            </AlertDialogFooter>
+                                                        </AlertDialogContent>
+                                                    </AlertDialog>
+                                                )}
+                                            </>
+                                        )}
+                                    </div>
                                 </div>
 
                                 {event.type === 'parts' && event.parts_numbers && (

@@ -44,7 +44,7 @@ const AddCommentRobot = ({robot_data}: {robot_data: IRobot}) => {
             // const data = await res.json() // Если нужно обработать ответ
 
             setCommentValue(""); // 2. Очищаем поле ввода после успешной отправки
-            console.log("Comment added successfully!");
+            window.location.reload();
 
         } catch (e) {
             console.error("Failed to add comment:", e);

@@ -63,6 +63,8 @@ const PartsPicker = ({robot}: {robot: IRobot}) => {
                 card_id: user_store.card_id,
                 robot_id: robot.id
             })
+
+            window.location.reload();
             console.log(parts_res);
 
         } catch (error) {

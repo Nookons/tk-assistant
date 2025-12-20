@@ -46,7 +46,10 @@ const Page = () => {
 
                     <div className={`flex justify-between md:justify-start items-center gap-2`}>
                         <div className={`flex items-center gap-2`}>
-                            <Image src={`/img/A42T_Green.svg`} alt={`robot image`} width={35} height={35}/>
+                            {current_Robot.robot_type === "K50H"
+                                ?   <Image src={`/img/K50H_green.svg`} alt={`robot_img`} width={30} height={30} />
+                                :   <Image src={`/img/A42T_green.svg`} alt={`robot_img`} width={30} height={30} />
+                            }
                             <Label
                                 className={`font-bold text-base md:text-2xl`}>{current_Robot.robot_number}</Label>
                         </div>

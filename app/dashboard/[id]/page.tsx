@@ -10,6 +10,8 @@ import RobotListProvider from "@/components/shared/dashboard/robotsList/robotLis
 import {getUserData} from "@/futures/user/getUserData";
 import {LoaderCircle, UserStar} from "lucide-react";
 import {Label} from "@/components/ui/label";
+import {Card, CardContent, CardTitle} from "@/components/ui/card";
+import ShiftStats from "@/components/shared/dashboard/ShiftStats/ShiftStats";
 
 const Page = () => {
     const params = useParams();
@@ -44,7 +46,6 @@ const Page = () => {
             }
         }
     }, [saved_user]);
-
 
 
     const getEmployeesList = async () => {
@@ -91,19 +92,20 @@ const Page = () => {
 
     return (
         <div className={`px-4`}>
-            <div className={`flex items-center border p-4 rounded-t-2xl justify-between`}>
+            <div className={`flex items-center justify-between mt-4`}>
                 <div className={`flex items-center gap-2`}>
                     <Label className={`text-base`}>{user_data.user_name}</Label>
                 </div>
                 <div className={`flex items-center gap-4`}>
-                    <UserStar size={24} />
+                    <UserStar size={24}/>
                     <Badge className={`text-base px-2`} variant={user_data.score < 0 ? `destructive` : "secondary"}>
                         {user_data.score.toFixed(2)}
                     </Badge>
                 </div>
             </div>
             <div className={``}>
-                <RobotListProvider card_id={card_id} />
+                <ShiftStats />
+                <RobotListProvider card_id={card_id}/>
             </div>
         </div>
     );
