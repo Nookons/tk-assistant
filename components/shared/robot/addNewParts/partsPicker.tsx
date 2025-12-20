@@ -167,7 +167,7 @@ const PartsPicker = ({robot}: {robot: IRobot}) => {
                                         className="h-9 text-base"
                                     />
                                     <CommandList
-                                        className="max-h-[400px] overflow-y-auto"
+                                        className="max-h-[200px] overflow-y-auto"
                                         onWheel={(e) => {
                                             e.stopPropagation();
                                         }}

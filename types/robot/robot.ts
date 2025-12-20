@@ -27,7 +27,7 @@ export interface IRobot {
     type_problem: string;
     problem_note: string;
     status: string;
-    updated_by?: number;
+    updated_by?: IUser;
 
     status_history: IHistoryStatus[];
     parts_history: IHistoryParts[];

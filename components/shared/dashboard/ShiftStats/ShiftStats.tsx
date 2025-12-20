@@ -17,13 +17,16 @@ import {
     SelectTrigger,
     SelectValue
 } from "@/components/ui/select";
+import {getWorkDate} from "@/futures/Date/getWorkDate";
+import {getInitialShift} from "@/futures/Date/getInitialShift";
 
 const ShiftStats = () => {
     const robots = useRobotsStore(state => state.robots);
 
     const [open, setOpen] = React.useState(false)
-    const [date, setDate] = React.useState<Date | undefined>(dayjs().toDate())
-    const [shift_type, setShift_type] = useState<'day' | 'night'>('day')
+
+    const [date, setDate] = React.useState<Date | undefined>(getWorkDate(new Date()));
+    const [shift_type, setShift_type] = useState<'day' | 'night'>(getInitialShift());
 
     const onlyThisShift = useMemo(() => {
         if (!robots) return [];

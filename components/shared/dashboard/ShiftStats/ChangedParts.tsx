@@ -2,17 +2,18 @@
 import React, { useEffect, useState } from 'react';
 import { IRobot } from "@/types/robot/robot";
 import { Empty, EmptyHeader, EmptyMedia, EmptyTitle } from "@/components/ui/empty";
-import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Skeleton } from "@/components/ui/skeleton";
 import {ReplaceAll, Clock, Settings2, Box, Copy, Sheet} from "lucide-react";
 import dayjs from "dayjs";
 import { getPartsStatsByRobot } from "@/futures/robots/getPartsStatsByRobot";
-import {Label} from "@/components/ui/label";
 import {Button} from "@/components/ui/button";
 import Image from "next/image";
 import Link from "next/link";
+import {getChangeRecord} from "@/futures/Parts/getChangeRecord";
+import {IChangeRecord} from "@/types/Parts/ChangeRecord";
+import {toast} from "sonner";
 
 // Интерфейсы для типизации
 interface ILocalItem {
@@ -69,6 +70,45 @@ const ChangedParts = ({ robots }: { robots: IRobot[] }) => {
         setPartsCounter(count);
     }, [partsStats]);
 
+    const handleCopy = async () => {
+        const data: IChangeRecord[] = [];
+
+        // 1. Собираем данные
+        for (const item of Object.values(partsStats)) {
+            for (const entry of item.data) {
+                const res = await getChangeRecord(entry.id.toString());
+                data.push(res);
+            }
+        }
+
+        // 2. Формируем строки
+        const textToCopy = data
+            .flatMap(item => {
+                // Парсим массив номеров деталей
+                const partsArray: string[] = JSON.parse(item.parts_numbers) || [];
+
+                // Создаем массив строк для каждой детали в этой записи
+                return partsArray.map((entPart: string) => {
+                    const date = dayjs(item.created_at).format("YYYY/MM/DD HH:mm");
+                    const userName = item.user?.user_name || "Unknown";
+
+                    return `${date}\t${userName}\tOUT\t${entPart}\t\t\t1\tGLPC-C\t${item.robot.robot_number}`;
+                });
+            })
+            .join('\n'); // Объединяем все строки через перенос
+
+        // 3. Копируем в буфер
+        try {
+            if (textToCopy) {
+                await navigator.clipboard.writeText(textToCopy);
+                toast.success(`Text copied to clipboard`)
+                console.log("Данные скопированы в буфер обмена");
+            }
+        } catch (err) {
+            console.error("Ошибка при копировании:", err);
+        }
+    };
+
     if (!loading && robots.length < 1 || partsCounter === 0) return (
         <Empty className="p-4 sm:p-6 border-dashed border-2">
             <EmptyHeader>
@@ -83,7 +123,7 @@ const ChangedParts = ({ robots }: { robots: IRobot[] }) => {
             <div className="pb-3">
                 <div className="flex items-center gap-3">
                     <div className={`flex gap-2`}>
-                        <Button variant={`ghost`} className={`p-1`}><Copy size={12} /></Button>
+                        <Button onClick={handleCopy} variant={`ghost`} className={`p-1`}><Copy size={12} /></Button>
                         <Button variant={`ghost`} className={`p-1`}><Sheet  size={12} /></Button>
                     </div>
                     <div className="space-y-1">
@@ -103,7 +143,7 @@ const ChangedParts = ({ robots }: { robots: IRobot[] }) => {
                                 </div>
                             ))
                         ) : (
-                            robots.map((robot) => {
+                            robots.map((robot, robot_ind) => {
                                 const robotEntries = partsStats[robot.id]?.data || [];
                                 if (robotEntries.length === 0) return null;
 
@@ -152,7 +192,6 @@ const ChangedParts = ({ robots }: { robots: IRobot[] }) => {
                                             {robotEntries.map((entry) => {
                                                 const partsArray = JSON.parse(entry.parts_numbers) || [];
 
-
                                                 return (
                                                     <div key={entry.id} className="border w-full border-dashed p-2 rounded-2xl">
                                                         <div className="flex flex-wrap gap-2">
@@ -170,7 +209,7 @@ const ChangedParts = ({ robots }: { robots: IRobot[] }) => {
                                                         </div>
                                                         <Separator className="" />
                                                         <span className="text-[12px] sm:text-[12px] text-muted-foreground">
-                                                            Recorded at {dayjs(entry.created_at).format("HH:mm")}
+                                                            {robot.parts_history[robot_ind]?.user?.user_name || "Unknown"} recorded at {dayjs(entry.created_at).format("HH:mm")}
                                                         </span>
                                                     </div>
                                                 );
