@@ -1,4 +1,5 @@
 import {Timestamp} from "next/dist/server/lib/cache-handlers/types";
+import {IUser} from "@/types/user/user";
 
 export interface IStockItemTemplate {
     id: number;
@@ -9,4 +10,5 @@ export interface IStockItemTemplate {
     description_orginall: string;
     description_eng: string;
     part_type: string;
+    user?: IUser;
 }

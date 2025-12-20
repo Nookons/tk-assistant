@@ -43,19 +43,29 @@ const Page = () => {
             {/* ROBOT INFO */}
             <div className="">
                 <div className={`grid md:grid-cols-2 gap-4 py-4`}>
-
-                    <div className={`flex justify-between md:justify-start items-center gap-2`}>
+                    <div className={`flex relative justify-between md:justify-start items-center gap-2`}>
                         <div className={`flex items-center gap-2`}>
                             {current_Robot.robot_type === "K50H"
-                                ?   <Image src={`/img/K50H_green.svg`} alt={`robot_img`} width={30} height={30} />
-                                :   <Image src={`/img/A42T_Green.svg`} alt={`robot_img`} width={30} height={30} />
+                                ?
+                                <>
+                                    {current_Robot.status === "离线 | Offline"
+                                        ? <Image src={`/img/K50H_red.svg`} alt={`robot_img`} width={30} height={30} />
+                                        : <Image src={`/img/K50H_green.svg`} alt={`robot_img`} width={30} height={30} />
+                                    }
+                                </>
+                                :
+                                <>
+                                {current_Robot.status === "离线 | Offline"
+                                    ? <Image src={`/img/A42T_red.svg`} alt={`robot_img`} width={30} height={30} />
+                                    : <Image src={`/img/A42T_Green.svg`} alt={`robot_img`} width={30} height={30} />
+                                }
+                                </>
                             }
                             <Label
                                 className={`font-bold text-base md:text-2xl`}>{current_Robot.robot_number}</Label>
                         </div>
                         <div className={`flex items-center gap-2`}>
-                            <Dot className="text-green-500 animate-ping inline"/>
-                            <Label>{current_Robot.status.toUpperCase()}</Label>
+                            <Label>{current_Robot.status}</Label>
                         </div>
                     </div>
 

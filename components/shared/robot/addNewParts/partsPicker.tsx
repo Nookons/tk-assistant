@@ -10,22 +10,28 @@ import {
     SheetTrigger
 } from "@/components/ui/sheet";
 import {Button} from "@/components/ui/button";
-import {Check, ChevronDown, Frown, Laugh, Settings, Wrench} from "lucide-react";
+import {Check, ChevronDown, Frown, Laugh, Loader, Settings, Wrench} from "lucide-react";
 import {Popover, PopoverContent, PopoverTrigger} from "@/components/ui/popover";
 import {Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList} from "@/components/ui/command";
 import {IStockItemTemplate} from "@/types/stock/StockItem";
 import {IRobot} from "@/types/robot/robot";
 import {useUserStore} from "@/store/user";
 import {addChangeParts} from "@/futures/robots/addChangeParts";
+import {useRobotsStore} from "@/store/robotsStore";
+import {toast} from "sonner";
+import PartsPreview from "@/components/shared/robot/addNewParts/PartsPreview";
 
 const PartsPicker = ({robot}: {robot: IRobot}) => {
     const [options_Data, setOptions_Data] = useState<IStockItemTemplate[]>([])
     const [open, setOpen] = useState(false)
 
+    const [sheetOpen, setSheetOpen] = useState<boolean>(false)
+
     const [selected, setSelected] = useState<string[]>([])
     const [isLoading, setIsLoading] = useState<boolean>(false)
 
     const user_store = useUserStore(state => state.current_user)
+    const update_parts = useRobotsStore(state => state.addPartsHistory)
 
     const toggleValue = (value: string) => {
         setSelected((prev) =>
@@ -56,22 +62,37 @@ const PartsPicker = ({robot}: {robot: IRobot}) => {
     const handleSubmit = async () => {
         try {
             if (!user_store) return;
+
+            if (selected.length === 0) {
+                toast.error("请至少选择一个部件。 | Please select at least one part.");
+                return;
+            }
+
             setIsLoading(true);
 
             const parts_res = await addChangeParts({
                 parts: selected,
                 card_id: user_store.card_id,
-                robot_id: robot.id
+                robot_id: robot.id,
             })
 
-            window.location.reload();
-            console.log(parts_res);
+            if (parts_res) {
+                toast.success(`部件添加成功。 | Part(s) added successfully.`)
+                setSelected([])
+                update_parts(parts_res.robot_id, {...parts_res, user: user_store})
+                setSheetOpen(false)
+            }
 
         } catch (error) {
             console.log(error);
         } finally {
             setIsLoading(false);
         }
+    }
+
+    const handleSheetOpen = () => {
+        setOpen(true)
+        setSheetOpen(true)
     }
 
     useEffect(() => {
@@ -81,8 +102,8 @@ const PartsPicker = ({robot}: {robot: IRobot}) => {
     }, [robot]);
 
     return (
-        <Sheet>
-            <SheetTrigger asChild>
+        <Sheet onOpenChange={() => setSheetOpen(!sheetOpen)} open={sheetOpen}>
+            <SheetTrigger onClick={handleSheetOpen} asChild>
                 <Button
                     variant="outline"
                     className="group w-full relative flex items-center gap-2"
@@ -112,7 +133,7 @@ const PartsPicker = ({robot}: {robot: IRobot}) => {
                     <span>Add New Part</span>
                 </Button>
             </SheetTrigger>
-            <SheetContent className={`w-full md:min-w-[550px]`}>
+            <SheetContent onClick={(e) => e.preventDefault()} className={`w-full md:min-w-[550px]`}>
                 <SheetHeader>
                     <SheetTitle>Add new part(s) for robot</SheetTitle>
                     <SheetDescription>
@@ -176,12 +197,15 @@ const PartsPicker = ({robot}: {robot: IRobot}) => {
                                 </Command>
                             </PopoverContent>
                         </Popover>
+
+                        <PartsPreview parts_data={selected} />
+
                     </div>
                 </div>
                 <SheetFooter>
-                    <Button onClick={handleSubmit} type="submit">Save changes</Button>
+                    <Button disabled={isLoading} onClick={handleSubmit} type="submit">{isLoading && <Loader className={`animate-spin`} />} Save changes</Button>
                     <SheetClose asChild>
-                        <Button variant="outline">Close</Button>
+                        <Button onClick={() => setSheetOpen(false)} variant="outline">Close</Button>
                     </SheetClose>
                 </SheetFooter>
             </SheetContent>

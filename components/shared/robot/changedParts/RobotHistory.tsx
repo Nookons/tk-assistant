@@ -9,7 +9,7 @@ import {
     BrushCleaning,
     Combine,
     MoveRight,
-    PackageMinus, Trash2
+    PackageMinus, Trash2, Loader
 } from "lucide-react";
 import {Card, CardContent} from "@/components/ui/card";
 import {Label} from "@/components/ui/label";
@@ -34,6 +34,7 @@ import {
 } from "@/components/ui/alert-dialog";
 import {removeParts} from "@/futures/robots/remove-parts";
 import {useUserStore} from "@/store/user";
+import {useRobotsStore} from "@/store/robotsStore";
 
 interface StatusHistoryItem {
     id: number;
@@ -62,7 +63,10 @@ type HistoryEvent = StatusHistoryItem | PartsHistoryItem;
 const RobotHistory = ({robot}: { robot: IRobot }) => {
     const [filtered, setFiltered] = useState<HistoryEvent[]>([]);
 
+    const [isLoading, setIsLoading] = useState<boolean>(false)
+
     const user = useUserStore(state => state.current_user)
+    const removeFromStock = useRobotsStore(state => state.deletePartsHistory)
 
     useEffect(() => {
         const statusHistory = robot.status_history?.map(item => ({
@@ -85,13 +89,18 @@ const RobotHistory = ({robot}: { robot: IRobot }) => {
 
     const getPartsRemove = async (parts_id: number) => {
         try {
+            setIsLoading(true)
             const res = await removeParts(parts_id.toString())
 
             if (res) {
-                window.location.reload();
+                removeFromStock(res.robot_id, res.id)
             }
         } catch (err) {
             console.log(err);
+        } finally {
+            setTimeout(() => {
+                setIsLoading(false)
+            }, 250)
         }
     }
 
@@ -125,14 +134,14 @@ const RobotHistory = ({robot}: { robot: IRobot }) => {
                             )}
                         </span>
 
-                        <Card className="rounded-2xl shadow p-0">
-                            <CardContent className="py-2">
-                                <div className="flex justify-between items-center mb-2">
+                        <Card className="p-2">
+                            <CardContent className="w-full px-2">
+                                <div className="grid grid-cols-2 gap-2 items-center mb-2">
                                     <Label className="text-xs text-neutral-500">
                                         {dayjs(event.created_at).format('HH:mm · MMM D, YYYY')}
                                     </Label>
-                                    <div className={`flex items-center gap-2`}>
-                                        <Label className="text-xs text-neutral-500">
+                                    <div className={`flex items-center justify-end gap-2`}>
+                                        <Label className="text-xs line-clamp-1 text-neutral-500">
                                             {event.user?.user_name || 'Unknown User'}
                                         </Label>
                                         {event.type === 'parts' && (
@@ -140,19 +149,28 @@ const RobotHistory = ({robot}: { robot: IRobot }) => {
                                                 {event.card_id === user?.card_id && (
                                                     <AlertDialog>
                                                         <AlertDialogTrigger asChild>
-                                                            <Button variant={`ghost`}><Trash2 /></Button>
+                                                            <Button className={`p-1`} disabled={isLoading}
+                                                                    variant={`ghost`}>
+                                                                {isLoading
+                                                                    ? <Loader className={`animate-spin`}/>
+                                                                    : <Trash2/>
+                                                                }
+                                                            </Button>
                                                         </AlertDialogTrigger>
                                                         <AlertDialogContent>
                                                             <AlertDialogHeader>
-                                                                <AlertDialogTitle>Are you absolutely sure?</AlertDialogTitle>
+                                                                <AlertDialogTitle>Are you absolutely
+                                                                    sure?</AlertDialogTitle>
                                                                 <AlertDialogDescription>
-                                                                    This action cannot be undone. This will permanently delete your
+                                                                    This action cannot be undone. This will permanently
+                                                                    delete your
                                                                     history.
                                                                 </AlertDialogDescription>
                                                             </AlertDialogHeader>
                                                             <AlertDialogFooter>
                                                                 <AlertDialogCancel>Cancel</AlertDialogCancel>
-                                                                <AlertDialogAction onClick={() => getPartsRemove(event.id)}>Continue</AlertDialogAction>
+                                                                <AlertDialogAction
+                                                                    onClick={() => getPartsRemove(event.id)}>Continue</AlertDialogAction>
                                                             </AlertDialogFooter>
                                                         </AlertDialogContent>
                                                     </AlertDialog>
@@ -163,7 +181,7 @@ const RobotHistory = ({robot}: { robot: IRobot }) => {
                                 </div>
 
                                 {event.type === 'parts' && event.parts_numbers && (
-                                    <div className="flex flex-wrap gap-4">
+                                    <div className="flex flex-wrap gap-2">
                                         {JSON.parse(event.parts_numbers).map((partNumber: string, idx: number) => (
                                             <Label>
                                                 <PackageMinus size={16}/>
@@ -174,18 +192,16 @@ const RobotHistory = ({robot}: { robot: IRobot }) => {
                                 )}
 
                                 {event.type === 'status' && event.new_status && (
-                                    <div>
-                                        <div className={`flex items-center gap-2`}>
-                                            <Label>
-                                                <BrushCleaning className={`text-red-500`} size={16}/>
-                                                <span className="text-xs">{event.old_status}</span>
-                                            </Label>
-                                            <MoveRight size={16}/>
-                                            <Label>
-                                                <Activity className={`text-green-500`} size={16}/>
-                                                <span className="text-xs">{event.new_status}</span>
-                                            </Label>
-                                        </div>
+                                    <div className={`flex items-center gap-2`}>
+                                        <Label>
+                                            <BrushCleaning className={`text-red-500`} size={16}/>
+                                            <span className="text-xs">{event.old_status}</span>
+                                        </Label>
+                                        <MoveRight size={16}/>
+                                        <Label>
+                                            <Activity className={`text-green-500`} size={16}/>
+                                            <span className="text-xs">{event.new_status}</span>
+                                        </Label>
                                     </div>
                                 )}
                             </CardContent>

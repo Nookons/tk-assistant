@@ -1,6 +1,6 @@
 export const removeParts = async (parts_id: string) => {
     const res = await fetch(`/api/robots/remove-parts`, {
-        method: 'POST',
+        method: 'DELETE',
         headers: {
             'Content-Type': 'application/json'
         },

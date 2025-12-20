@@ -69,7 +69,7 @@ const ChangedParts = ({ robots }: { robots: IRobot[] }) => {
         setPartsCounter(count);
     }, [partsStats]);
 
-    if (!loading && robots.length < 1) return (
+    if (!loading && robots.length < 1 || partsCounter === 0) return (
         <Empty className="p-4 sm:p-6 border-dashed border-2">
             <EmptyHeader>
                 <EmptyMedia variant="icon"><ReplaceAll /></EmptyMedia>
@@ -114,8 +114,20 @@ const ChangedParts = ({ robots }: { robots: IRobot[] }) => {
                                             <div className="flex items-center gap-2 sm:gap-3">
                                                 <div className="p-1.5 sm:p-2">
                                                     {robot.robot_type === "K50H"
-                                                        ?   <Image src={`/img/K50H_green.svg`} alt={`robot_img`} width={30} height={30} />
-                                                        :   <Image src={`/img/A42T_Green.svg`} alt={`robot_img`} width={30} height={30} />
+                                                        ?
+                                                        <>
+                                                            {robot.status === "离线 | Offline"
+                                                                ? <Image src={`/img/K50H_red.svg`} alt={`robot_img`} width={30} height={30} />
+                                                                : <Image src={`/img/K50H_green.svg`} alt={`robot_img`} width={30} height={30} />
+                                                            }
+                                                        </>
+                                                        :
+                                                        <>
+                                                            {robot.status === "离线 | Offline"
+                                                                ? <Image src={`/img/A42T_red.svg`} alt={`robot_img`} width={30} height={30} />
+                                                                : <Image src={`/img/A42T_Green.svg`} alt={`robot_img`} width={30} height={30} />
+                                                            }
+                                                        </>
                                                     }
                                                 </div>
                                                 <div>
