@@ -1,107 +1,59 @@
 'use client'
-import React, { useState } from 'react';
-import { Textarea } from "@/components/ui/textarea";
-import { Button } from "@/components/ui/button";
-import { Table, TableBody, TableCaption, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { Copy, Check, FileText } from "lucide-react";
+import React, {useEffect, useState} from 'react';
+import {Textarea} from "@/components/ui/textarea";
+import {Button} from "@/components/ui/button";
+import {Table, TableBody, TableCell, TableHead, TableHeader, TableRow} from "@/components/ui/table";
+import {Copy, Check, FileText} from "lucide-react";
 import dayjs from "dayjs";
 import duration from "dayjs/plugin/duration";
 import utc from "dayjs/plugin/utc";
+import {toast} from "sonner";
+import errors_data_raw from '../../utils/ErrorsPatterns/ErrorsPatterns.json';
+import Image from "next/image";
+import TemplateInfo from "@/components/shared/ErrorParse/TemplateInfo";
+import { ButtonGroup } from "@/components/ui/button-group"
 
 dayjs.extend(duration);
 dayjs.extend(utc);
 
-const errors_data = [
-    {
-        id: 1,
-        employee_title: "地面码脏污 Ground code dirty",
-        first_column: "识别不到地面码DM Code Error",
-        second_column: "地面码脏污 Ground code dirty",
-        issue_description: "Robot is unable to drive dm code is dirty",
-        recovery_title: "Clean the dm code and recover the robot",
-
-        device_type: "Ground code",
-        issue_type: "环境Environment",
-        solving_time: 2
-    },
-    {
-        id: 2,
-        employee_title: "地面码缺失 Ground code missing",
-        first_column: "识别不到地面码DM Code Error",
-        second_column: "地面码缺失 Ground code missing",
-        issue_description: "Robot is unable to drive dm code is missing",
-        recovery_title: "Reprinted the dm code and set robot on QR code then recovery the robot",
-
-        device_type: "Ground code",
-        issue_type: "环境Environment",
-        solving_time: 8
-    },
-    {
-        id: 3,
-        employee_title: "急停按钮损坏 Emergency stop button is damaged",
-
-        device_type: "None",
-        issue_type: "设备Equipment",
-
-        first_column: "机器人安全装置触发Robot safety device triggered",
-        second_column: "急停按钮损坏 Emergency stop button is damaged",
-        issue_description: "Emergency button on robot is damaged and triggered the safety system",
-        recovery_title: "Change the emergency button to new and recovery the robot",
-
-        solving_time: 8
-    },
-    {
-        id: 4,
-        employee_title: "异常无法恢复 Abnormal cannot be recovered",
-
-        device_type: "None",
-        issue_type: "设备Equipment",
-
-        first_column: "行走异常Unable to drive",
-        second_column: "异常无法恢复 Abnormal cannot be recovered",
-        issue_description: "Problem is can't be found at this time",
-        recovery_title: "Robot sent to maintenance area for repairing",
-
-        solving_time: 4
-    },
-    {
-        id: 5,
-        employee_title: "地面异物 Foreign objects on the ground",
-
-        device_type: "Ground code",
-        issue_type: "环境Environment",
-
-        first_column: "行走异常Unable to drive",
-        second_column: "地面异物Foreign objects on the ground",
-        issue_description: "Items fell from the tote and lay on the floor ",
-        recovery_title: "Took out items from floor and recover the robot",
-
-        solving_time: 2
-    },
-    {
-        id: 5,
-        employee_title: "取放箱位置错误 Wrong pick and place box position",
-
-        device_type: "Ground code",
-        issue_type: "设备Equipment",
-
-        first_column: "取放货异常Abnormal pick-up and delivery",
-        second_column: "取放箱位置错误 Wrong pick and place box position",
-        issue_description: "Items fell from the tote and lay on the floor ",
-        recovery_title: "Took out items from floor and recover the robot",
-
-        solving_time: 3
-    },
-
-];
-
 const employees_data = [
-    "Dmytro Kolomiiets",
-    "Roman",
-    "Heorhi  Labets",
-    "Vasyl  Bondarenko",
-    "Andrii Kyrychok"
+    "Dmytro Kolomiiets", "Heorhi Labets", "Vasyl  Bondarenko",
+    "Ivan Bulii", "邓广全", "Mykyta Kyrylov",
+    "Tugsbayar Batsukh",
+    "Andrii Kyrychok",
+    "Yevgenii Krysiuk",
+    "Oleksandr Sofyna",
+    "Vitalii Lepekha",
+    "Kryvenko Danylo",
+    "Rostyslav Mykhavko",
+    "Iliya Kudii",
+    "Ilkin Azimzade",
+    "Eduard Maliuk",
+    "Stepan Zapotichyi",
+    "SALMI ABDERAOUF",
+    "RAIS AMINE",
+    "Amdjed Dilmi",
+    "Oleksii Ilin",
+    "Petro Diakunchak",
+    "Danylo Yakubchik",
+    "Yevhen Horetskyi",
+    "Nazar",
 ];
+
+interface JsonError {
+    id: number;
+    employee_title: string;
+    first_column: string;
+    second_column: string;
+    issue_description: string;
+    recovery_title: string;
+    device_type: string;
+    issue_type: string;
+    solving_time: number; // В JSON именно это имя
+}
+
+// Приведение типов для данных из JSON
+const errors_data = errors_data_raw as JsonError[];
 
 interface ILocalIssue {
     employee: string;
@@ -109,7 +61,7 @@ interface ILocalIssue {
     second_column: string;
     error_robot: string;
     error_start_time: Date;
-    error_end_time: any;
+    error_end_time: Date;
     recovery_title: string;
     solving_time: number;
     device_type: string;
@@ -119,229 +71,236 @@ interface ILocalIssue {
 
 const Page = () => {
     const [value, setValue] = useState<string>("");
-    const [data, setData] = useState<ILocalIssue[]>([]);
     const [copied, setCopied] = useState(false);
+    const [wrong_parse, setWrong_parse] = useState<string[]>([]);
+    const [parsed, setParsed] = useState<ILocalIssue[]>([]);
 
     const parse = () => {
-        const split = value.split('\n').filter(item => item.length > 0);
+        // Очищаем старые данные перед новым парсингом
+        setWrong_parse([]);
+        setParsed([]);
+
+        const lines = value.split('\n').filter(item => item.trim().length > 0);
         let current_employee = "";
-        const local_data: ILocalIssue[] = [];
+        const temp_parsed: ILocalIssue[] = [];
+        const temp_wrong: string[] = [];
 
-        split.forEach(item => {
-            if (employees_data.includes(item)) {
-                current_employee = item;
+        lines.forEach(line => {
+            const trimmedLine = line.trim();
+
+            if (employees_data.includes(trimmedLine)) {
+                current_employee = trimmedLine;
                 return;
-            } else {
-                const error_split = item.split(".");
-                const error_title = error_split[0];
-                const error_robot = error_split[1];
-                const error_start_time = error_split[2];
-
-                errors_data.forEach(error => {
-                    if (error.employee_title === error_title) {
-                        const obj = {
-                            employee: current_employee,
-                            first_column: error.first_column,
-                            second_column: error.second_column,
-                            error_robot: error_robot,
-                            error_start_time: dayjs(`${dayjs().format("YYYY-MM-DD")} ${error_start_time}`).toDate(),
-                            error_end_time: dayjs(`${dayjs().format("YYYY-MM-DD")} ${error_start_time}`).add(error.solving_time, "minute"),
-                            recovery_title: error.recovery_title,
-                            solving_time: error.solving_time,
-                        };
-                        local_data.push(obj as any);
-                    }
-                });
             }
+
+            const parts = trimmedLine.split(".");
+
+            const error_string = parts[0]
+            const error_robot = parts[1]
+            const error_time = parts[2]
+
+            if (error_string === "Translate") return;
+
+            const error_pattern = errors_data.find(error =>
+                error.employee_title.toLowerCase().includes(error_string.toLowerCase())
+            );
+
+            if (!error_pattern) {
+                toast.error(`Error not found: ${error_string}`);
+                temp_wrong.push(`${error_time} | ${current_employee || "No Employee"} - ${error_string} - ${error_robot}`);
+                return;
+            }
+
+            // Формируем дату: сегодняшнее число + время из строки
+            const startTime = dayjs(`${dayjs().format("YYYY-MM-DD")} ${error_time}`);
+
+
+            temp_parsed.push({
+                employee: current_employee || "Unknown",
+                first_column: error_pattern.first_column,
+                second_column: error_pattern.second_column,
+                error_robot: error_robot,
+                error_start_time: startTime.toDate(),
+                // Используем правильное поле solving_time из JSON
+                error_end_time: startTime.add(error_pattern.solving_time, 'minute').toDate(),
+                recovery_title: error_pattern.recovery_title,
+                solving_time: error_pattern.solving_time,
+                device_type: error_pattern.device_type,
+                issue_type: error_pattern.issue_type,
+                issue_description: error_pattern.issue_description,
+            });
         });
 
-        setData(local_data as ILocalIssue[]);
+        setParsed(temp_parsed);
+        setWrong_parse(temp_wrong);
     };
 
-    const copyToClipboard = () => {
+    const copyToClipboard = (type: 'GLPC' | "P3") => {
         const headers = [
             "Date", "Warehouse", "Robot Type", "Robot Number", "Type",
             "Error", "Error Deeply", "", "Employee Text", "Recovery options",
-            "Employee", "Start Time", "End Time", "Time Gap", "Employee", "Status"
+            "Employee", "Start Time", "End Time", "Time Gap (min)", "Employee", "Status"
         ];
 
-        const rows = data.map(error => [
-            dayjs().format('MM/DD/YYYY'),
-            "Inventory Warehouse",
-            Number(error.error_robot) < 150 ? "A42T-E1 Clamp" : "K50H",
-            error.error_robot,
-            "设备Equipment",
-            error.first_column,
-            error.second_column,
-            "",
-            error.first_column,
-            error.recovery_title,
-            error.employee,
-            dayjs(error.error_start_time).format("HH:mm"),
-            dayjs(error.error_end_time).format("HH:mm"),
-            dayjs.duration(dayjs(error.error_end_time).diff(dayjs(error.error_start_time))).format("mm"),
-            error.employee,
-            "已处理Processed"
-        ]);
+        switch (type) {
+            case "GLPC":
+                const rows = parsed.map(error => {
+                    const diffMinutes = dayjs(error.error_end_time).diff(dayjs(error.error_start_time), 'minute');
+                    return [
+                        dayjs().format('MM/DD/YYYY'),
+                        "Inventory Warehouse",
+                        Number(error.error_robot) < 150 ? "A42T-E1 Clamp" : "K50H",
+                        error.error_robot,
+                        error.issue_type,
+                        error.first_column,
+                        error.second_column,
+                        "",
+                        error.first_column,
+                        error.recovery_title,
+                        error.employee,
+                        dayjs(error.error_start_time).format("HH:mm"),
+                        dayjs(error.error_end_time).format("HH:mm"),
+                        diffMinutes,
+                        error.employee,
+                        "已处理Processed"
+                    ];
+                });
 
-        const tsvContent = [
-            headers.join('\t'),
-            ...rows.map(row => row.join('\t'))
-        ].join('\n');
+                const tsvContent = [...rows.map(row => row.join('\t'))].join('\n');
 
-        navigator.clipboard.writeText(tsvContent).then(() => {
-            setCopied(true);
-            setTimeout(() => setCopied(false), 2000);
-        });
+                navigator.clipboard.writeText(tsvContent).then(() => {
+                    setCopied(true);
+                    setTimeout(() => setCopied(false), 2000);
+                });
+                break;
+            case "P3":
+                const rowsP3 = parsed.map(error => {
+                    const diffMinutes = dayjs(error.error_end_time).diff(dayjs(error.error_start_time), 'minute');
+                    return [
+                        dayjs().format('MM/DD/YYYY'),
+                        "None",
+                        "",
+                        error.error_robot,
+                        error.issue_type,
+                        error.first_column,
+                        error.second_column,
+                        error.first_column,
+                        error.recovery_title,
+                        "已处理Processed",
+                        `@${error.employee}`,
+                        dayjs(error.error_start_time).format("HH:mm"),
+                        dayjs(error.error_end_time).format("HH:mm"),
+                        dayjs().format(`00:${diffMinutes}`),
+                    ];
+                });
+
+                const tsvContentP3 = [...rowsP3.map(row => row.join('\t'))].join('\n');
+
+                navigator.clipboard.writeText(tsvContentP3).then(() => {
+                    setCopied(true);
+                    setTimeout(() => setCopied(false), 2000);
+                });
+                break;
+        }
+
     };
 
-    const clearData = () => {
-        setValue("");
-        setData([]);
-    };
+    useEffect(() => {
+        console.log(wrong_parse);
+    }, [wrong_parse]);
 
     return (
         <div className="container mx-auto p-6 max-w-[1600px]">
-            <div className="mb-6">
-                <h1 className="text-3xl font-bold mb-2">Robot Error Parser GLPC</h1>
-                <p className="text-gray-600">Parse robot error logs and export to spreadsheet</p>
-            </div>
-
-            <div className="rounded-lg shadow-md p-6 mb-6">
-                <div className="flex flex-col gap-4">
-                    <div>
-                        <label className="block text-sm font-medium mb-2">
-                            Paste Error Log Data
-                        </label>
-                        <Textarea
-                            className="min-h-[200px] max-h-[400px] font-mono text-sm"
-                            placeholder="Paste your error log data here..."
-                            value={value}
-                            onChange={(e) => setValue(e.target.value)}
-                        />
+            <div className="flex flex-col gap-4 mb-8">
+                <div>
+                    <div className={`my-2`}>
+                        <TemplateInfo />
                     </div>
-
-                    <div className="flex gap-3">
-                        <Button onClick={parse} className="flex items-center gap-2">
-                            <FileText className="w-4 h-4" />
-                            Parse Data
-                        </Button>
-                        <Button
-                            onClick={clearData}
-                            variant="outline"
-                            disabled={!value && data.length === 0}
-                        >
-                            Clear
-                        </Button>
-                    </div>
+                    <Textarea
+                        className="max-h-[200px] font-mono"
+                        placeholder="Dmytro Kolomiiets&#10;Speed error. 124. 14:20"
+                        value={value}
+                        onChange={(e) => setValue(e.target.value)}
+                    />
+                </div>
+                <div className="flex gap-3">
+                    <Button onClick={parse}><FileText className="w-4 h-4 mr-2"/> Parse Data</Button>
+                    <Button onClick={() => {
+                        setValue("");
+                        setParsed([]);
+                        setWrong_parse([]);
+                    }} variant="outline">Clear</Button>
                 </div>
             </div>
 
-            {data.length > 0 && (
-                <div className="rounded-lg shadow-md p-6">
-                    <div className="flex justify-between items-center mb-4">
-                        <div>
-                            <h2 className="text-xl font-semibold">Parsed Results</h2>
-                            <p className="text-sm text-gray-600">{data.length} error(s) found</p>
-                        </div>
-                        <Button
-                            onClick={copyToClipboard}
-                            className="flex items-center gap-2"
-                            variant={copied ? "default" : "default"}
-                        >
-                            {copied ? (
-                                <>
-                                    <Check className="w-4 h-4" />
-                                    Copied!
-                                </>
-                            ) : (
-                                <>
-                                    <Copy className="w-4 h-4" />
-                                    Copy to Clipboard
-                                </>
-                            )}
-                        </Button>
+            {wrong_parse.length > 0 && (
+                <div className="mb-8 p-4 border border-destructive/50 rounded-lg bg-destructive/5">
+                    <h3 className="text-destructive font-bold mb-2">Unsuccessful Parse ({wrong_parse.length})</h3>
+                    <ul className="list-disc list-inside text-sm text-muted-foreground">
+                        {wrong_parse.map((item, index) => <li key={index}>{item}</li>)}
+                    </ul>
+                </div>
+            )}
+
+            {parsed.length > 0 && (
+                <div className="space-y-4">
+                    <div className="flex justify-between items-center">
+                        <h2 className="text-xl font-semibold">Results: {parsed.length}</h2>
+                        <ButtonGroup>
+                            <Button onClick={() => copyToClipboard("GLPC")} variant={copied ? "secondary" : "default"}>
+                                {copied ? <Check className="w-4 h-4 mr-2"/> : <Copy className="w-4 h-4 mr-2"/>}
+                                {copied ? "Copied!" : "Copy GLPC"}
+                            </Button>
+                            <Button onClick={() => copyToClipboard("P3")} variant={copied ? "secondary" : "default"}>
+                                {copied ? <Check className="w-4 h-4 mr-2"/> : <Copy className="w-4 h-4 mr-2"/>}
+                                {copied ? "Copied!" : "Copy P3"}
+                            </Button>
+                        </ButtonGroup>
                     </div>
 
-                    <div className="overflow-x-auto border rounded-md">
+                    <div className="border rounded-lg overflow-hidden">
                         <Table>
-                            <TableCaption>Robot error log entries</TableCaption>
-                            <TableHeader>
-                                <TableRow className="">
-                                    <TableHead className="font-semibold">Date</TableHead>
-                                    {/*<TableHead className="font-semibold">Warehouse</TableHead>*/}
-                                    <TableHead className="font-semibold">Robot Type</TableHead>
-                                    <TableHead className="font-semibold">Robot Number</TableHead>
-                                    <TableHead className="font-semibold">Type</TableHead>
-                                    <TableHead className="font-semibold">Error</TableHead>
-                                    <TableHead className="font-semibold">Error Deeply</TableHead>
-                                    <TableHead className="font-semibold"></TableHead>
-                                    <TableHead className="font-semibold">Employee Text</TableHead>
-                                    <TableHead className="font-semibold">Recovery Options</TableHead>
-                                    <TableHead className="font-semibold">Employee</TableHead>
-                                    <TableHead className="font-semibold">Start Time</TableHead>
-                                    <TableHead className="font-semibold">End Time</TableHead>
-                                    <TableHead className="font-semibold">Time Gap</TableHead>
-                                    <TableHead className="font-semibold">Employee</TableHead>
-                                    <TableHead className="font-semibold">Status</TableHead>
+                            <TableHeader className="bg-muted">
+                                <TableRow>
+                                    <TableHead>Robot</TableHead>
+                                    <TableHead>Error</TableHead>
+                                    <TableHead>Recovery</TableHead>
+                                    <TableHead>Start</TableHead>
+                                    <TableHead>End</TableHead>
+                                    <TableHead>Gap</TableHead>
+                                    <TableHead>Operator</TableHead>
                                 </TableRow>
                             </TableHeader>
                             <TableBody>
-                                {data.map((error, index) => (
-                                    <TableRow key={`robot-error-${index}`} className="">
-                                        <TableCell className="whitespace-nowrap">
-                                            {dayjs().format('DD/MM/YYYY')}
+                                {parsed.map((error, i) => (
+                                    <TableRow key={i}>
+                                        <TableCell className="font-bold">
+                                            <div className={`flex items-center gap-2`}>
+                                                <div>
+                                                    {Number(error.error_robot) > 150
+                                                        ? <Image src={`/img/K50H_red.svg`} alt={`robot_img`} width={30}
+                                                                 height={30}/>
+                                                        : <Image src={`/img/A42T_red.svg`} alt={`robot_img`} width={30}
+                                                                 height={30}/>
+                                                    }
+                                                </div>
+                                                <article>{error.error_robot} - {Number(error.error_robot) < 150 ? "A42" : "K50"}</article>
+                                            </div>
                                         </TableCell>
-                                        {/*<TableCell className="whitespace-nowrap">
-                                            Inventory Warehouse
-                                        </TableCell>*/}
-                                        <TableCell className="whitespace-nowrap">
-                                            {error.device_type}
-                                            {Number(error.error_robot) < 150 ? "A42T-E1 Clamp" : "K50H"}
+                                        <TableCell>
+                                            <div className="text-sm font-medium">{error.first_column}</div>
+                                            <div className="text-xs text-muted-foreground">{error.second_column}</div>
                                         </TableCell>
-                                        <TableCell className="text-center font-medium">
-                                            {error.error_robot}
+                                        <TableCell>
+                                            <div className="text-sm font-medium">{error.issue_description}</div>
+                                            <div className="text-xs text-muted-foreground">{error.recovery_title}</div>
                                         </TableCell>
-                                        <TableCell className="whitespace-nowrap">
-                                            {error.issue_type}
+                                        <TableCell>{dayjs(error.error_start_time).format("HH:mm")}</TableCell>
+                                        <TableCell>{dayjs(error.error_end_time).format("HH:mm")}</TableCell>
+                                        <TableCell className="font-bold">
+                                            {dayjs(error.error_end_time).diff(error.error_start_time, 'minute')}
                                         </TableCell>
-                                        <TableCell className="max-w-[350px]">
-                                            {error.first_column}
-                                        </TableCell>
-                                        <TableCell className="max-w-[350px]">
-                                            {error.second_column}
-                                        </TableCell>
-                                        <TableCell></TableCell>
-                                        <TableCell className="max-w-[350px]">
-                                            {error.first_column}
-                                        </TableCell>
-                                        <TableCell className="max-w-[400px]">
-                                            {error.recovery_title}
-                                        </TableCell>
-                                        <TableCell className="whitespace-nowrap">
-                                            {error.employee}
-                                        </TableCell>
-                                        <TableCell className="whitespace-nowrap font-mono">
-                                            {dayjs(error.error_start_time).format("HH:mm")}
-                                        </TableCell>
-                                        <TableCell className="whitespace-nowrap font-mono">
-                                            {dayjs(error.error_end_time).format("HH:mm")}
-                                        </TableCell>
-                                        <TableCell className="whitespace-nowrap font-mono">
-                                            {dayjs
-                                                .duration(
-                                                    dayjs(error.error_end_time).diff(dayjs(error.error_start_time))
-                                                )
-                                                .format("HH:mm")}
-                                        </TableCell>
-                                        <TableCell className="whitespace-nowrap">
-                                            {error.employee}
-                                        </TableCell>
-                                        <TableCell className="whitespace-nowrap">
-                                            <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800">
-                                                已处理Processed
-                                            </span>
-                                        </TableCell>
+                                        <TableCell>{error.employee}</TableCell>
                                     </TableRow>
                                 ))}
                             </TableBody>
