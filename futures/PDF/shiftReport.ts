@@ -2,18 +2,40 @@ import {toast} from "sonner";
 import jsPDF from "jspdf";
 import dayjs from "dayjs";
 import autoTable from "jspdf-autotable";
-import {IEmployeeReport} from "@/types/shift/Report";
-import {IHistoryParts, IHistoryStatus, IRobot} from "@/types/robot/robot";
+import {IHistoryParts, IHistoryStatus} from "@/types/robot/robot";
 import "@/utils/fonts/NotoSansSC-Regular-normal";
 
+// Новый тип для данных об ошибках
+export interface ErrorRecord {
+    id: number;
+    error_robot: number;
+    device_type: string;
+    employee: string;
+    error_start_time: string;
+    error_end_time: string;
+    first_column: string;
+    second_column: string;
+    issue_type: string;
+    issue_description: string;
+    recovery_title: string;
+    solving_time: number;
+    shift_type: string;
+}
+
+interface ErrorReportData {
+    [employeeName: string]: ErrorRecord[];
+}
+
 export const generateShiftReport = async (
-    {report_data, date, shift_type, history_status, history_parts}:
-    {report_data: IEmployeeReport[], date: Date | undefined, shift_type: string, history_status: IHistoryStatus[], history_parts: IHistoryParts[]}) =>
+    {report_data, date, shift, history_status, history_parts}:
+    {report_data: ErrorReportData, date: Date | undefined, shift: string, history_status: IHistoryStatus[], history_parts: IHistoryParts[]}) =>
 {
-    if (!report_data || report_data.length === 0) {
+    if (!report_data || Object.keys(report_data).length === 0) {
         toast.error("No report data available to generate PDF");
         return;
     }
+
+    console.log(history_parts);
 
     const doc = new jsPDF();
     doc.setFont('NotoSansSC-Regular', 'normal');
@@ -47,46 +69,46 @@ export const generateShiftReport = async (
     // Subtitle with modern styling
     doc.setFontSize(11);
     doc.setTextColor(colors.textMuted[0], colors.textMuted[1], colors.textMuted[2]);
-    doc.text(`${shift_type.toUpperCase()} SHIFT`, 7, 32);
+    doc.text(`${shift.toUpperCase()} SHIFT`, 7, 32);
 
     doc.setFontSize(10);
     doc.setTextColor(colors.accent[0], colors.accent[1], colors.accent[2]);
     doc.text(dayjs(date).format('DD/MM/YYYY'), 7, 40);
 
-    let yPosition = 25;
+    let yPosition = 55;
 
-    // 📊 Statistics Summary Card
-    const totalStats = report_data.reduce((acc, item) => ({
-        rt_kubot_exc: Number(acc.rt_kubot_exc) + Number(item.rt_kubot_exc),
-        rt_kubot_mini_exc: Number(acc.rt_kubot_mini_exc) + Number(item.rt_kubot_mini_exc),
-        rt_kubot_e2_exc: Number(acc.rt_kubot_e2_exc) + Number(item.rt_kubot_e2_exc),
-        abnormal_location: Number(acc.abnormal_location) + Number(item.abnormal_location),
-        abnormal_case: Number(acc.abnormal_case) + Number(item.abnormal_case),
-    }), {
-        rt_kubot_exc: 0,
-        rt_kubot_mini_exc: 0,
-        rt_kubot_e2_exc: 0,
-        abnormal_location: 0,
-        abnormal_case: 0
+    // 📊 Statistics Summary Card - Подсчет из новых данных
+    const allErrors = Object.values(report_data).flat();
+    const totalStats: Record<string, number> = {};
+
+    Object.entries(report_data).forEach(([employee, errors]) => {
+        totalStats[employee] = errors.length;
     });
-
-    yPosition += 35;
 
     // 👥 Employee Details Section
     doc.setFontSize(12);
     doc.setTextColor(colors.text[0], colors.text[1], colors.text[2]);
 
+    const employeeData = Object.entries(report_data).map(([employee, errors]) => {
+        const equipmentErrors = errors.filter(e => e.issue_type === "设备Equipment").length;
+        const environmentErrors = errors.filter(e => e.issue_type === "环境Environment").length;
+        const totalTime = errors.reduce((sum, e) => sum + e.solving_time, 0);
+        const uniqueRobots = new Set(errors.map(e => e.error_robot)).size;
+
+        return [
+            employee,
+            errors.length.toString(),
+            uniqueRobots.toString(),
+            equipmentErrors.toString(),
+            environmentErrors.toString(),
+            `${totalTime} min`,
+        ];
+    });
+
     autoTable(doc, {
         startY: yPosition,
-        head: [['Employee', 'RT KUBOT', 'RT MINI', 'RT E2', 'ABN LOC', 'ABN CASE']],
-        body: report_data.map(item => [
-            item.employee_select,
-            item.rt_kubot_exc,
-            item.rt_kubot_mini_exc,
-            item.rt_kubot_e2_exc,
-            item.abnormal_location,
-            item.abnormal_case,
-        ]),
+        head: [['Employee', 'Total Errors', 'Robots', 'Equipment', 'Environment', 'Total Time']],
+        body: employeeData,
         theme: 'plain',
         styles: {
             fontSize: 9,
@@ -99,8 +121,8 @@ export const generateShiftReport = async (
             fillColor: [248, 250, 252],
             textColor: [59, 130, 246],
             fontStyle: 'bold',
-            fontSize: 8,
-            halign: 'center',
+            fontSize: 9,
+            halign: 'left',
         },
         bodyStyles: {
             fillColor: [255, 255, 255],
@@ -217,7 +239,7 @@ export const generateShiftReport = async (
 
     doc.setFontSize(11);
     doc.setTextColor(colors.warning[0], colors.warning[1], colors.warning[2]);
-    doc.text('🔧⊛ Parts Replacement', 14, yPosition);
+    doc.text('🔧 Parts Replacement', 14, yPosition);
 
     doc.setFontSize(8);
     doc.setTextColor(colors.textMuted[0], colors.textMuted[1], colors.textMuted[2]);
@@ -271,9 +293,9 @@ export const generateShiftReport = async (
 
         doc.addImage(logoImg, 'PNG', pageWidth - 25, 15, 10, 10);
 
-        const fileName = `SHEIN_Report_${shift_type.toUpperCase()}_${dayjs(date).format('YYYY-MM-DD_HH-mm')}.pdf`;
+        const fileName = `SHEIN_Report_${shift.toUpperCase()}_${dayjs(date).format('YYYY-MM-DD_HH-mm')}.pdf`;
         doc.save(fileName);
     };
 
-    logoImg.src = shift_type === "day" ? '/ico/sun.png' : '/ico/moon.png';
-}
+    logoImg.src = shift === "day" ? '/ico/sun.png' : '/ico/moon.png';
+};

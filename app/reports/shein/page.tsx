@@ -1,379 +1,222 @@
-'use client'
-import React, {useEffect, useState} from "react";
-import {Label} from "@/components/ui/label";
-import {Input} from "@/components/ui/input";
-import {IUser, IUserApiResponse} from "@/types/user/user";
-import {Button} from "@/components/ui/button";
-import {
-    Select,
-    SelectContent,
-    SelectGroup,
-    SelectItem,
-    SelectLabel,
-    SelectTrigger,
-    SelectValue
-} from "@/components/ui/select";
-import {Card, CardAction, CardContent, CardFooter, CardHeader, CardTitle} from "@/components/ui/card";
-import {toast} from "sonner";
-import dayjs from "dayjs";
-import {Item} from "@/components/ui/item";
-import {Badge} from "@/components/ui/badge";
-import {Popover, PopoverContent, PopoverTrigger} from "@/components/ui/popover";
-import {ChevronDownIcon, Loader} from "lucide-react";
-import { Calendar } from "@/components/ui/calendar";
-import {generateShiftReport} from "@/futures/PDF/shiftReport";
-import {IEmployeeReport} from "@/types/shift/Report";
-import SheinReportFile from "@/components/shared/reports/sheinReportFile/SheinReportFile";
-import {useRobotsStore} from "@/store/robotsStore";
-import {IHistoryParts, IHistoryStatus} from "@/types/robot/robot";
+'use client';
 
+import { useEffect, useState, useMemo } from 'react';
+import { format } from 'date-fns';
+import { ChevronDown } from 'lucide-react';
+import { Button } from '@/components/ui/button';
+import { Calendar } from '@/components/ui/calendar';
+import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
+import { Select, SelectContent, SelectGroup, SelectItem, SelectLabel, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
+import { Badge } from '@/components/ui/badge';
+import { Separator } from '@/components/ui/separator';
+import { ScrollArea } from '@/components/ui/scroll-area';
+import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/components/ui/accordion';
 
-const Page = () => {
-    const [employees_list, setEmployees_list] = useState<IUser[]>([])
+import { getWorkDate } from '@/futures/Date/getWorkDate';
+import { getInitialShift } from '@/futures/Date/getInitialShift';
+import { getShiftList } from '@/futures/exception/getShiftList';
+import {ErrorRecord, generateShiftReport} from '@/futures/PDF/shiftReport';
+import { useRobotsStore } from '@/store/robotsStore';
+import { toast } from 'sonner';
+import dayjs from 'dayjs';
 
-    const [isLoading, setIsLoading] = useState<boolean>(false);
+import type { IHistoryParts, IHistoryStatus } from '@/types/robot/robot';
 
+export default function Page() {
+    /* ------------------------- state ------------------------- */
+    const [date, setDate] = useState<Date | undefined>(getWorkDate(new Date()));
+    const [shift, setShift] = useState<'day' | 'night'>(getInitialShift());
 
-    const initialDate = dayjs().format("YYYY-MM-DD"); // только дата
+    const [data, setData] = useState<Record<string, ErrorRecord[]>>({});
+    const [loading, setLoading] = useState(false);
 
-    const [open, setOpen] = React.useState(false)
-    const [date, setDate] = React.useState<Date | undefined>(dayjs(initialDate).toDate());
-    const [shift_type, setShift_type] = useState<string>("day")
-    const [report_data, setReport_data] = useState<IEmployeeReport[] | null>(null)
+    /* ------------------------- robots store ------------------------- */
+    const robots = useRobotsStore((s) => s.robots);
 
-    const robots = useRobotsStore(state => state.robots)
+    /* ------------------------- history for selected date & shift ------------------------- */
+    const { historyStatus, historyParts } = useMemo(() => {
+        if (!date || !robots) return { historyStatus: [], historyParts: [] };
 
-    const [history_status, setHistory_status] = useState<IHistoryStatus[]>([])
-    const [history_parts, setHistory_parts] = useState<IHistoryParts[]>([])
+        const dayKey = dayjs(date).format('YYYY-MM-DD');
+
+        // Определяем временные границы смены
+        let shiftStart: dayjs.Dayjs;
+        let shiftEnd: dayjs.Dayjs;
+
+        if (shift === 'day') {
+            // Day shift: 06:00 - 18:00
+            shiftStart = dayjs(date).hour(6).minute(0).second(0);
+            shiftEnd = dayjs(date).hour(18).minute(0).second(0);
+        } else {
+            // Night shift: 18:00 - 06:00 (следующего дня)
+            shiftStart = dayjs(date).hour(18).minute(0).second(0);
+            shiftEnd = dayjs(date).add(1, 'day').hour(6).minute(0).second(0);
+        }
+
+        const hs: IHistoryStatus[] = [];
+        const hp: IHistoryParts[] = [];
+
+        robots.forEach((r) => {
+            // Фильтруем status_history по времени смены
+            r.status_history
+                .filter((h) => {
+                    const createdAt = dayjs(h.created_at);
+                    return createdAt.isAfter(shiftStart) && createdAt.isBefore(shiftEnd);
+                })
+                .forEach((h) => hs.push(h));
+
+            // Фильтруем parts_history по времени смены
+            r.parts_history
+                .filter((h) => {
+                    const createdAt = dayjs(h.created_at);
+                    return createdAt.isAfter(shiftStart) && createdAt.isBefore(shiftEnd);
+                })
+                .forEach((h) => hp.push(h));
+        });
+
+        return { historyStatus: hs, historyParts: hp };
+    }, [robots, date, shift]);
+
+    /* ------------------------- load exceptions ------------------------- */
+    const loadExceptions = async () => {
+        if (!date) return;
+        setLoading(true);
+        try {
+            const list = await getShiftList({ date, shift_type: shift });
+            const grp: Record<string, ErrorRecord[]> = {};
+            list.forEach((e: any) => (grp[e.employee] = [...(grp[e.employee] || []), e]));
+            setData(grp);
+        } finally {
+            setLoading(false);
+        }
+    };
 
     useEffect(() => {
-        if (robots) {
-            const filtered = robots.filter(item => dayjs(item.updated_at).format("YYYY-MM-DD") === initialDate)
+        loadExceptions();
+    }, [date, shift]);
 
-            let status_items: IHistoryStatus[] = [];
-            let parts_items: IHistoryParts[] = [];
-
-            filtered.forEach((el, index) => {
-
-                const status_history_today = el.status_history.filter(item => dayjs(item.created_at).format("YYYY-MM-DD") === initialDate)
-
-                if (status_history_today.length > 0) {
-                    status_history_today.forEach((i) => {
-                        status_items.push(i)
-                    })
-                }
-            })
-
-            filtered.forEach((el, index) => {
-
-                const status_history_today = el.parts_history.filter(item => dayjs(item.created_at).format("YYYY-MM-DD") === initialDate)
-
-                if (status_history_today.length > 0) {
-                    status_history_today.forEach((i) => {
-                        parts_items.push(i)
-                    })
-                }
-            })
-
-            setHistory_status(status_items);
-            setHistory_parts(parts_items);
-        }
-    }, [robots])
-
-
-    const [card_data, setCard_data] = useState({
-        rt_kubot_exc: "0",
-        rt_kubot_mini_exc: "0",
-        rt_kubot_e2_exc: "0",
-        abnormal_location: "0",
-        abnormal_case: "0",
-        employee_select: "",
-    })
-
-    const getEmployeesList = async () => {
+    /* ------------------------- PDF ------------------------- */
+    const handlePdf = async () => {
+        if (!date) return;
         try {
-            const res = await fetch(`/api/user/get-employees-list`, {
-                method: "GET",
-                headers: {
-                    "Content-Type": "application/json"
-                }
-            })
-
-            if (res.status !== 200) {
-                throw new Error(`HTTP error! status: ${res.status}`);
-            }
-            const result = await res.json();
-            setEmployees_list(result);
-
-        } catch (error) {
-            console.log(error);
-        }
-    }
-
-    useEffect(() => {
-        getEmployeesList()
-    }, []);
-
-    const addReportCardHandle = () => {
-        if (!card_data.employee_select.length) {
-            toast.error("User is must be assigned to the report, please select the user")
-            return;
-        }
-
-        const filtered = report_data?.filter(item => item.employee_select !== card_data.employee_select)
-        setReport_data([...filtered || [], card_data] as IEmployeeReport[])
-    }
-
-    const generatePDFReport = async () => {
-        if (!report_data || report_data.length === 0) {
-            toast.error("No report data available to generate PDF");
-            return;
-        }
-
-        try {
-            setIsLoading(true);
-            const promises_shifts = report_data.map(async (item) => {
-                const user_name = item.employee_select.split("-")[0];
-                const card_id = item.employee_select.split("-")[1];
-
-                const data = {
-                    employee_name: user_name,
-                    shift_type: shift_type,
-                    card_id: card_id,
-                    rt_kubot_exc: item.rt_kubot_exc,
-                    rt_kubot_mini: item.rt_kubot_mini_exc,
-                    rt_kubot_e2: item.rt_kubot_e2_exc,
-                    abnormal_locations: item.abnormal_location,
-                    abnormal_cases: item.abnormal_case,
-                    shift_date: date,
-                };
-
-                const score_summ = Number(data.rt_kubot_exc) + Number(data.rt_kubot_mini) + Number(data.rt_kubot_e2) + Number(data.abnormal_locations) + Number(data.abnormal_cases);
-                const new_score = score_summ / 100
-                try {
-                    const res = await fetch(`/api/user/update-user-score`, {
-                        method: "POST",
-                        headers: {
-                            "Content-Type": "application/json"
-                        },
-                        body: JSON.stringify({
-                            card_id: card_id,
-                            value: new_score
-                        })
-                    });
-
-                    const res_shift = await fetch(`/api/user/add-employee-shift`, {
-                        method: "POST",
-                        headers: {
-                            "Content-Type": "application/json"
-                        },
-                        body: JSON.stringify(data)
-                    });
-
-                    if (!res.ok) {
-                        throw new Error(`HTTP error! status: ${res.status}`);
-                    }
-
-                    if (!res_shift.ok) {
-                        throw new Error(`HTTP error! status: ${res.status}`);
-                    }
-
-                    const result = await res.json();
-                    console.log(result);
-                    return result;
-                } catch (err) {
-                    console.error('Error updating stats for card_id:', card_id, err);
-                }
+            setLoading(true);
+            // Правильный вызов с новым форматом данных
+            await generateShiftReport({
+                report_data: data, // Передаем объект Record<string, Exc[]>
+                date,
+                shift,
+                history_status: historyStatus,
+                history_parts: historyParts,
             });
-
-            await Promise.all(promises_shifts);
-            await generateShiftReport({report_data, date, shift_type, history_status, history_parts})
-
-            setTimeout(() => {
-                setIsLoading(false);
-            }, 250)
-
+            toast.success('PDF report generated successfully!');
         } catch (error) {
-            console.error('Error generating PDF:', error);
-            toast.error("Failed to generate PDF report");
+            console.error('PDF generation error:', error);
+            toast.error('Failed to generate PDF');
+        } finally {
+            setLoading(false);
         }
-    }
+    };
 
+    /* ------------------------- UI ------------------------- */
     return (
-        <div className="max-w-[1200px] px-4 m-auto">
-            <div className={`mb-6`}>
-                <h1 className="text-2xl mb-4">SHEIN REPORT PAGE</h1>
-
-                <div className={`mb-4`}>
-                    <SheinReportFile />
-                </div>
-
-                <div className={`flex flex-wrap items-center gap-2`}>
-                    <Button
-                        onClick={generatePDFReport}
-                        disabled={!report_data || report_data.length === 0 || isLoading}
-                    >
-                        {isLoading && <Loader className={`animate-spin`} /> }
-                        Generate PDF Report
-                    </Button>
-                    <Select value={shift_type} onValueChange={(value) => setShift_type(value)}>
-                        <SelectTrigger className="w-auto">
-                            <SelectValue placeholder="Shift Type" />
-                        </SelectTrigger>
-                        <SelectContent>
-                            <SelectGroup>
-                                <SelectItem value="day">Day</SelectItem>
-                                <SelectItem value="night">Night</SelectItem>
-                            </SelectGroup>
-                        </SelectContent>
-                    </Select>
-                    <div className="flex flex-col gap-3">
-                        <Popover open={open} onOpenChange={setOpen}>
-                            <PopoverTrigger asChild>
-                                <Button
-                                    variant="outline"
-                                    id="date"
-                                    className="w-auto justify-between font-normal"
-                                >
-                                    {date ? date.toLocaleDateString() : "Shift Date"}
-                                    <ChevronDownIcon />
-                                </Button>
-                            </PopoverTrigger>
-                            <PopoverContent className="w-auto overflow-hidden p-0" align="start">
-                                <Calendar
-                                    mode="single"
-                                    selected={date}
-                                    captionLayout="dropdown"
-                                    onSelect={(date) => {
-                                        setDate(date)
-                                        setOpen(false)
-                                    }}
-                                />
-                            </PopoverContent>
-                        </Popover>
-                    </div>
-                </div>
-            </div>
+        <div className="max-w-5xl mx-auto p-6 space-y-6">
             <Card>
-                <CardHeader className={`flex flex-wrap  w-full justify-between items-center mb-6`}>
-                    <CardTitle className={`mb-4`}>Employee Report Card</CardTitle>
-                    <CardAction>
-                        <div className={`flex w-full items-center gap-2`}>
-                            <Select
-                                value={card_data.employee_select}
-                                onValueChange={(value) => setCard_data((prev) => ({...prev, employee_select: value})) }>
-                                <SelectTrigger className="w-full">
-                                    <SelectValue placeholder="Select a employee"/>
-                                </SelectTrigger>
-                                <SelectContent>
-                                    <SelectGroup>
-                                        <SelectLabel>Employee</SelectLabel>
-                                        {employees_list.map((employee, index) => (
-                                            <SelectItem key={index} value={`${employee.user_name}-${employee.card_id}`}>{employee.user_name}</SelectItem>
-                                        ))}
-                                    </SelectGroup>
-                                </SelectContent>
-                            </Select>
-                        </div>
-                    </CardAction>
+                <CardHeader>
+                    <CardTitle>SHEIN REPORT PAGE</CardTitle>
+                    <CardDescription>Shift exceptions and robot history</CardDescription>
                 </CardHeader>
 
-                <CardContent>
-                    <div className={`flex flex-col gap-6`}>
-                        <div className={`flex flex-wrap gap-4`}>
-                            <div>
-                                <div className={`grid items-center gap-3`}>
-                                    <Label htmlFor="picture">RT KUBOT</Label>
-                                    <Input
-                                        className={`max-w-[100px]`}
-                                        value={card_data.rt_kubot_exc}
-                                        onChange={(e) => setCard_data((prev) => ({...prev, rt_kubot_exc: e.target.value}))}
-                                        type={"number"}
-                                    />
-                                </div>
-                            </div>
-                            <div>
-                                <div className={`grid max-w-sm items-center gap-3`}>
-                                    <Label htmlFor="picture">RT KUBOT MINI</Label>
-                                    <Input
-                                        className={`max-w-[100px]`}
-                                        value={card_data.rt_kubot_mini_exc}
-                                        onChange={(e) => setCard_data((prev) => ({...prev, rt_kubot_mini_exc:e.target.value}))}
-                                        type={"number"}
-                                    />
-                                </div>
-                            </div>
-                            <div>
-                                <div className={`grid max-w-sm items-center gap-3`}>
-                                    <Label htmlFor="picture">RT KUBOT E2</Label>
-                                    <Input
-                                        className={`max-w-[100px]`}
-                                        value={card_data.rt_kubot_e2_exc}
-                                        onChange={(e) => setCard_data((prev) => ({...prev, rt_kubot_e2_exc:e.target.value}))}
-                                        type={"number"}
-                                    />
-                                </div>
-                            </div>
-                            <p className={`col-span-3 text-neutral-500 text-xs`}>In this section, please record the number
-                                of robots of this type that you have solved during the shift.</p>
-                        </div>
-                        <div className={`flex flex-wrap items-center gap-4`}>
-                            <div>
-                                <div className={`grid w-full max-w-sm items-center gap-3`}>
-                                    <Label htmlFor="picture">ABNORMAL LOCATION</Label>
-                                    <Input
-                                        className={`max-w-[155px]`}
-                                        value={card_data.abnormal_location}
-                                        onChange={(e) => setCard_data((prev) => ({...prev, abnormal_location:e.target.value}))}
-                                        type={"number"}
-                                    />
-                                </div>
-                            </div>
-                            <div>
-                                <div className={`grid w-full max-w-sm items-center gap-3`}>
-                                    <Label htmlFor="picture">ABNORMAL CASES</Label>
-                                    <Input
-                                        className={`max-w-[155px]`}
-                                        value={card_data.abnormal_case}
-                                        onChange={(e) => setCard_data((prev) => ({...prev, abnormal_case:e.target.value}))}
-                                        type={"number"}
-                                    />
-                                </div>
-                            </div>
-                            <p className={`col-span-3 w-full text-neutral-500 text-xs`}>
-                                In this section, please record the number
-                                of abnormal position data.
-                            </p>
-                        </div>
+                <CardContent className="flex flex-wrap items-center justify-between gap-4">
+                    <div className="grid md:grid-cols-2 items-center gap-4">
+                        {/* DATE */}
+                        <Popover>
+                            <PopoverTrigger asChild>
+                                <Button variant="outline" className="w-[200px] justify-between">
+                                    {date ? format(date, 'PPP') : 'Pick date'}
+                                    <ChevronDown className="ml-2 h-4 w-4" />
+                                </Button>
+                            </PopoverTrigger>
+                            <PopoverContent className="w-auto p-0">
+                                <Calendar mode="single" selected={date} onSelect={setDate} initialFocus />
+                            </PopoverContent>
+                        </Popover>
+
+                        {/* SHIFT */}
+                        <Select value={shift} onValueChange={(v) => setShift(v as 'day' | 'night')}>
+                            <SelectTrigger className="w-[180px]">
+                                <SelectValue />
+                            </SelectTrigger>
+                            <SelectContent>
+                                <SelectGroup>
+                                    <SelectLabel>Shift</SelectLabel>
+                                    <SelectItem value="day">Day (06:00-18:00)</SelectItem>
+                                    <SelectItem value="night">Night (18:00-06:00)</SelectItem>
+                                </SelectGroup>
+                            </SelectContent>
+                        </Select>
                     </div>
+
+                    <Button onClick={handlePdf} disabled={loading || !Object.keys(data).length}>
+                        {loading ? 'Generating…' : 'PDF'}
+                    </Button>
                 </CardContent>
-                <CardFooter className="flex items-center justify-end gap-2">
-                    <Button onClick={addReportCardHandle}>
-                        Add to report
-                    </Button>
-                    <Button variant="outline">
-                        Clean
-                    </Button>
-                </CardFooter>
             </Card>
 
+            {/* ---------- CONTENT ---------- */}
+            {loading && !Object.keys(data).length && (
+                <Card>
+                    <CardContent className="pt-6">Loading…</CardContent>
+                </Card>
+            )}
 
-            <div className={`flex flex-col gap-2 mt-4`}>
-                {report_data?.map((item, index) => (
-                    <Item key={index} variant={`outline`} className={`flex flex-col items-start gap-4`}>
-                        <h5>{item.employee_select}</h5>
-                        <div className={`grid grid-cols-2 items-center gap-2`}>
-                            <Badge variant={`secondary`}>RT_KUBOT: {item.rt_kubot_exc}</Badge>
-                            <Badge variant={`secondary`}>RT_KUBOT_MINI: {item.rt_kubot_mini_exc}</Badge>
-                            <Badge variant={`secondary`}>RT_KUBOT_E2: {item.rt_kubot_e2_exc}</Badge>
-                            <Badge variant={`secondary`}>ABNORMAL_LOCATIONS: {item.abnormal_location}</Badge>
-                            <Badge variant={`secondary`}>ABNORMAL_CASE: {item.abnormal_case}</Badge>
-                        </div>
-                    </Item>
-                ))}
-            </div>
+            {!loading && !Object.keys(data).length && (
+                <Card>
+                    <CardContent className="pt-6 text-sm text-muted-foreground">No errors for selected shift.</CardContent>
+                </Card>
+            )}
+
+            <ScrollArea className="h-[600px] pr-4">
+                <div className="space-y-4">
+                    {Object.entries(data).map(([emp, list]) => (
+                        <Card key={emp}>
+                            <CardHeader className="pb-3">
+                                <div className="flex items-center justify-between">
+                                    <CardTitle className="text-base">{emp}</CardTitle>
+                                    <Badge variant="secondary">
+                                        {list.length} error{list.length > 1 ? 's' : ''} · {list.reduce((s, e) => s + e.solving_time, 0)} min
+                                    </Badge>
+                                </div>
+                            </CardHeader>
+
+                            <CardContent>
+                                <Accordion type="single" collapsible>
+                                    {list.map((e) => (
+                                        <AccordionItem value={String(e.id)} key={e.id}>
+                                            <AccordionTrigger className="text-sm">
+                                                <div className="flex items-center gap-3">
+                                                    <span>{dayjs(e.error_start_time).format('HH:mm')}</span>
+                                                    <span className="font-medium">Robot {e.error_robot}</span>
+                                                    <span className="text-muted-foreground">{e.device_type}</span>
+                                                    <Badge variant="outline">{e.solving_time} min</Badge>
+                                                </div>
+                                            </AccordionTrigger>
+
+                                            <AccordionContent className="text-sm space-y-2">
+                                                <div>Issue: {e.issue_description}</div>
+                                                <div>Recovery: {e.recovery_title}</div>
+                                                <div className="text-xs text-muted-foreground">{e.first_column} · {e.second_column}</div>
+                                                <Separator />
+                                                <div className="text-xs text-muted-foreground">{e.error_start_time} → {e.error_end_time}</div>
+                                            </AccordionContent>
+                                        </AccordionItem>
+                                    ))}
+                                </Accordion>
+                            </CardContent>
+                        </Card>
+                    ))}
+                </div>
+            </ScrollArea>
         </div>
     );
-};
-
-export default Page;
+}

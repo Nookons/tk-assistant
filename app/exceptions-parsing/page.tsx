@@ -11,34 +11,15 @@ import {toast} from "sonner";
 import errors_data_raw from '../../utils/ErrorsPatterns/ErrorsPatterns.json';
 import Image from "next/image";
 import TemplateInfo from "@/components/shared/ErrorParse/TemplateInfo";
-import { ButtonGroup } from "@/components/ui/button-group"
+import {ButtonGroup} from "@/components/ui/button-group"
+import {useRobotsStore} from "@/store/robotsStore";
+import {getEmployeesList} from "@/futures/user/getEmployees";
+import {IUser} from "@/types/user/user";
+import {addNewException} from "@/futures/exception/addNewException";
+import {getInitialShift, getInitialShiftByTime} from "@/futures/Date/getInitialShift";
 
 dayjs.extend(duration);
 dayjs.extend(utc);
-
-const employees_data = [
-    "Dmytro Kolomiiets", "Heorhi Labets", "Vasyl  Bondarenko",
-    "Ivan Bulii", "邓广全", "Mykyta Kyrylov",
-    "Tugsbayar Batsukh",
-    "Andrii Kyrychok",
-    "Yevgenii Krysiuk",
-    "Oleksandr Sofyna",
-    "Vitalii Lepekha",
-    "Kryvenko Danylo",
-    "Rostyslav Mykhavko",
-    "Iliya Kudii",
-    "Ilkin Azimzade",
-    "Eduard Maliuk",
-    "Stepan Zapotichyi",
-    "SALMI ABDERAOUF",
-    "RAIS AMINE",
-    "Amdjed Dilmi",
-    "Oleksii Ilin",
-    "Petro Diakunchak",
-    "Danylo Yakubchik",
-    "Yevhen Horetskyi",
-    "Nazar",
-];
 
 interface JsonError {
     id: number;
@@ -55,7 +36,7 @@ interface JsonError {
 // Приведение типов для данных из JSON
 const errors_data = errors_data_raw as JsonError[];
 
-interface ILocalIssue {
+export interface ILocalIssue {
     employee: string;
     first_column: string;
     second_column: string;
@@ -67,6 +48,9 @@ interface ILocalIssue {
     device_type: string;
     issue_type: string;
     issue_description: string;
+    add_by?: string;
+    uniq_key?: string;
+    shift_type?: string;
 }
 
 const Page = () => {
@@ -75,65 +59,114 @@ const Page = () => {
     const [wrong_parse, setWrong_parse] = useState<string[]>([]);
     const [parsed, setParsed] = useState<ILocalIssue[]>([]);
 
-    const parse = () => {
-        // Очищаем старые данные перед новым парсингом
-        setWrong_parse([]);
-        setParsed([]);
+    const robots = useRobotsStore(state => state.robots)
 
-        const lines = value.split('\n').filter(item => item.trim().length > 0);
-        let current_employee = "";
-        const temp_parsed: ILocalIssue[] = [];
-        const temp_wrong: string[] = [];
 
-        lines.forEach(line => {
-            const trimmedLine = line.trim();
+    const parse = async () => {
+        try {
+            // Очищаем старые данные перед новым парсингом
+            setWrong_parse([]);
+            setParsed([]);
 
-            if (employees_data.includes(trimmedLine)) {
-                current_employee = trimmedLine;
-                return;
+            const lines = value.split('\n').filter(item => item.trim().length > 0);
+            let current_employee = "";
+            const temp_parsed: ILocalIssue[] = [];
+            const temp_wrong: string[] = [];
+
+            const users = await getEmployeesList();
+
+            if (!users) {
+                throw new Error("Can't get employees list");
             }
 
-            const parts = trimmedLine.split(".");
 
-            const error_string = parts[0]
-            const error_robot = parts[1]
-            const error_time = parts[2]
+            lines.forEach(line => {
+                const trimmedLine = line.trim();
 
-            if (error_string === "Translate") return;
+                const isUser = users.find((user: IUser) => user.user_name === trimmedLine);
 
-            const error_pattern = errors_data.find(error =>
-                error.employee_title.toLowerCase().includes(error_string.toLowerCase())
-            );
+                if (isUser) {
+                    current_employee = trimmedLine;
+                    return;
+                }
 
-            if (!error_pattern) {
-                toast.error(`Error not found: ${error_string}`);
-                temp_wrong.push(`${error_time} | ${current_employee || "No Employee"} - ${error_string} - ${error_robot}`);
-                return;
-            }
+                const parts = trimmedLine.split(".");
 
-            // Формируем дату: сегодняшнее число + время из строки
-            const startTime = dayjs(`${dayjs().format("YYYY-MM-DD")} ${error_time}`);
+                const error_string = parts[0]
+                const error_robot = parts[1]
+                const error_time = parts[2]
 
+                if (error_string === "Translate") return;
 
-            temp_parsed.push({
-                employee: current_employee || "Unknown",
-                first_column: error_pattern.first_column,
-                second_column: error_pattern.second_column,
-                error_robot: error_robot,
-                error_start_time: startTime.toDate(),
-                // Используем правильное поле solving_time из JSON
-                error_end_time: startTime.add(error_pattern.solving_time, 'minute').toDate(),
-                recovery_title: error_pattern.recovery_title,
-                solving_time: error_pattern.solving_time,
-                device_type: error_pattern.device_type,
-                issue_type: error_pattern.issue_type,
-                issue_description: error_pattern.issue_description,
+                const error_pattern = errors_data.find(error =>
+                    error.employee_title.toLowerCase().includes(error_string.toLowerCase())
+                );
+
+                if (!error_pattern) {
+                    toast.error(`Error not found: ${error_string}`);
+                    temp_wrong.push(`${error_time} | ${current_employee || "No Employee"} - ${error_string} - ${error_robot}`);
+                    return;
+                }
+
+                // Формируем дату: сегодняшнее число + время из строки
+                const startTime = dayjs(`${dayjs().format("YYYY-MM-DD")} ${error_time}`);
+
+                const robot_state = robots.find(robot => Number(robot.robot_number) === Number(error_robot))
+
+                const obj = {
+                    employee: current_employee || "Unknown",
+                    first_column: error_pattern.first_column,
+                    second_column: error_pattern.second_column,
+                    error_robot: error_robot,
+                    error_start_time: startTime.toDate(),
+                    error_end_time: startTime.add(error_pattern.solving_time, 'minute').toDate(),
+                    recovery_title: error_pattern.recovery_title,
+                    solving_time: error_pattern.solving_time,
+                    device_type: robot_state?.robot_type || "Unknown",
+                    issue_type: error_pattern.issue_type,
+                    issue_description: error_pattern.issue_description,
+                }
+
+                temp_parsed.push(obj);
             });
-        });
 
-        setParsed(temp_parsed);
-        setWrong_parse(temp_wrong);
+            setParsed(temp_parsed);
+            setWrong_parse(temp_wrong);
+        } catch (error) {
+            error && toast.error(error.toString() || "Unknown error");
+            console.error(error)
+        }
     };
+
+    useEffect(() => {
+        const send = async () => {
+            try {
+                const users = await getEmployeesList();
+
+                await Promise.all(
+                    parsed.map(async (issue) => {
+                        const date = issue.error_start_time;
+                        const user = users.find((u: IUser) => u.user_name === issue.employee)!;
+                        const shift = getInitialShiftByTime(date);
+
+                        await addNewException({
+                            data: {
+                                ...issue,
+                                add_by: user.card_id,
+                                shift_type: shift,
+                                uniq_key: `${issue.employee}.${issue.error_robot}.${issue.error_start_time.getTime()}`
+                            }
+                        });
+                    })
+                );
+                toast.success('All exceptions saved');
+            } catch (e) {
+                toast.error('Save failed');
+            }
+        };
+
+        send();
+    }, [parsed]);
 
     const copyToClipboard = (type: 'GLPC' | "P3") => {
         const headers = [
@@ -214,7 +247,7 @@ const Page = () => {
             <div className="flex flex-col gap-4 mb-8">
                 <div>
                     <div className={`my-2`}>
-                        <TemplateInfo />
+                        <TemplateInfo/>
                     </div>
                     <Textarea
                         className="max-h-[200px] font-mono"
@@ -284,7 +317,7 @@ const Page = () => {
                                                                  height={30}/>
                                                     }
                                                 </div>
-                                                <article>{error.error_robot} - {Number(error.error_robot) < 150 ? "A42" : "K50"}</article>
+                                                <article>{error.error_robot} - {error.device_type}</article>
                                             </div>
                                         </TableCell>
                                         <TableCell>
