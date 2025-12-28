@@ -86,6 +86,7 @@ export default function Page() {
             const list = await getShiftList({ date, shift_type: shift });
             const grp: Record<string, ErrorRecord[]> = {};
             list.forEach((e: any) => (grp[e.employee] = [...(grp[e.employee] || []), e]));
+            console.log(grp);
             setData(grp);
         } finally {
             setLoading(false);
