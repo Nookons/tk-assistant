@@ -31,19 +31,24 @@ export async function GET(req: NextRequest) {
         dayjsTimezone: dayjs.tz.guess()
     });
 
-    const workDay = dayjs(date);
     let startShift: dayjs.Dayjs;
     let endShift: dayjs.Dayjs;
 
     if (shift === 'night') {
-        // 18:00 предыдущего дня … 06:00 текущего
-        const base = dayjs(getWorkDate(date)).hour(18).minute(0).second(0).millisecond(0);
-        startShift = base;
-        endShift = base.add(12, 'hour');
+        // Ночная смена: 18:00 выбранного дня → 06:00 следующего дня
+        // getWorkDate уже учитывает, что если сейчас 05:45, то это продолжение смены предыдущего дня
+        const workDate = getWorkDate(date);
+        console.log('🔵 Work date for night shift:', {
+            original: dayjs(date).format('YYYY-MM-DD'),
+            workDate: dayjs(workDate).format('YYYY-MM-DD')
+        });
+
+        startShift = dayjs(workDate).hour(18).minute(0).second(0).millisecond(0);
+        endShift = dayjs(workDate).add(1, 'day').hour(6).minute(0).second(0).millisecond(0);
     } else if (shift === 'day') {
-        // 06:00 … 18:00 текущего дня
-        startShift = workDay.hour(6).minute(0).second(0).millisecond(0);
-        endShift = workDay.hour(18).minute(0).second(0).millisecond(0);
+        // Дневная смена: 06:00 → 18:00 выбранного дня
+        startShift = dayjs(date).hour(6).minute(0).second(0).millisecond(0);
+        endShift = dayjs(date).hour(18).minute(0).second(0).millisecond(0);
     } else {
         return NextResponse.json({ error: 'Unknown shift type' }, { status: 400 });
     }
@@ -65,7 +70,11 @@ export async function GET(req: NextRequest) {
 
     console.log('🔵 Query without shift_type filter:', {
         totalRecords: allData?.length || 0,
-        shifts: allData ? [...new Set(allData.map(d => d.shift_type))] : []
+        shifts: allData ? [...new Set(allData.map(d => d.shift_type))] : [],
+        timeRange: allData && allData.length > 0 ? {
+            first: allData[0].error_start_time,
+            last: allData[allData.length - 1].error_start_time
+        } : 'No data'
     });
 
     // Теперь с фильтром по shift_type
@@ -78,7 +87,12 @@ export async function GET(req: NextRequest) {
 
     console.log('🔵 Query WITH shift_type filter:', {
         totalRecords: data?.length || 0,
-        sampleRecord: data && data.length > 0 ? data[0] : 'No data'
+        sampleRecord: data && data.length > 0 ? {
+            id: data[0].id,
+            employee: data[0].employee,
+            error_start_time: data[0].error_start_time,
+            shift_type: data[0].shift_type
+        } : 'No data'
     });
 
     if (error) {
@@ -87,8 +101,8 @@ export async function GET(req: NextRequest) {
     }
 
     if (!data || data.length === 0) {
-        console.log('⚠️ No data found - returning empty array instead of 404');
-        return NextResponse.json([], { status: 200 }); // Важно! Возвращаем пустой массив, а не 404
+        console.log('⚠️ No data found - returning empty array');
+        return NextResponse.json([], { status: 200 });
     }
 
     console.log('✅ Returning data:', {
