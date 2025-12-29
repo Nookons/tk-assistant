@@ -17,6 +17,7 @@ import {getEmployeesList} from "@/futures/user/getEmployees";
 import {IUser} from "@/types/user/user";
 import {addNewException} from "@/futures/exception/addNewException";
 import {getInitialShift, getInitialShiftByTime} from "@/futures/Date/getInitialShift";
+import {getWorkDate} from "@/futures/Date/getWorkDate";
 
 dayjs.extend(duration);
 dayjs.extend(utc);
@@ -61,10 +62,8 @@ const Page = () => {
 
     const robots = useRobotsStore(state => state.robots)
 
-
     const parse = async () => {
         try {
-            // Очищаем старые данные перед новым парсингом
             setWrong_parse([]);
             setParsed([]);
 
@@ -79,6 +78,8 @@ const Page = () => {
                 throw new Error("Can't get employees list");
             }
 
+            const now = dayjs();
+            const currentHour = now.hour();
 
             lines.forEach(line => {
                 const trimmedLine = line.trim();
@@ -91,10 +92,9 @@ const Page = () => {
                 }
 
                 const parts = trimmedLine.split(".");
-
-                const error_string = parts[0]
-                const error_robot = parts[1]
-                const error_time = parts[2]
+                const error_string = parts[0];
+                const error_robot = parts[1];
+                const error_time = parts[2];
 
                 if (error_string === "Translate") return;
 
@@ -108,10 +108,21 @@ const Page = () => {
                     return;
                 }
 
-                // Формируем дату: сегодняшнее число + время из строки
-                const startTime = dayjs(`${dayjs().format("YYYY-MM-DD")} ${error_time}`);
+                // Парсим время ошибки
+                const [errorHour, errorMinute] = error_time.split(':').map(Number);
 
-                const robot_state = robots.find(robot => Number(robot.robot_number) === Number(error_robot))
+                let startTime: dayjs.Dayjs;
+
+                // Если сейчас с 00:00 до 06:00 И время ошибки с 18:00 до 00:00
+                if (currentHour >= 0 && currentHour < 6 && errorHour >= 18 && errorHour < 24) {
+                    // Время ошибки было вчера
+                    startTime = now.subtract(1, 'day').hour(errorHour).minute(errorMinute).second(0);
+                } else {
+                    // Обычная ситуация - сегодня
+                    startTime = now.hour(errorHour).minute(errorMinute).second(0);
+                }
+
+                const robot_state = robots.find(robot => Number(robot.robot_number) === Number(error_robot));
 
                 const obj = {
                     employee: current_employee || "Unknown",
@@ -125,7 +136,7 @@ const Page = () => {
                     device_type: robot_state?.robot_type || "Unknown",
                     issue_type: error_pattern.issue_type,
                     issue_description: error_pattern.issue_description,
-                }
+                };
 
                 temp_parsed.push(obj);
             });
@@ -134,9 +145,10 @@ const Page = () => {
             setWrong_parse(temp_wrong);
         } catch (error) {
             error && toast.error(error.toString() || "Unknown error");
-            console.error(error)
+            console.error(error);
         }
     };
+
 
     useEffect(() => {
         const send = async () => {
@@ -154,7 +166,7 @@ const Page = () => {
                                 ...issue,
                                 add_by: user.card_id,
                                 shift_type: shift,
-                                uniq_key: `${issue.employee}.${issue.error_robot}.${issue.error_start_time.getTime()}`
+                                uniq_key: `${issue.employee}.${issue.error_robot}.${dayjs(issue.error_start_time).format('YYYYMMDDHHmm')}`
                             }
                         });
                     })

@@ -7,6 +7,9 @@ import { Button } from "@/components/ui/button"
 import UserButton from "@/components/shared/header/userButton"
 import Image from "next/image"
 import { cn } from "@/lib/utils"
+import {useTheme} from "next-themes";
+import {useEffect} from "react";
+import {Label} from "@/components/ui/label";
 
 // Removed unused import: Home
 
@@ -69,6 +72,14 @@ export function Header() {
     const [mobileMenuOpen, setMobileMenuOpen] = React.useState<boolean>(false)
     const [activeDropdown, setActiveDropdown] = React.useState<string | null>(null)
 
+    const { theme } = useTheme()
+    const [mounted, setMounted] = React.useState(false)
+
+    useEffect(() => {
+        setMounted(true)
+    }, [])
+
+
     // Using useCallback for a stable toggle function
     const toggleMobileMenu = React.useCallback(() => {
         setMobileMenuOpen(prev => !prev);
@@ -79,18 +90,27 @@ export function Header() {
         setMobileMenuOpen(false);
     }, []);
 
+
+
     return (
         <header className="sticky bg-muted-foreground/5 backdrop-blur-2xl mb-2 top-0 z-50 w-full">
-            <div className="flex justify-between py-4 px-2">
+            <div className="flex items-center justify-between px-2 py-2">
                 {/* Logo */}
                 <Link href="/" className="flex items-center gap-3" aria-label="Go to Homepage">
-                    <div className="bg-white rounded-lg shadow-sm p-1.5 flex items-center">
-                        <Image
-                            alt="Tk Service Logo"
-                            src="/img/logo_short.png"
-                            width={75}
-                            height={75}
-                        />
+                    <div className="rounded-lg flex items-center">
+                        <div className="rounded-lg flex items-center">
+                            <Label className={`font-bold text-primary`}>TK Service</Label>
+                            {/*{mounted && (
+                                <Image
+                                    alt="Tk Service Logo"
+                                    className={`rounded-2xl my-2`}
+                                    src={theme === "light" ? "/img/black.png" : "/img/black.png"}
+                                    width={75}
+                                    height={75}
+                                    priority
+                                />
+                            )}*/}
+                        </div>
                     </div>
                 </Link>
 

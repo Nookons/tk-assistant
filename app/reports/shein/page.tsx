@@ -24,15 +24,31 @@ import dayjs from 'dayjs';
 import type { IHistoryParts, IHistoryStatus } from '@/types/robot/robot';
 
 export default function Page() {
-    /* ------------------------- state ------------------------- */
-    const [date, setDate] = useState<Date | undefined>(getWorkDate(new Date()));
-    const [shift, setShift] = useState<'day' | 'night'>(getInitialShift());
+    // Инициализируем стейт с явным значением
+    const [date, setDate] = useState<Date>(() => {
+        const initialDate = getWorkDate(new Date());
+        console.log('Initial date from getWorkDate:', initialDate);
+        return initialDate || new Date();
+    });
+
+    const [shift, setShift] = useState<'day' | 'night'>(() => {
+        const initialShift = getInitialShift();
+        console.log('Initial shift from getInitialShift:', initialShift);
+        return initialShift;
+    });
 
     const [data, setData] = useState<Record<string, ErrorRecord[]>>({});
     const [loading, setLoading] = useState(false);
+    const [mounted, setMounted] = useState(false);
 
     /* ------------------------- robots store ------------------------- */
     const robots = useRobotsStore((s) => s.robots);
+
+    /* ------------------------- Эффект для отслеживания монтирования ------------------------- */
+    useEffect(() => {
+        setMounted(true);
+        console.log('Component mounted');
+    }, []);
 
     /* ------------------------- history for selected date & shift ------------------------- */
     const { historyStatus, historyParts } = useMemo(() => {
@@ -79,32 +95,66 @@ export default function Page() {
     }, [robots, date, shift]);
 
     /* ------------------------- load exceptions ------------------------- */
+    /* ------------------------- load exceptions ------------------------- */
     const loadExceptions = async () => {
-        if (!date) return;
+        if (!date) {
+            console.log('loadExceptions: date is undefined, skipping');
+            return;
+        }
+
+        console.log('=== Starting loadExceptions ===');
+        console.log('Date object:', date);
+        console.log('Date type:', typeof date);
+        console.log('Date toString:', date.toString());
+        console.log('Date ISO:', date.toISOString());
+        console.log('Shift:', shift);
+
         setLoading(true);
+
         try {
-            const list = await getShiftList({ date, shift_type: shift });
+            // Форматируем дату в ISO формат (YYYY-MM-DD)
+            const formattedDate = dayjs(date).format('YYYY-MM-DD');
+            console.log('Formatted date for API:', formattedDate);
+
+            const list = await getShiftList({ date: formattedDate, shift_type: shift });
+
+            console.log('API Response:', list);
+            console.log('Response length:', list?.length);
+
             const grp: Record<string, ErrorRecord[]> = {};
             list.forEach((e: any) => (grp[e.employee] = [...(grp[e.employee] || []), e]));
-            console.log(grp);
+
+            console.log('Grouped data:', grp);
+            console.log('Grouped keys:', Object.keys(grp));
+
             setData(grp);
+
+        } catch (error) {
+            console.error('Error loading exceptions:', error);
+            toast.error('Failed to load exceptions');
         } finally {
             setLoading(false);
         }
     };
 
     useEffect(() => {
-        loadExceptions();
-    }, [date, shift]);
+        console.log('=== useEffect triggered ===');
+        console.log('mounted:', mounted);
+        console.log('date:', date);
+        console.log('shift:', shift);
+
+        if (mounted && date) {
+            loadExceptions();
+        }
+    }, [mounted, date, shift]);
 
     /* ------------------------- PDF ------------------------- */
     const handlePdf = async () => {
         if (!date) return;
         try {
             setLoading(true);
-            // Правильный вызов с новым форматом данных
             await generateShiftReport({
-                report_data: data, // Передаем объект Record<string, Exc[]>
+                report_data: data,
                 date,
                 shift,
                 history_status: historyStatus,
@@ -139,7 +189,7 @@ export default function Page() {
                                 </Button>
                             </PopoverTrigger>
                             <PopoverContent className="w-auto p-0">
-                                <Calendar mode="single" selected={date} onSelect={setDate} initialFocus />
+                                <Calendar mode="single" selected={date} onSelect={(d) => d && setDate(d)} initialFocus />
                             </PopoverContent>
                         </Popover>
 
@@ -165,7 +215,7 @@ export default function Page() {
             </Card>
 
             {/* ---------- CONTENT ---------- */}
-            {loading && !Object.keys(data).length && (
+            {loading && (
                 <Card>
                     <CardContent className="pt-6">Loading…</CardContent>
                 </Card>
@@ -173,51 +223,55 @@ export default function Page() {
 
             {!loading && !Object.keys(data).length && (
                 <Card>
-                    <CardContent className="pt-6 text-sm text-muted-foreground">No errors for selected shift.</CardContent>
+                    <CardContent className="pt-6 text-sm text-muted-foreground">
+                        No errors for selected shift. (Date: {date ? format(date, 'PPP') : 'none'}, Shift: {shift})
+                    </CardContent>
                 </Card>
             )}
 
-            <ScrollArea className="h-[600px] pr-4">
-                <div className="space-y-4">
-                    {Object.entries(data).map(([emp, list]) => (
-                        <Card key={emp}>
-                            <CardHeader className="pb-3">
-                                <div className="flex items-center justify-between">
-                                    <CardTitle className="text-base">{emp}</CardTitle>
-                                    <Badge variant="secondary">
-                                        {list.length} error{list.length > 1 ? 's' : ''} · {list.reduce((s, e) => s + e.solving_time, 0)} min
-                                    </Badge>
-                                </div>
-                            </CardHeader>
+            {!loading && Object.keys(data).length > 0 && (
+                <ScrollArea className="h-[600px] pr-4">
+                    <div className="space-y-4">
+                        {Object.entries(data).map(([emp, list]) => (
+                            <Card key={emp}>
+                                <CardHeader className="pb-3">
+                                    <div className="flex items-center justify-between">
+                                        <CardTitle className="text-base">{emp}</CardTitle>
+                                        <Badge variant="secondary">
+                                            {list.length} error{list.length > 1 ? 's' : ''} · {list.reduce((s, e) => s + e.solving_time, 0)} min
+                                        </Badge>
+                                    </div>
+                                </CardHeader>
 
-                            <CardContent>
-                                <Accordion type="single" collapsible>
-                                    {list.map((e) => (
-                                        <AccordionItem value={String(e.id)} key={e.id}>
-                                            <AccordionTrigger className="text-sm">
-                                                <div className="flex items-center gap-3">
-                                                    <span>{dayjs(e.error_start_time).format('HH:mm')}</span>
-                                                    <span className="font-medium">Robot {e.error_robot}</span>
-                                                    <span className="text-muted-foreground">{e.device_type}</span>
-                                                    <Badge variant="outline">{e.solving_time} min</Badge>
-                                                </div>
-                                            </AccordionTrigger>
+                                <CardContent>
+                                    <Accordion type="single" collapsible>
+                                        {list.map((e) => (
+                                            <AccordionItem value={String(e.id)} key={e.id}>
+                                                <AccordionTrigger className="text-sm">
+                                                    <div className="flex items-center gap-3">
+                                                        <span>{dayjs(e.error_start_time).format('HH:mm')}</span>
+                                                        <span className="font-medium">Robot {e.error_robot}</span>
+                                                        <span className="text-muted-foreground">{e.device_type}</span>
+                                                        <Badge variant="outline">{e.solving_time} min</Badge>
+                                                    </div>
+                                                </AccordionTrigger>
 
-                                            <AccordionContent className="text-sm space-y-2">
-                                                <div>Issue: {e.issue_description}</div>
-                                                <div>Recovery: {e.recovery_title}</div>
-                                                <div className="text-xs text-muted-foreground">{e.first_column} · {e.second_column}</div>
-                                                <Separator />
-                                                <div className="text-xs text-muted-foreground">{e.error_start_time} → {e.error_end_time}</div>
-                                            </AccordionContent>
-                                        </AccordionItem>
-                                    ))}
-                                </Accordion>
-                            </CardContent>
-                        </Card>
-                    ))}
-                </div>
-            </ScrollArea>
+                                                <AccordionContent className="text-sm space-y-2">
+                                                    <div>Issue: {e.issue_description}</div>
+                                                    <div>Recovery: {e.recovery_title}</div>
+                                                    <div className="text-xs text-muted-foreground">{e.first_column} · {e.second_column}</div>
+                                                    <Separator />
+                                                    <div className="text-xs text-muted-foreground">{e.error_start_time} → {e.error_end_time}</div>
+                                                </AccordionContent>
+                                            </AccordionItem>
+                                        ))}
+                                    </Accordion>
+                                </CardContent>
+                            </Card>
+                        ))}
+                    </div>
+                </ScrollArea>
+            )}
         </div>
     );
 }

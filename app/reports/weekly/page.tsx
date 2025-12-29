@@ -68,6 +68,7 @@ export interface ExceptionRecord {
     employee: string;            // "Dmytro Kolomiiets"
     start_time: string;          // "1899-12-30T06:25:00.000Z"
     end_time: string;            // "1899-12-30T06:26:00.000Z"
+    gap: number;            // "1899-12-30T06:26:00.000Z"
 }
 
 
@@ -86,159 +87,96 @@ const createEmptySummary = (): RobotSummary => ({
     total_idle_percentage: 0,
 });
 
-const calculateSummary = (robots: RobotStats[]): RobotSummary => {
-    if (robots.length === 0) return createEmptySummary();
-
-    const totalMinutes = robots.length * TOTAL_MINUTES_PER_ROBOT;
-
-    const totals = robots.reduce((acc, robot) => ({
-        work_time: acc.work_time + robot.work_time,
-        charge_time: acc.charge_time + robot.charge_time,
-        offline_time: acc.offline_time + robot.offline_time,
-        abnormal_time: acc.abnormal_time + robot.abnormal_time,
-        idle_time: acc.idle_time + robot.idle_time,
-    }), {
-        work_time: 0,
-        charge_time: 0,
-        offline_time: 0,
-        abnormal_time: 0,
-        idle_time: 0,
-    });
-
-    return {
-        total_robots: robots.length,
-        working_hours: totals.work_time,
-        charge_hours: totals.charge_time,
-        total_offline: totals.offline_time,
-        total_abnormal: totals.abnormal_time,
-        total_idle: totals.idle_time,
-        working_hours_percentage: (totals.work_time / totalMinutes) * 100,
-        charge_hours_percentage: (totals.charge_time / totalMinutes) * 100,
-        total_offline_percentage: (totals.offline_time / totalMinutes) * 100,
-        total_abnormal_percentage: (totals.abnormal_time / totalMinutes) * 100,
-        total_idle_percentage: (totals.idle_time / totalMinutes) * 100,
-    };
-};
 
 const isValidExcelFile = (file: File): boolean => {
     return VALID_FILE_TYPES.includes(file.type) ||
         /\.(xlsx|xls|ods)$/i.test(file.name);
 };
 
-const processRobotData = (rows: any[][]): RobotStats[] => {
-    const robotsMap = new Map<string, RobotStats>();
 
-    rows.forEach((row) => {
-        const record = {
-            robotId: row[0],
-            robotType: row[1],
-            date: row[3],
-            work_time: parseFloat(row[5]) || 0,
-            charge_time: parseFloat(row[6]) || 0,
-            offline_time: parseFloat(row[7]) || 0,
-            abnormal_time: parseFloat(row[8]) || 0,
-            idle_time: parseFloat(row[9]) || 0
-        };
+// Функция для конвертации Excel ДАТЫ (включая китайский формат)
+const excelDateToJSDate = (excelDate: any): Date | null => {
+    console.log('Raw Excel date value:', excelDate, 'Type:', typeof excelDate);
 
-        let robot = robotsMap.get(record.robotId);
+    // Если это уже Date объект
+    if (excelDate instanceof Date) {
+        return excelDate;
+    }
 
-        if (!robot) {
-            robot = {
-                robotId: record.robotId,
-                robotType: record.robotType,
-                count: 0,
-                work_time: 0,
-                charge_time: 0,
-                offline_time: 0,
-                abnormal_time: 0,
-                idle_time: 0,
-                dates: new Set<string>()
-            };
-            robotsMap.set(record.robotId, robot);
+    // Если это строка с китайскими символами (例: 2025年12月29日)
+    if (typeof excelDate === 'string') {
+        // Проверяем на китайский формат
+        const chineseMatch = excelDate.match(/(\d+)年(\d+)月(\d+)日/);
+        if (chineseMatch) {
+            const [_, year, month, day] = chineseMatch;
+            const dateStr = `${year}-${month.padStart(2, '0')}-${day.padStart(2, '0')}`;
+            console.log('✅ Parsed Chinese date:', dateStr);
+            return dayjs(dateStr).toDate();
         }
 
-        robot.count++;
-        robot.work_time += record.work_time;
-        robot.charge_time += record.charge_time;
-        robot.offline_time += record.offline_time;
-        robot.abnormal_time += record.abnormal_time;
-        robot.idle_time += record.idle_time;
-        robot.dates.add(record.date);
-    });
+        // Обычная строка даты
+        const parsed = new Date(excelDate);
+        if (!isNaN(parsed.getTime())) {
+            return parsed;
+        }
+    }
 
-    return Array.from(robotsMap.values());
+    // Если это число (Excel serial date)
+    if (typeof excelDate === 'number') {
+        const date = dayjs('1899-12-30').add(Math.floor(excelDate), 'day');
+        return date.toDate();
+    }
+
+    return null;
 };
 
-function excelDateToJSDate(serial: number): Date {
-    const utc_days = serial - 25569;
-    const utc_value = utc_days * 86400; // секунд в сутках
-    return new Date(utc_value * 1000);
-}
+// Функция для конвертации Excel ВРЕМЕНИ
+const excelTimeToJSDate = (excelTime: any, baseDate: Date): Date | null => {
+    console.log('Raw Excel time value:', excelTime, 'Type:', typeof excelTime);
+
+    // Если это уже Date объект
+    if (excelTime instanceof Date) {
+        return excelTime;
+    }
+
+    // Если это строка времени (例: "14:30" или "2:30 PM")
+    if (typeof excelTime === 'string') {
+        const timeMatch = excelTime.match(/(\d{1,2}):(\d{2})/);
+        if (timeMatch) {
+            const [_, hours, minutes] = timeMatch;
+            return dayjs(baseDate)
+                .hour(parseInt(hours))
+                .minute(parseInt(minutes))
+                .second(0)
+                .toDate();
+        }
+    }
+
+    // Если это число (Excel time fraction или serial datetime)
+    if (typeof excelTime === 'number') {
+        // Если число больше 1, это datetime (дата + время)
+        if (excelTime > 1) {
+            const date = dayjs('1899-12-30').add(excelTime, 'day');
+            return date.toDate();
+        }
+
+        // Если число меньше 1, это только время (дробь дня)
+        const totalMinutes = Math.round(excelTime * 24 * 60);
+        const hours = Math.floor(totalMinutes / 60);
+        const minutes = totalMinutes % 60;
+
+        return dayjs(baseDate).hour(hours).minute(minutes).second(0).toDate();
+    }
+
+    return null;
+};
 
 // ============= COMPONENT =============
 const Page: React.FC = () => {
-    const [file, setFile] = useState<File | null>(null);
     const [exception_file, setException_file] = useState<File | null>(null);
     const [data, setData] = useState<ExcelData | null>(null);
-    const [processedData, setProcessedData] = useState<RobotStats[]>([]);
 
     const [exceptions_data, setExceptions_data] = useState<ExceptionRecord[]>([])
-
-    // Используем useMemo для вычисления сводок
-    const summaries = useMemo(() => {
-        const robotsByType = {
-            [ROBOT_TYPES.KUBOT]: processedData.filter(r => r.robotType === ROBOT_TYPES.KUBOT),
-            [ROBOT_TYPES.MINI]: processedData.filter(r => r.robotType === ROBOT_TYPES.MINI),
-            [ROBOT_TYPES.E2]: processedData.filter(r => r.robotType === ROBOT_TYPES.E2),
-        };
-
-        return {
-            total: calculateSummary(processedData),
-            kubot: calculateSummary(robotsByType[ROBOT_TYPES.KUBOT]),
-            mini: calculateSummary(robotsByType[ROBOT_TYPES.MINI]),
-            e2: calculateSummary(robotsByType[ROBOT_TYPES.E2]),
-        };
-    }, [processedData]);
-
-    const processFile = (selectedFile: File) => {
-        if (!isValidExcelFile(selectedFile)) {
-            alert('Пожалуйста, загрузите Excel файл (.xlsx, .xls, .ods)');
-            return;
-        }
-
-        setFile(selectedFile);
-
-        const reader = new FileReader();
-        reader.onload = (e: ProgressEvent<FileReader>) => {
-            try {
-                const workbook = XLSX.read(e.target?.result, {type: 'binary'});
-                const firstSheetName = workbook.SheetNames[0];
-                const worksheet = workbook.Sheets[firstSheetName];
-                const jsonData = XLSX.utils.sheet_to_json(worksheet, {header: 1}) as any[][];
-
-                const headers = jsonData[0] as string[];
-                const rows = jsonData.slice(1).filter(row =>
-                    row.some(cell => cell !== undefined && cell !== '')
-                );
-
-                setData({
-                    sheetName: firstSheetName,
-                    headers: headers,
-                    rows: rows,
-                    totalRows: rows.length,
-                    totalColumns: headers.length
-                });
-
-                const robotStats = processRobotData(rows);
-                setProcessedData(robotStats.slice(1));
-            } catch (error) {
-                console.error('Ошибка обработки файла:', error);
-                alert('Ошибка при обработке файла');
-            }
-        };
-
-        reader.readAsBinaryString(selectedFile);
-    };
 
     const processExceptionsFile = (selectedFile: File) => {
         if (!isValidExcelFile(selectedFile)) {
@@ -247,6 +185,7 @@ const Page: React.FC = () => {
         }
 
         const reader = new FileReader();
+
 
         reader.onload = (e: ProgressEvent<FileReader>) => {
             try {
@@ -271,9 +210,15 @@ const Page: React.FC = () => {
                 let data: any[] = [];
 
                 rows.forEach((Meline) => {
-                    console.log(Meline);
+                    // Конвертируем дату исключения
+                    const exceptionDate = excelDateToJSDate(Meline[0]) || new Date();
+
+                    console.log('Exception date:', Meline[0], '->', exceptionDate);
+                    console.log('Start time:', Meline[11]);
+                    console.log('End time:', Meline[12]);
+
                     const obj = {
-                        exception_date: excelDateToJSDate(Meline[0]) || 0,
+                        exception_date: exceptionDate,
                         warehouse: Meline[1] || "",
                         robot_type: Meline[2] || "",
                         robot_number: Meline[3] || "",
@@ -282,19 +227,18 @@ const Page: React.FC = () => {
                         error_2: Meline[6] || "",
                         error_description: Meline[8] || "",
                         error_recovery: Meline[9] || "",
-                        employee: Meline[10] || "",
-                        start_time: excelDateToJSDate(Meline[11]) || "",
-                        end_time: excelDateToJSDate(Meline[12]) || "",
+                        employee: Meline[9] || "",
+                        // Время привязываем к дате исключения
+                        start_time: excelTimeToJSDate(Meline[11], exceptionDate) || exceptionDate,
+                        end_time: excelTimeToJSDate(Meline[12], exceptionDate) || exceptionDate,
+                        gap: Meline[13] || 6,
                     };
 
                     data.push(obj);
                 });
 
-
                 setExceptions_data(data as ExceptionRecord[]);
 
-                //const robotStats = processRobotData(rows);
-                //setProcessedData(robotStats.slice(1));
             } catch (error) {
                 console.error('Ошибка обработки файла:', error);
                 alert('Ошибка при обработке файла');
@@ -306,73 +250,35 @@ const Page: React.FC = () => {
 
     const handlePDF = async () => {
         try {
-            console.log(processedData);
-            await generateWeeklyReport({summaries, processedData})
+            console.log(exceptions_data);
+            await generateWeeklyReport({exceptions_data})
         } catch (err) {
             console.log(err);
         }
     }
 
     useEffect(() => {
-        if (file) {
-            processFile(file);
-        } else {
-            setProcessedData([]);
-        }
-    }, [file]);
-
-    useEffect(() => {
         if (exception_file) {
             processExceptionsFile(exception_file);
         } else {
-            setProcessedData([]);
+            setException_file(null);
         }
     }, [exception_file]);
+
 
     return (
         <div className="p-8 grid grid-cols-[350px_1fr] gap-8">
             <div className="mb-4">
                 <div className="flex flex-col gap-4 mb-4">
                     <FileUpload
-                        file={file}
-                        title="Robots Data"
-                        setFile={setFile}
-                    />
-                    <FileUpload
                         file={exception_file}
                         title="Exception Data"
                         setFile={setException_file}
                     />
                 </div>
-
-                {processedData.length > 0 && (
-                    <>
-                        <div className="my-4">
-                            <Button onClick={handlePDF} className="w-full">
-                                PDF Export
-                            </Button>
-                        </div>
-
-                        <div className="flex flex-wrap gap-4 mb-6">
-                            <RobotsSummaryCard
-                                title="Total"
-                                summary_data={summaries.total}
-                            />
-                            <RobotsSummaryCard
-                                title="RT Kubot"
-                                summary_data={summaries.kubot}
-                            />
-                            <RobotsSummaryCard
-                                title="RT Kubot Mini"
-                                summary_data={summaries.mini}
-                            />
-                            <RobotsSummaryCard
-                                title="RT Kubot E2"
-                                summary_data={summaries.e2}
-                            />
-                        </div>
-                    </>
-                )}
+                <div>
+                    <Button onClick={handlePDF}>PDF</Button>
+                </div>
             </div>
 
             <div>
@@ -406,9 +312,6 @@ const Page: React.FC = () => {
                                             error_2
                                         </th>
                                         <th className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wider">
-                                            error_description
-                                        </th>
-                                        <th className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wider">
                                             error_recovery
                                         </th>
                                         <th className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wider">
@@ -420,10 +323,13 @@ const Page: React.FC = () => {
                                         <th className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wider">
                                             end_time
                                         </th>
+                                        <th className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wider">
+                                            Gap
+                                        </th>
                                     </tr>
                                     </thead>
                                     <tbody>
-                                    {exceptions_data.slice(0, 5).map((exception, rowIndex) => (
+                                    {exceptions_data.slice(0, 100).map((exception, rowIndex) => (
                                         <tr key={rowIndex} className="hover:bg-primary">
                                             <td className="px-4">{dayjs(exception.exception_date).format("YYYY/MM/DD")}</td>
                                             <td className="px-4">{exception.warehouse}</td>
@@ -439,62 +345,10 @@ const Page: React.FC = () => {
                                             <td className="px-4">
                                                 <p className={`line-clamp-1`}>{exception.error_description}</p>
                                             </td>
-                                            <td className="px-4">
-                                                <p className={`line-clamp-1`}>{exception.error_recovery}</p>
-                                            </td>
                                             <td className="px-4">{exception.employee}</td>
                                             <td className="px-4">{dayjs(exception.start_time).format("HH:mm")}</td>
                                             <td className="px-4">{dayjs(exception.end_time).format("HH:mm")}</td>
-                                        </tr>
-                                    ))}
-                                    </tbody>
-                                </table>
-                            </div>
-                        </div>
-                    </div>
-                )}
-
-                {processedData.length > 0 && (
-                    <div>
-                        <div className="overflow-x-auto">
-                            <h4 className="font-semibold mb-3">Robots Data:</h4>
-                            <div className="border rounded-lg overflow-hidden">
-                                <table className="min-w-full divide-y divide-gray-200">
-                                    <thead>
-                                    <tr>
-                                        <th className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wider">
-                                            Robot Number
-                                        </th>
-                                        <th className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wider">
-                                            Robot Type
-                                        </th>
-                                        <th className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wider">
-                                            Work Time (m)
-                                        </th>
-                                        <th className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wider">
-                                            Charge Time (m)
-                                        </th>
-                                        <th className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wider">
-                                            Offline Time (m)
-                                        </th>
-                                        <th className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wider">
-                                            Abnormal Time (m)
-                                        </th>
-                                        <th className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wider">
-                                            Idle Time (m)
-                                        </th>
-                                    </tr>
-                                    </thead>
-                                    <tbody>
-                                    {processedData.slice(0, 25).map((robot, rowIndex) => (
-                                        <tr key={robot.robotId} className="hover:bg-primary">
-                                            <td className="px-4">{robot.robotId}</td>
-                                            <td className="px-4">{robot.robotType}</td>
-                                            <td className="px-4">{robot.work_time.toFixed(2)}</td>
-                                            <td className="px-4">{robot.charge_time.toFixed(2)}</td>
-                                            <td className="px-4">{robot.offline_time.toFixed(2)}</td>
-                                            <td className="px-4">{robot.abnormal_time.toFixed(2)}</td>
-                                            <td className="px-4">{robot.idle_time.toFixed(2)}</td>
+                                            <td className="px-4">{exception.gap}</td>
                                         </tr>
                                     ))}
                                     </tbody>
