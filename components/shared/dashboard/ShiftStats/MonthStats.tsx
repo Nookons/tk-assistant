@@ -18,6 +18,7 @@ import {
 } from "@/components/ui/select";
 import {getWorkDate} from "@/futures/Date/getWorkDate";
 import {getInitialShift} from "@/futures/Date/getInitialShift";
+import {IRobot} from "@/types/robot/robot";
 
 // Интерфейс пользователя
 interface IUser {
@@ -92,13 +93,10 @@ export type {
     IRobotExtend
 };
 
-const ShiftStats = () => {
+const ShiftStats = ({setFixed_robots}: {setFixed_robots: (value: IRobot[]) => void}) => {
     const robots = useRobotsStore(state => state.robots);
-    const [open, setOpen] = useState(false);
     const [date, setDate] = useState<Date | undefined>(getWorkDate(new Date()));
-    const [shift_type, setShift_type] = useState<'day' | 'night'>(getInitialShift());
 
-    // Фильтрация роботов по смене
     const onlyThisShift = useMemo(() => {
         if (!robots || !date) return [];
 
@@ -108,33 +106,19 @@ const ShiftStats = () => {
             if (item.parts_history.length === 0) return false;
 
             const itemDate = dayjs(item.updated_at);
-            const itemHour = itemDate.hour();
 
-            if (shift_type === 'day') {
-                // Дневная смена: 6:00 - 18:00
-                return itemDate.format("YYYY-MM-DD") === selectedDate.format("YYYY-MM-DD")
-                    && itemHour >= 6
-                    && itemHour < 18;
-            } else {
-                // Ночная смена: 18:00 - 6:00
-                const isCurrentDayNight = itemDate.format("YYYY-MM-DD") === selectedDate.format("YYYY-MM-DD")
-                    && itemHour >= 18;
-
-                const isNextDayMorning = itemDate.format("YYYY-MM-DD") === selectedDate.add(1, 'day').format("YYYY-MM-DD")
-                    && itemHour < 6;
-
-                return isCurrentDayNight || isNextDayMorning;
-            }
+            return itemDate.format("YYYY-MM") === selectedDate.format("YYYY-MM")
         });
 
         // Сортировка по времени
         return filtered.sort((a, b) =>
             dayjs(a.updated_at).valueOf() - dayjs(b.updated_at).valueOf()
         );
-    }, [robots, date, shift_type]);
+    }, [robots, date]);
 
     useEffect(() => {
         console.log('Filtered shift data:', onlyThisShift);
+        setFixed_robots(onlyThisShift);
     }, [onlyThisShift]);
 
     const dataExtend = onlyThisShift as unknown as IRobotExtend[];
@@ -145,50 +129,6 @@ const ShiftStats = () => {
 
     return (
         <div className="py-5 mask-b-from-50%">
-            <div className="flex justify-between gap-3">
-                {/* Выбор даты */}
-                <Popover open={open} onOpenChange={setOpen}>
-                    <PopoverTrigger asChild>
-                        <Button
-                            variant="outline"
-                            className="justify-between font-normal"
-                        >
-                            {date ? date.toLocaleDateString() : "Select date"}
-                            <ChevronDownIcon className="ml-2 h-4 w-4" />
-                        </Button>
-                    </PopoverTrigger>
-                    <PopoverContent className="w-auto overflow-hidden p-0" align="start">
-                        <Calendar
-                            mode="single"
-                            selected={date}
-                            captionLayout="dropdown"
-                            onSelect={(newDate) => {
-                                setDate(newDate);
-                                setOpen(false);
-                            }}
-                        />
-                    </PopoverContent>
-                </Popover>
-
-                {/* Выбор смены */}
-                <Select
-                    value={shift_type}
-                    onValueChange={(value) => setShift_type(value as 'day' | 'night')}
-                >
-                    <SelectTrigger>
-                        <SelectValue placeholder="Select a shift" />
-                    </SelectTrigger>
-                    <SelectContent>
-                        <SelectGroup>
-                            <SelectLabel>Shift types</SelectLabel>
-                            <SelectItem value="day">Day (6:00 - 18:00)</SelectItem>
-                            <SelectItem value="night">Night (18:00 - 6:00)</SelectItem>
-                        </SelectGroup>
-                    </SelectContent>
-                </Select>
-            </div>
-
-            {/* Список роботов */}
             <div className="grid grid-cols-1 gap-4 py-2">
                 <ChangedParts robots={dataExtend} />
             </div>

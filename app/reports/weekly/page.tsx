@@ -6,6 +6,9 @@ import FileUpload from "@/components/shared/reports/FileUpload";
 import {Button} from "@/components/ui/button";
 import {generateWeeklyReport} from "@/futures/PDF/weekly";
 import dayjs from "dayjs";
+import ShiftStats from "@/components/shared/dashboard/ShiftStats/ShiftStats";
+import MonthStats from "@/components/shared/dashboard/ShiftStats/MonthStats";
+import {IHistoryParts, IRobot} from "@/types/robot/robot";
 
 // ============= TYPES =============
 interface ExcelData {
@@ -178,6 +181,9 @@ const Page: React.FC = () => {
 
     const [exceptions_data, setExceptions_data] = useState<ExceptionRecord[]>([])
 
+    const [fixed_robots, setFixed_robots] = useState<IRobot[]>([])
+    const [parts_history, setParts_history] = useState<IHistoryParts[]>([])
+
     const processExceptionsFile = (selectedFile: File) => {
         if (!isValidExcelFile(selectedFile)) {
             alert('Пожалуйста, загрузите Excel файл (.xlsx, .xls, .ods)');
@@ -214,8 +220,8 @@ const Page: React.FC = () => {
                     const exceptionDate = excelDateToJSDate(Meline[0]) || new Date();
 
                     console.log('Exception date:', Meline[0], '->', exceptionDate);
-                    console.log('Start time:', Meline[11]);
-                    console.log('End time:', Meline[12]);
+                    console.log('Start time:', Meline[10]);
+                    console.log('End time:', Meline[11]);
 
                     const obj = {
                         exception_date: exceptionDate,
@@ -229,9 +235,9 @@ const Page: React.FC = () => {
                         error_recovery: Meline[9] || "",
                         employee: Meline[9] || "",
                         // Время привязываем к дате исключения
-                        start_time: excelTimeToJSDate(Meline[11], exceptionDate) || exceptionDate,
-                        end_time: excelTimeToJSDate(Meline[12], exceptionDate) || exceptionDate,
-                        gap: Meline[13] || 6,
+                        start_time: excelTimeToJSDate(Meline[10], exceptionDate) || exceptionDate,
+                        end_time: excelTimeToJSDate(Meline[11], exceptionDate) || exceptionDate,
+                        gap: Meline[12] || 6,
                     };
 
                     data.push(obj);
@@ -250,12 +256,29 @@ const Page: React.FC = () => {
 
     const handlePDF = async () => {
         try {
-            console.log(exceptions_data);
-            await generateWeeklyReport({exceptions_data})
+            console.log(parts_history);
+            await generateWeeklyReport({exceptions_data, parts_history})
         } catch (err) {
             console.log(err);
         }
     }
+
+    useEffect(() => {
+        const result: IHistoryParts[] = [];
+        if (fixed_robots.length) {
+            fixed_robots.forEach((robot) => {
+
+                robot.parts_history.forEach((part) => {
+                    result.push(part)
+                })
+            })
+        }
+        setParts_history(result)
+    }, [fixed_robots]);
+
+    useEffect(() => {
+        console.log(parts_history);
+    }, [parts_history]);
 
     useEffect(() => {
         if (exception_file) {
@@ -279,13 +302,14 @@ const Page: React.FC = () => {
                 <div>
                     <Button onClick={handlePDF}>PDF</Button>
                 </div>
+                <div>
+                    <MonthStats setFixed_robots={setFixed_robots}/>
+                </div>
             </div>
-
             <div>
                 {exceptions_data.length > 0 && (
                     <div>
                         <div className="overflow-x-auto">
-                            <h4 className="font-semibold mb-3">Robots Data:</h4>
                             <div className="border rounded-lg overflow-hidden">
                                 <table className="min-w-full divide-y divide-gray-200">
                                     <thead>
@@ -294,16 +318,10 @@ const Page: React.FC = () => {
                                             exception_date
                                         </th>
                                         <th className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wider">
-                                            warehouse
-                                        </th>
-                                        <th className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wider">
                                             robot_type
                                         </th>
                                         <th className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wider">
                                             robot_number
-                                        </th>
-                                        <th className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wider">
-                                            exception_type
                                         </th>
                                         <th className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wider">
                                             error_1
@@ -332,10 +350,8 @@ const Page: React.FC = () => {
                                     {exceptions_data.slice(0, 100).map((exception, rowIndex) => (
                                         <tr key={rowIndex} className="hover:bg-primary">
                                             <td className="px-4">{dayjs(exception.exception_date).format("YYYY/MM/DD")}</td>
-                                            <td className="px-4">{exception.warehouse}</td>
-                                            <td className="px-4">{exception.robot_type}</td>
+                                            <td className="px-4 min-w-[150px]">{exception.robot_type}</td>
                                             <td className="px-4">{exception.robot_number}</td>
-                                            <td className="px-4">{exception.exception_type}</td>
                                             <td className="px-4">
                                                 <p className={`line-clamp-1`}>{exception.error_1}</p>
                                             </td>
@@ -345,7 +361,9 @@ const Page: React.FC = () => {
                                             <td className="px-4">
                                                 <p className={`line-clamp-1`}>{exception.error_description}</p>
                                             </td>
-                                            <td className="px-4">{exception.employee}</td>
+                                            <td className="px-4 min-w-[200px]">
+                                                <p className={`line-clamp-1`}>{exception.employee}</p>
+                                            </td>
                                             <td className="px-4">{dayjs(exception.start_time).format("HH:mm")}</td>
                                             <td className="px-4">{dayjs(exception.end_time).format("HH:mm")}</td>
                                             <td className="px-4">{exception.gap}</td>

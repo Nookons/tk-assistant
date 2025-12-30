@@ -9,165 +9,209 @@ import {
     DialogTitle,
     DialogTrigger
 } from "@/components/ui/dialog";
-import React, {useState} from 'react';
+import React, {useEffect, useState, useMemo} from 'react';
 import {Label} from "@/components/ui/label";
 import {Input} from "@/components/ui/input";
 import {Textarea} from "@/components/ui/textarea";
 import {useUserStore} from "@/store/user";
-import {FilePlusCorner, Loader} from "lucide-react";
+import {BellPlus, Copy, FilePlusCorner, Loader} from "lucide-react";
 import {toast} from "sonner";
 import {Select, SelectContent, SelectGroup, SelectItem, SelectLabel, SelectTrigger, SelectValue} from "@/components/ui/select";
+import {getAllParts} from "@/futures/stock/getAllParts";
+import {IStockItemTemplate} from "@/types/stock/StockItem";
+import {Item} from "@/components/ui/item";
+import {Badge} from "@/components/ui/badge";
+import dayjs from "dayjs";
+import {Separator} from "@/components/ui/separator";
 
+// ========== ТРИГРАММНЫЙ ПОИСК ==========
+
+/**
+ * Генерирует триграммы из строки
+ */
+function generateTrigrams(str: string): string[] {
+    if (!str) return [];
+
+    const normalized = str.toLowerCase().replace(/\s+/g, '');
+    const trigrams: string[] = [];
+    const padded = `  ${normalized}  `;
+
+    for (let i = 0; i < padded.length - 2; i++) {
+        trigrams.push(padded.substring(i, i + 3));
+    }
+
+    return trigrams;
+}
+
+/**
+ * Вычисляет процент совпадения триграмм
+ */
+function calculateTrigramSimilarity(trigrams1: string[], trigrams2: string[]): number {
+    if (trigrams1.length === 0 || trigrams2.length === 0) {
+        return 0;
+    }
+
+    const set1 = new Set(trigrams1);
+    const set2 = new Set(trigrams2);
+
+    let matchCount = 0;
+    set1.forEach(trigram => {
+        if (set2.has(trigram)) {
+            matchCount++;
+        }
+    });
+
+    const baseSize = Math.min(set1.size, set2.size);
+    return (matchCount / baseSize) * 100;
+}
+
+/**
+ * Поиск с триграммами по нескольким полям
+ */
+function trigramSearchMultiField<T>(
+    searchQuery: string,
+    item: T,
+    fields: (keyof T)[],
+    threshold: number = 50
+): { match: boolean; similarity: number; matchedField?: keyof T } {
+    if (!searchQuery.trim()) {
+        return { match: true, similarity: 100 };
+    }
+
+    const queryTrigrams = generateTrigrams(searchQuery);
+    let maxSimilarity = 0;
+    let matchedField: keyof T | undefined;
+
+    for (const field of fields) {
+        const value = item[field];
+        if (typeof value === 'string') {
+            const textTrigrams = generateTrigrams(value);
+            const similarity = calculateTrigramSimilarity(queryTrigrams, textTrigrams);
+
+            if (similarity > maxSimilarity) {
+                maxSimilarity = similarity;
+                matchedField = field;
+            }
+        }
+    }
+
+    return {
+        match: maxSimilarity >= threshold,
+        similarity: maxSimilarity,
+        matchedField
+    };
+}
+
+// ========== КОМПОНЕНТ ==========
 
 const Page = () => {
-    const [part_number, setPart_number] = useState<string>("")
-    const [description_chinese, setDescription_chinese] = useState<string>("")
-    const [description_eng, setDescription_eng] = useState<string>("")
-
-    const [part_type, setPart_type] = useState<string>("A42T")
-    const [isLoading, setIsLoading] = useState<boolean>(false)
-
     const user = useUserStore(state => state.current_user)
 
     const [value, setValue] = useState<string>("")
+    const [threshold, setThreshold] = useState<number>(50) // Порог совпадения
+    const [parts_data, setParts_data] = useState<IStockItemTemplate[]>([])
 
-    const handleSubmit = async (
-        {part_type, part_number, description_chinese, description_eng} :
-        {part_type: string, part_number: string, description_chinese: string, description_eng: string}) =>
-    {
-        setIsLoading(true)
-
-        if (!user) return
-
+    const getAllPartsLocal = async () => {
         try {
-            const res = await fetch(`/api/stock/create-template`, {
-                method: "POST",
-                headers: {
-                    "Content-Type": "application/json",
-                },
-                body: JSON.stringify({
-                    card_id: user.card_id,
-                    material_number: part_number || null,
-                    description_orginall: description_chinese || null,
-                    description_eng: description_eng || null,
-                    part_type: part_type || null,
-                }),
-            })
-
-            await res.json()
-
-            if (!res.ok) {
-                toast.error(res.statusText || "Failed to create item template")
-            }
+            const res = await getAllParts();
+            setParts_data(res);
         } catch (error) {
-            toast.error("Failed to create item template")
-            console.log(error)
-        } finally {
-            setIsLoading(false)
+            error && toast.error(error.toString() || "Unknown error");
         }
     }
 
+    const copyToClipboard = (text: string) => {
+        try {
+            navigator.clipboard.writeText(text);
+            toast.success("Copied to clipboard");
+        } catch (error) {
+            error && toast.error(error.toString() || "Unknown error");
+        }
+    }
 
-    const handleClick = async () => {
-        const rows = value.split("\n")
+    useEffect(() => {
+        getAllPartsLocal()
+    }, []);
 
-        for (const el of rows) {
-            const [part_type, part_number, description_chinese, description_eng] =
-                el.split("\t")
+    // Триграммный поиск с сортировкой по релевантности
+    const filtered_data = useMemo(() => {
+        if (!value.trim()) {
+            return parts_data;
+        }
 
-            await handleSubmit({
-                part_type,
-                part_number,
-                description_chinese,
-                description_eng,
+        return parts_data
+            .map(item => {
+                const result = trigramSearchMultiField(
+                    value,
+                    item,
+                    ['description_orginall', 'description_eng', 'material_number'],
+                    threshold
+                );
+                return { item, ...result };
             })
-        }
-
-        toast.success("All items processed")
-    }
-
-
+            .filter(result => result.match)
+            .sort((a, b) => b.similarity - a.similarity)
+            .map(result => result.item);
+    }, [value, parts_data, threshold]);
 
     return (
-        <div className={`px-4`}>
-            {/*<div>
-                <Textarea
+        <div className={`px-4 max-w-[1600px] m-auto`}>
+            <div className={`mb-4 space-y-2`}>
+                <Input
                     value={value}
                     onChange={(e) => setValue(e.target.value)}
+                    placeholder="Поиск по названию или номеру материала..."
                 />
-                <Button onClick={handleClick}>CLick</Button>
-            </div>*/}
-            <Dialog>
-                <form>
-                    <DialogTrigger asChild>
-                        <Button variant="outline">Create New Item</Button>
-                    </DialogTrigger>
-                    <DialogContent className="">
-                        <DialogHeader>
-                            <DialogTitle>Create Item</DialogTitle>
-                            <DialogDescription>
-                                Create new item template for stocking. Fill in the form below to create a new item template.
-                            </DialogDescription>
-                        </DialogHeader>
-                        <div className="grid gap-4">
-                            <div className="grid gap-3">
-                                <Label htmlFor="part-1">Part Number</Label>
-                                <Input
-                                    value={part_number}
-                                    onChange={(e) => setPart_number(e.target.value)}
-                                    id="part-1"
-                                    name="part_number"
-                                    placeholder={`1.04.04.000176`}
-                                />
-                            </div>
-                            <div className="grid gap-3">
-                                <Label htmlFor="part-1">For what this part</Label>
-                                <Select value={part_type} onValueChange={(value) => setPart_type(value)}>
-                                    <SelectTrigger className="w-full">
-                                        <SelectValue placeholder="Select a type for what this part" />
-                                    </SelectTrigger>
-                                    <SelectContent>
-                                        <SelectGroup>
-                                            <SelectLabel>Robot type</SelectLabel>
-                                            <SelectItem value="A42T">A42T</SelectItem>
-                                            <SelectItem value="K50H">K50H</SelectItem>
-                                        </SelectGroup>
-                                    </SelectContent>
-                                </Select>
-                            </div>
-                            <div className="grid gap-3">
-                                <Label htmlFor="description-1">Description Chinese</Label>
-                                <Textarea
-                                    value={description_chinese}
-                                    onChange={(e) => setDescription_chinese(e.target.value)}
-                                    id="description-1"
-                                    name="description"
-                                    placeholder="底盘前后急停开关"
-                                />
-                            </div>
-                            <div className="grid gap-3">
-                                <Label htmlFor="description-1">Description ENG</Label>
-                                <Textarea
-                                    value={description_eng}
-                                    onChange={(e) => setDescription_eng(e.target.value)}
-                                    id="description-1"
-                                    name="description"
-                                    placeholder="FRONT AND REAR EMERGENCY STOP SWITCHES"
-                                />
-                            </div>
-                        </div>
-                        <DialogFooter>
-                            <DialogClose asChild>
-                                <Button variant="outline">Cancel</Button>
-                            </DialogClose>
-                            <Button disabled={isLoading}>
-                                {isLoading ? <Loader className={`animate-spin`} /> : <FilePlusCorner />}
-                                 Create Item
-                            </Button>
-                        </DialogFooter>
-                    </DialogContent>
-                </form>
-            </Dialog>
+
+                {/* Показываем количество результатов */}
+                {value && (
+                    <Label className="text-xs text-muted-foreground">
+                        Find: {filtered_data.length} / {parts_data.length}
+                    </Label>
+                )}
+            </div>
+
+            <Separator className={`my-4`} />
+
+            <div className={`w-full grid grid-cols-1 gap-2`}>
+                {filtered_data.length === 0 && value ? (
+                    <div className="text-center py-10 text-muted-foreground">
+                        <p>Ничего не найдено</p>
+                        <p className="text-xs mt-2">Попробуйте уменьшить точность поиска</p>
+                    </div>
+                ) : (
+                    filtered_data.map((part, index) => {
+                        return (
+                            <Item variant={`muted`} className={`flex items-center gap-2`} key={index}>
+                                <div className={`w-full flex items-center gap-2 justify-between mb-6`}>
+                                    <Label className={`text-xs`}>
+                                        <BellPlus size={18} /> {dayjs(part.updated_at).format('HH:mm · MMM D, YYYY')}
+                                    </Label>
+                                    <Label className={`text-xs`}>{part.user?.user_name}</Label>
+                                </div>
+
+                                <div className={`flex flex-col gap-2 w-full`}>
+                                    <p>{part.description_eng}</p>
+                                    <Separator />
+                                    <p>{part.description_orginall}</p>
+                                </div>
+
+                                <div className={`w-full flex items-center justify-between mt-2`}>
+                                    <Badge
+                                        onClick={() => copyToClipboard(part.material_number)}
+                                        className="cursor-pointer"
+                                    >
+                                        <Copy /> {part.material_number}
+                                    </Badge>
+                                    <Label className={`text-xs text-muted-foreground`}>
+                                        {dayjs(part.created_at).format('HH:mm · MMM D, YYYY')}
+                                    </Label>
+                                </div>
+                            </Item>
+                        )
+                    })
+                )}
+            </div>
         </div>
     );
 };

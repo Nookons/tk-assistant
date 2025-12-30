@@ -5,8 +5,8 @@ import {IRobot, IRobotApiResponse} from "@/types/robot/robot";
 import {Label} from "@/components/ui/label";
 import dayjs from "dayjs";
 import {
-    CirclePlus, Dot, Frown, Laugh,
-    Phone, RefreshCw,
+    CirclePlus, Construction, Dot, Frown, Laugh, Loader,
+    Phone, RefreshCw, SmilePlus,
     Warehouse
 } from "lucide-react";
 import {useUserStore} from "@/store/user";
@@ -17,6 +17,11 @@ import CommentsList from "@/components/shared/robot/commentsList/CommentsList";
 import Image from "next/image";
 import ChangeRobotStatus from "@/components/shared/robot/changeStatus/ChangeRobotStatus";
 import {useRobotsStore} from "@/store/robotsStore";
+import {Button} from "@/components/ui/button";
+import {changeRobotStatus} from "@/futures/robots/changeRobotStatus";
+import {toast} from "sonner";
+import {Timestamp} from "next/dist/server/lib/cache-handlers/types";
+import {IUser} from "@/types/user/user";
 
 
 const Page = () => {
@@ -27,6 +32,8 @@ const Page = () => {
 
     const [current_Robot, setCurrent_Robot] = useState<IRobot | null>(null)
 
+    const [isLoading, setIsLoading] = useState<boolean>(false)
+
     useEffect(() => {
         if (robots_list) {
             const robot_data = robots_list.find(item => item.id === Number(robot_id))
@@ -35,6 +42,81 @@ const Page = () => {
     }, [robots_list])
 
     const user_store = useUserStore(state => state.current_user)
+
+    const setNewStatus = useRobotsStore(state => state.updateRobotStatus)
+
+    const sendToMaintenance = async () => {
+        try {
+            if (!current_Robot) return;
+            if (!user_store) return;
+
+            setIsLoading(true);
+            const res = await changeRobotStatus({
+                robot_id: current_Robot.id,
+                robot_number: Number(current_Robot.robot_number),
+                card_id: user_store?.card_id || 0,
+                new_status: `离线 | Offline`, // Use the stored clean key
+                old_status: `在线 | Online`
+            });
+
+            if (!res) throw new Error("Can't send robot to maintenance");
+
+            setNewStatus(current_Robot.id, "离线 | Offline" ,{
+                id: 9999,
+                add_by: user_store?.card_id || 0,
+                robot_id: current_Robot.id || 0,
+                created_at: Date.now() as Timestamp,
+                new_status: `离线 | Offline`,
+                old_status: `在线 | Online`,
+                robot_number: Number(current_Robot.robot_number) || 0,
+                user: user_store,
+            })
+
+            toast.success("Robot sent to maintenance");
+
+        } catch (error) {
+            error && toast.error(error.toString() || "Unknown error");
+        } finally {
+            setTimeout(() => setIsLoading(false), 1000);
+        }
+    }
+
+    const sendToMap = async () => {
+        try {
+            if (!current_Robot) return;
+            if (!user_store) return;
+
+            setIsLoading(true);
+
+            const res = await changeRobotStatus({
+                robot_id: current_Robot.id,
+                robot_number: Number(current_Robot.robot_number),
+                card_id: user_store?.card_id || 0,
+                new_status: `在线 | Online`, // Use the stored clean key
+                old_status: `离线 | Offline`
+            });
+
+            if (!res) throw new Error("Can't send robot to map");
+
+            setNewStatus(current_Robot.id, "在线 | Online" ,{
+                id: 9999,
+                add_by: user_store?.card_id || 0,
+                robot_id: current_Robot.id || 0,
+                created_at: Date.now() as Timestamp,
+                new_status: `在线 | Online`,
+                old_status: `离线 | Offline`,
+                robot_number: Number(current_Robot.robot_number) || 0,
+                user: user_store,
+            })
+
+            toast.success("Robot sent to map");
+
+        } catch (error) {
+            error && toast.error(error.toString() || "Unknown error");
+        } finally {
+            setTimeout(() => setIsLoading(false), 1000);
+        }
+    }
 
     if (!current_Robot) return null;
 
@@ -49,16 +131,16 @@ const Page = () => {
                                 ?
                                 <>
                                     {current_Robot.status === "离线 | Offline"
-                                        ? <Image src={`/img/K50H_red.svg`} alt={`robot_img`} width={30} height={30} />
-                                        : <Image src={`/img/K50H_green.svg`} alt={`robot_img`} width={30} height={30} />
+                                        ? <Image src={`/img/K50H_red.svg`} alt={`robot_img`} width={30} height={30}/>
+                                        : <Image src={`/img/K50H_green.svg`} alt={`robot_img`} width={30} height={30}/>
                                     }
                                 </>
                                 :
                                 <>
-                                {current_Robot.status === "离线 | Offline"
-                                    ? <Image src={`/img/A42T_red.svg`} alt={`robot_img`} width={30} height={30} />
-                                    : <Image src={`/img/A42T_Green.svg`} alt={`robot_img`} width={30} height={30} />
-                                }
+                                    {current_Robot.status === "离线 | Offline"
+                                        ? <Image src={`/img/A42T_red.svg`} alt={`robot_img`} width={30} height={30}/>
+                                        : <Image src={`/img/A42T_Green.svg`} alt={`robot_img`} width={30} height={30}/>
+                                    }
                                 </>
                             }
                             <Label
@@ -69,17 +151,35 @@ const Page = () => {
                         </div>
                     </div>
 
-                    <div className={`grid grid-cols-2 gap-1`}>
+                    <div className={`grid md:grid-cols-2 gap-2`}>
+                        {current_Robot.status === "在线 | Online"
+                            ?
+                            <Button
+                                variant={`outline`}
+                                disabled={isLoading}
+                                onClick={sendToMaintenance}
+                                className={`w-full`}
+                            >
+                                {isLoading ? <Loader className={`animate-spin`} /> : <Construction/>}
+                                Send Maintenance
+                            </Button>
+                            :
+                            <Button
+                                disabled={isLoading}
+                                onClick={sendToMap}
+                                className={`w-full`}
+                            >
+                                {isLoading ? <Loader className={`animate-spin`} /> : <SmilePlus/>}
+                                Send to map
+                            </Button>
+                        }
                         <PartsPicker
-                            robot={current_Robot}
-                        />
-                        <ChangeRobotStatus
                             robot={current_Robot}
                         />
                     </div>
                 </div>
 
-                <hr className={`my-4`} />
+                <hr className={`my-4`}/>
 
                 <div className="">
                     <div className={`flex flex-col-reverse md:grid md:grid-cols-2  items-start gap-4`}>

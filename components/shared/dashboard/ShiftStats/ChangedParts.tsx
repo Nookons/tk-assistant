@@ -9,7 +9,7 @@ import {Button} from "@/components/ui/button";
 import Image from "next/image";
 import Link from "next/link";
 import {toast} from "sonner";
-import {IRobotExtend} from "@/components/shared/dashboard/ShiftStats/ShiftStats";
+import ShiftStats, {IRobotExtend} from "@/components/shared/dashboard/ShiftStats/ShiftStats";
 
 // Интерфейсы для типизации
 interface ILocalItem {
@@ -32,7 +32,6 @@ const ChangedParts = ({robots}: { robots: IRobotExtend[] }) => {
     const [partsStats, setPartsStats] = useState<Record<string, ILocalData>>({});
     const [isCopying, setIsCopying] = useState(false);
 
-    console.log(robots);
 
     const handleCopy = async () => {
         if (isCopying) return;
@@ -40,12 +39,9 @@ const ChangedParts = ({robots}: { robots: IRobotExtend[] }) => {
         setIsCopying(true);
         try {
             // Собираем все записи из parts_history всех роботов
-            const allEntries: Array<{
-                created_at: string;
-                parts_numbers: string;
-                user_name: string;
-                robot_number: number;
-            }> = [];
+            const allEntries: Array<{ created_at: string; parts_numbers: string; user_name: string; robot_number: number; }> = [];
+
+            console.log(robots);
 
             robots.forEach(robot => {
                 if (robot?.parts_history && Array.isArray(robot.parts_history)) {
@@ -140,7 +136,7 @@ const ChangedParts = ({robots}: { robots: IRobotExtend[] }) => {
             <Separator/>
             <div className="p-0">
                 <ScrollArea className="h-[300px] sm:h-[450px]">
-                    <div className="grid grid-cols-2 md:grid-cols-4 gap-4 my-2">
+                    <div className="grid grid-cols-2 md:grid-cols-1 gap-4 my-2">
                         {robots.map((robot) => {
                             if (!robot) return null;
 
