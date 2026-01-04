@@ -3,8 +3,8 @@ import React, {useEffect, useState} from 'react';
 import {useParams} from "next/navigation";
 import {IRobot, IRobotApiResponse} from "@/types/robot/robot";
 import {Label} from "@/components/ui/label";
-import dayjs from "dayjs";
 import {
+    Bubbles,
     CirclePlus, Construction, Dot, Frown, Laugh, Loader,
     Phone, RefreshCw, SmilePlus,
     Warehouse
@@ -22,6 +22,33 @@ import {changeRobotStatus} from "@/futures/robots/changeRobotStatus";
 import {toast} from "sonner";
 import {Timestamp} from "next/dist/server/lib/cache-handlers/types";
 import {IUser} from "@/types/user/user";
+import {
+    Dialog, DialogClose,
+    DialogContent,
+    DialogDescription,
+    DialogFooter,
+    DialogHeader,
+    DialogTitle,
+    DialogTrigger
+} from "@/components/ui/dialog";
+import { Input } from "@/components/ui/input";
+import {
+    Select,
+    SelectContent,
+    SelectGroup, SelectItem,
+    SelectLabel,
+    SelectTrigger,
+    SelectValue
+} from "@/components/ui/select";
+import {Textarea} from "@/components/ui/textarea";
+import SendRobotToMaintance from "@/components/shared/robot/sendRobotToMaintance/sendRobotToMaintance";
+import {Badge} from "@/components/ui/badge";
+import dayjs from "dayjs";
+import {timeToString} from "@/utils/timeToString";
+import SendRobotToMap from "@/components/shared/robot/sendRobotToMap/sendRobotToMap";
+import {Empty, EmptyDescription, EmptyHeader, EmptyMedia, EmptyTitle} from "@/components/ui/empty";
+
+
 
 
 const Page = () => {
@@ -32,7 +59,6 @@ const Page = () => {
 
     const [current_Robot, setCurrent_Robot] = useState<IRobot | null>(null)
 
-    const [isLoading, setIsLoading] = useState<boolean>(false)
 
     useEffect(() => {
         if (robots_list) {
@@ -41,82 +67,6 @@ const Page = () => {
         }
     }, [robots_list])
 
-    const user_store = useUserStore(state => state.current_user)
-
-    const setNewStatus = useRobotsStore(state => state.updateRobotStatus)
-
-    const sendToMaintenance = async () => {
-        try {
-            if (!current_Robot) return;
-            if (!user_store) return;
-
-            setIsLoading(true);
-            const res = await changeRobotStatus({
-                robot_id: current_Robot.id,
-                robot_number: Number(current_Robot.robot_number),
-                card_id: user_store?.card_id || 0,
-                new_status: `离线 | Offline`, // Use the stored clean key
-                old_status: `在线 | Online`
-            });
-
-            if (!res) throw new Error("Can't send robot to maintenance");
-
-            setNewStatus(current_Robot.id, "离线 | Offline" ,{
-                id: 9999,
-                add_by: user_store?.card_id || 0,
-                robot_id: current_Robot.id || 0,
-                created_at: Date.now() as Timestamp,
-                new_status: `离线 | Offline`,
-                old_status: `在线 | Online`,
-                robot_number: Number(current_Robot.robot_number) || 0,
-                user: user_store,
-            })
-
-            toast.success("Robot sent to maintenance");
-
-        } catch (error) {
-            error && toast.error(error.toString() || "Unknown error");
-        } finally {
-            setTimeout(() => setIsLoading(false), 1000);
-        }
-    }
-
-    const sendToMap = async () => {
-        try {
-            if (!current_Robot) return;
-            if (!user_store) return;
-
-            setIsLoading(true);
-
-            const res = await changeRobotStatus({
-                robot_id: current_Robot.id,
-                robot_number: Number(current_Robot.robot_number),
-                card_id: user_store?.card_id || 0,
-                new_status: `在线 | Online`, // Use the stored clean key
-                old_status: `离线 | Offline`
-            });
-
-            if (!res) throw new Error("Can't send robot to map");
-
-            setNewStatus(current_Robot.id, "在线 | Online" ,{
-                id: 9999,
-                add_by: user_store?.card_id || 0,
-                robot_id: current_Robot.id || 0,
-                created_at: Date.now() as Timestamp,
-                new_status: `在线 | Online`,
-                old_status: `离线 | Offline`,
-                robot_number: Number(current_Robot.robot_number) || 0,
-                user: user_store,
-            })
-
-            toast.success("Robot sent to map");
-
-        } catch (error) {
-            error && toast.error(error.toString() || "Unknown error");
-        } finally {
-            setTimeout(() => setIsLoading(false), 1000);
-        }
-    }
 
     if (!current_Robot) return null;
 
@@ -152,27 +102,12 @@ const Page = () => {
                     </div>
 
                     <div className={`grid md:grid-cols-2 gap-2`}>
+
                         {current_Robot.status === "在线 | Online"
-                            ?
-                            <Button
-                                variant={`outline`}
-                                disabled={isLoading}
-                                onClick={sendToMaintenance}
-                                className={`w-full`}
-                            >
-                                {isLoading ? <Loader className={`animate-spin`} /> : <Construction/>}
-                                Send Maintenance
-                            </Button>
-                            :
-                            <Button
-                                disabled={isLoading}
-                                onClick={sendToMap}
-                                className={`w-full`}
-                            >
-                                {isLoading ? <Loader className={`animate-spin`} /> : <SmilePlus/>}
-                                Send to map
-                            </Button>
+                            ? <SendRobotToMaintance current_Robot={current_Robot} />
+                            : <SendRobotToMap current_Robot={current_Robot} />
                         }
+
                         <PartsPicker
                             robot={current_Robot}
                         />
@@ -182,7 +117,35 @@ const Page = () => {
                 <hr className={`my-4`}/>
 
                 <div className="">
-                    <div className={`flex flex-col-reverse md:grid md:grid-cols-2  items-start gap-4`}>
+                    <div className={`flex flex-col md:grid md:grid-cols-1  items-start gap-4`}>
+                        <div className={`flex flex-col gap-2 flex-wrap w-full`}>
+
+                            {current_Robot.type_problem.length > 0
+                            ?
+                                <div className={`rounded p-2 w-full flex flex-col gap-2`}>
+                                    <Badge variant={`destructive`} className="">{current_Robot.type_problem}</Badge>
+                                    <Label className="text-xl">{current_Robot.problem_note}</Label>
+                                    <div className={`mt-4`}>
+                                        <p className="text-xs text-muted-foreground">{current_Robot.updated_by?.user_name} - {current_Robot.updated_by?.warehouse}</p>
+                                        <p className="text-xs text-muted-foreground">{timeToString(current_Robot.updated_at)}</p>
+                                    </div>
+                                </div>
+                            :
+                                <Empty className="from-muted/50 to-background h-full bg-gradient-to-b from-30%">
+                                    <EmptyHeader>
+                                        <EmptyMedia variant="icon">
+                                            <Bubbles  />
+                                        </EmptyMedia>
+                                        <EmptyTitle>No Issue</EmptyTitle>
+                                        <EmptyDescription>
+                                            Robot going well and without any problems.
+                                        </EmptyDescription>
+                                    </EmptyHeader>
+                                </Empty>
+                            }
+
+                        </div>
+
                         <div className={`w-full`}>
                             <div className={`rounded mb-4 w-full`}>
                                 <AddCommentRobot
@@ -193,18 +156,6 @@ const Page = () => {
                                 <CommentsList
                                     robot_id={current_Robot.id}
                                 />
-                            </div>
-                        </div>
-
-                        <div className={`flex flex-col gap-2 flex-wrap w-full`}>
-                            {/*{robot_data.type_problem.map((item: string) => (
-                                <div className={`p-2 border border-dashed rounded bg-red-500/20`}>
-                                    <Label className={`text-xs md:text-xs px-2`}>{item}</Label>
-                                </div>
-                            ))}*/}
-                            <div className={`border border-dashed rounded p-2 w-full`}>
-                                <Label className="text-xs text-muted-foreground mb-4">Note:</Label>
-                                <Label className="">{current_Robot.problem_note}</Label>
                             </div>
                         </div>
                     </div>

@@ -104,8 +104,8 @@ const Page = () => {
                 </div>
             </div>
             <div className={``}>
-                <ShiftStats />
                 <RobotListProvider card_id={card_id}/>
+                <ShiftStats />
             </div>
         </div>
     );
