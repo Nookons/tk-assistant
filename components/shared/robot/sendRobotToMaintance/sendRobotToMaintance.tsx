@@ -84,7 +84,9 @@ const SendRobotToMaintance = ({current_Robot}: {current_Robot: IRobot}) => {
                 robot_number: Number(current_Robot.robot_number),
                 card_id: user_store?.card_id || 0,
                 new_status: `离线 | Offline`,
-                old_status: `在线 | Online`
+                old_status: `在线 | Online`,
+                type_problem: issue_type,
+                problem_note: issue_note
             });
 
             const res_robot_update = await robotUpdate({
@@ -105,6 +107,8 @@ const SendRobotToMaintance = ({current_Robot}: {current_Robot: IRobot}) => {
                 old_status: `在线 | Online`,
                 robot_number: Number(current_Robot.robot_number) || 0,
                 user: user_store,
+                type_problem: issue_type,
+                problem_note: issue_note
             })
 
             updateRobot(current_Robot.id, {

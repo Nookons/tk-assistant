@@ -4,18 +4,16 @@ import {Textarea} from "@/components/ui/textarea";
 import {Button} from "@/components/ui/button";
 import {IRobot} from "@/types/robot/robot";
 import {useUserStore} from "@/store/user";
-import { Loader2 } from "lucide-react"; // Импортируем иконку для индикации загрузки
+import { Loader2 } from "lucide-react";
+import {useRobotsStore} from "@/store/robotsStore"; // Импортируем иконку для индикации загрузки
 
 const AddCommentRobot = ({robot_data}: {robot_data: IRobot}) => {
-
     const [commentValue, setCommentValue] = useState<string>("")
-    // 💡 Новое состояние для отслеживания процесса отправки
     const [isSubmitting, setIsSubmitting] = useState<boolean>(false)
 
-    // Переименовал value -> commentValue для лучшей читаемости
-    // Удалил старое состояние `isLoading`, используем `isSubmitting`
-
     const user = useUserStore(state => state.current_user)
+
+    const updateRobot = useRobotsStore(state => state.updateRobot)
 
     const addComment = async () => {
         if (!user?.card_id || !commentValue.trim()) {
@@ -43,6 +41,9 @@ const AddCommentRobot = ({robot_data}: {robot_data: IRobot}) => {
 
             // const data = await res.json() // Если нужно обработать ответ
 
+            updateRobot(robot_data.id, {
+
+            })
             setCommentValue(""); // 2. Очищаем поле ввода после успешной отправки
             window.location.reload();
 

@@ -4,12 +4,11 @@ import { supabase } from '@/lib/supabaseClient';
 export async function POST(request: Request) {
     try {
         const body = await request.json();
-        const {old_status, new_status, card_id, robot_number, robot_id} = body;
+        const {old_status, new_status, card_id, robot_number, robot_id, type_problem, problem_note} = body;
 
         // --- 1. Validation Check ---
         if (!new_status || !card_id || !robot_id) {
             return NextResponse.json(
-                // Added robot_id to missing fields list
                 { error: 'Missing required fields (new_status, card_id, robot_id)' },
                 { status: 400 }
             );
@@ -24,6 +23,8 @@ export async function POST(request: Request) {
                 new_status: new_status,
                 old_status: old_status,
                 add_by: card_id,
+                type_problem,
+                problem_note
             })
             .select()
             .single();

@@ -41,6 +41,8 @@ export interface IHistoryStatus {
     new_status: string;
     old_status: string;
     robot_number: number;
+    type_problem: string | null;
+    problem_note: string | null;
     user: IUser;
 }
 export interface IHistoryParts {

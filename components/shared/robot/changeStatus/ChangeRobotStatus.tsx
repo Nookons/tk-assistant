@@ -68,7 +68,9 @@ const ChangeRobotStatus = ({robot}: { robot: IRobot}) => {
                 robot_number: Number(robot.robot_number),
                 card_id,
                 new_status: selectedKey, // Use the stored clean key
-                old_status: robot.status
+                old_status: robot.status,
+                type_problem: null,
+                problem_note: null,
             });
 
             if (res) {

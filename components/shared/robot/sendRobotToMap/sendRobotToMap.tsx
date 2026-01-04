@@ -35,7 +35,9 @@ const SendRobotToMap = ({current_Robot}: {current_Robot: IRobot}) => {
                 robot_number: Number(current_Robot.robot_number),
                 card_id: user_store?.card_id || 0,
                 new_status: `在线 | Online`,
-                old_status: `离线 | Offline`
+                old_status: `离线 | Offline`,
+                type_problem: null,
+                problem_note: null
             });
 
             const res_robot_update = await robotUpdate({
@@ -56,6 +58,8 @@ const SendRobotToMap = ({current_Robot}: {current_Robot: IRobot}) => {
                 old_status: `离线 | Offline`,
                 robot_number: Number(current_Robot.robot_number) || 0,
                 user: user_store,
+                type_problem: null,
+                problem_note: null
             })
 
             updateRobot(current_Robot.id, {
