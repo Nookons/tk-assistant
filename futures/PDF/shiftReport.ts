@@ -4,6 +4,9 @@ import dayjs from "dayjs";
 import autoTable from "jspdf-autotable";
 import {IHistoryParts, IHistoryStatus} from "@/types/robot/robot";
 import "@/utils/fonts/NotoSansSC-Regular-normal";
+import {IChangeStatusRobot} from "@/types/Status/Status";
+import {getPartByNumber} from "@/futures/stock/getPartByNumber";
+import {IStockItemTemplate} from "@/types/stock/StockItem";
 
 // Новый тип для данных об ошибках
 export interface ErrorRecord {
@@ -27,8 +30,8 @@ interface ErrorReportData {
 }
 
 export const generateShiftReport = async (
-    {report_data, date, shift, history_status, history_parts}:
-    {report_data: ErrorReportData, date: Date | undefined, shift: string, history_status: IHistoryStatus[], history_parts: IHistoryParts[]}) =>
+    {report_data, date, shift, history_status, history_parts, parts_numbers}:
+    {report_data: ErrorReportData, date: Date | undefined, shift: string, history_status: IChangeStatusRobot[], history_parts: IHistoryParts[], parts_numbers: IStockItemTemplate[]}) =>
 {
     if (!report_data || Object.keys(report_data).length === 0) {
         toast.error("No report data available to generate PDF");
@@ -136,28 +139,27 @@ export const generateShiftReport = async (
     yPosition = (doc as any).lastAutoTable.finalY + 12;
 
     // 🟢 Online Status Section
-    const onlineCount = history_status.filter(item => item.new_status === "在线 | Online").length;
-
     doc.setFillColor(colors.cardBg[0], colors.cardBg[1], colors.cardBg[2]);
     doc.roundedRect(10, yPosition - 5, pageWidth - 20, 8, 2, 2, 'F');
 
     doc.setFontSize(11);
     doc.setTextColor(colors.success[0], colors.success[1], colors.success[2]);
-    doc.text('● Online', 14, yPosition);
+    doc.text('● Robots Status', 14, yPosition);
 
     doc.setFontSize(8);
     doc.setTextColor(colors.textMuted[0], colors.textMuted[1], colors.textMuted[2]);
-    doc.text(`${onlineCount} robots`, pageWidth - 30, yPosition);
+    doc.text(`${history_status.length} robots`, pageWidth - 30, yPosition);
 
     yPosition += 6;
 
     autoTable(doc, {
         startY: yPosition,
-        head: [['Robot', "Status Change", "Employee"]],
-        body: history_status.filter(item => item.new_status === "在线 | Online").map(item => [
+        head: [['Robot', "Status Change", "Type Problem", "Note"]],
+        body: history_status.map(item => [
             item.robot_number,
-            `${item.old_status} → ${item.new_status}`,
-            item.user.user_name,
+            `→ ${item.new_status}`,
+            `${item.type_problem}`,
+            `${item.problem_note}`,
         ]),
         theme: 'plain',
         styles: {
@@ -184,54 +186,6 @@ export const generateShiftReport = async (
 
     yPosition = (doc as any).lastAutoTable.finalY + 12;
 
-    // 🔴 Offline Status Section
-    const offlineCount = history_status.filter(item => item.new_status === "离线 | Offline").length;
-
-    doc.setFillColor(colors.cardBg[0], colors.cardBg[1], colors.cardBg[2]);
-    doc.roundedRect(10, yPosition - 5, pageWidth - 20, 8, 2, 2, 'F');
-
-    doc.setFontSize(11);
-    doc.setTextColor(colors.danger[0], colors.danger[1], colors.danger[2]);
-    doc.text('● Offline', 14, yPosition);
-
-    doc.setFontSize(8);
-    doc.setTextColor(colors.textMuted[0], colors.textMuted[1], colors.textMuted[2]);
-    doc.text(`${offlineCount} robots`, pageWidth - 30, yPosition);
-
-    yPosition += 6;
-
-    autoTable(doc, {
-        startY: yPosition,
-        head: [['Robot', "Status Change", "Employee"]],
-        body: history_status.filter(item => item.new_status === "离线 | Offline").map(item => [
-            item.robot_number,
-            `${item.old_status} → ${item.new_status}`,
-            item.user.user_name,
-        ]),
-        theme: 'plain',
-        styles: {
-            fontSize: 9,
-            font: 'NotoSansSC-Regular',
-            textColor: [15, 23, 42],
-            lineColor: [226, 232, 240],
-            lineWidth: 0.1,
-        },
-        headStyles: {
-            fillColor: [248, 250, 252],
-            textColor: [220, 38, 38],
-            fontSize: 8,
-            halign: 'center',
-        },
-        bodyStyles: {
-            fillColor: [255, 255, 255],
-        },
-        alternateRowStyles: {
-            fillColor: [249, 250, 251],
-        },
-        margin: { left: 10, right: 10 },
-    });
-
-    yPosition = (doc as any).lastAutoTable.finalY + 12;
 
     // 🔧 Parts Section
     doc.setFillColor(colors.cardBg[0], colors.cardBg[1], colors.cardBg[2]);
@@ -278,6 +232,19 @@ export const generateShiftReport = async (
         },
         margin: { left: 10, right: 10 },
     });
+
+    yPosition = (doc as any).lastAutoTable.finalY + 12;
+
+
+    doc.setFontSize(11);
+    doc.setTextColor(colors.textMuted[0], colors.textMuted[1], colors.textMuted[2]);
+
+    for (const item of parts_numbers) {
+        doc.text(`${item.part_type} - ${item.material_number} (${item.description_orginall}) - ${item.description_eng}`, 7, yPosition);
+        yPosition += 6; // увеличиваем позицию для следующей строки
+    }
+
+
 
     // 🎨 Footer with light accent
     const finalY = (doc as any).lastAutoTable.finalY;

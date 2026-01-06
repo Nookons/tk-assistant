@@ -35,6 +35,10 @@ import {
 import {removeParts} from "@/futures/robots/remove-parts";
 import {useUserStore} from "@/store/user";
 import {useRobotsStore} from "@/store/robotsStore";
+import {Separator} from "@/components/ui/separator";
+import {getPartByNumber} from "@/futures/stock/getPartByNumber";
+import {IStockItemTemplate} from "@/types/stock/StockItem";
+import Link from "next/link";
 
 interface StatusHistoryItem {
     id: number;
@@ -57,6 +61,7 @@ interface PartsHistoryItem {
     created_at: Timestamp;
     parts_numbers: string;
     user: IUser;
+    parts: IStockItemTemplate[];
     type: 'parts';
 }
 
@@ -70,22 +75,38 @@ const RobotHistory = ({robot}: { robot: IRobot }) => {
     const user = useUserStore(state => state.current_user);
     const removeFromStock = useRobotsStore(state => state.deletePartsHistory);
 
-    useEffect(() => {
+    const getHistory = async () => {
         const statusHistory = robot.status_history?.map(item => ({
             ...item,
             type: 'status' as const
         })) || [];
 
-        const partsHistory = robot.parts_history?.map(item => ({
-            ...item,
-            type: 'parts' as const
-        })) || [];
+        const partsHistory = [];
+
+        for (const item of robot.parts_history) {
+            const partsNumbers: string[] = JSON.parse(item.parts_numbers || '[]');
+
+            const partsData = await Promise.all(
+                partsNumbers.map(partNumber => getPartByNumber(partNumber))
+            );
+
+            partsHistory.push({
+                ...item,
+                parts: partsData.flat(),
+                type: 'parts' as const
+            });
+        }
 
         const sorted = [...statusHistory, ...partsHistory].sort(
             (a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime()
         );
 
         setFiltered(sorted);
+    };
+
+
+    useEffect(() => {
+        getHistory()
     }, [robot]);
 
     const toggleNoteExpansion = (eventId: number) => {
@@ -176,7 +197,9 @@ const RobotHistory = ({robot}: { robot: IRobot }) => {
                                                         <AlertDialogHeader>
                                                             <AlertDialogTitle>Delete Parts History?</AlertDialogTitle>
                                                             <AlertDialogDescription>
-                                                                This action cannot be undone. This will permanently delete this parts history entry from the robot's records.
+                                                                This action cannot be undone. This will permanently
+                                                                delete this parts history entry from the robot's
+                                                                records.
                                                             </AlertDialogDescription>
                                                         </AlertDialogHeader>
                                                         <AlertDialogFooter>
@@ -194,42 +217,44 @@ const RobotHistory = ({robot}: { robot: IRobot }) => {
                                     </div>
 
                                     {event.type === 'parts' && event.parts_numbers && (
-                                        <div className="flex flex-wrap gap-2">
-                                            {JSON.parse(event.parts_numbers).map((partNumber: string, idx: number) => (
-                                                <div key={idx} className="flex items-center gap-1 bg-secondary px-2 py-1 rounded-md">
-                                                    <PackageMinus size={14}/>
-                                                    <span className="text-xs">{partNumber}</span>
-                                                </div>
-                                            ))}
+                                        <div className="flex flex-col flex-wrap gap-2">
+                                            <div className={`flex flex-col gap-2`}>
+                                                {event.parts.map((part) => (
+                                                    <Link href={`/stock/${part.material_number}`} className={`flex group cursor-pointer items-center gap-2`}>
+                                                        <div key={part.id}
+                                                             className="flex items-center gap-2 bg-secondary px-2 py-1 rounded-md"
+                                                        >
+                                                            <PackageMinus size={18}/>
+                                                            <p className="text-base transition group-hover:text-primary">{part.material_number}</p>
+                                                            <p className={`text-base transition group-hover:text-primary line-clamp-1`}>{part.description_orginall} - {part.description_eng}</p>
+                                                        </div>
+                                                    </Link>
+                                                ))}
+                                            </div>
                                         </div>
                                     )}
 
                                     {event.type === 'status' && event.new_status && (
                                         <div className="grid gap-3">
                                             <div className="flex items-center gap-2">
-                                                <div className="flex items-center gap-1">
-                                                    <BrushCleaning className="text-red-500" size={16}/>
-                                                    <span className="text-xs">{event.old_status}</span>
-                                                </div>
                                                 <MoveRight size={16} className="text-neutral-400"/>
                                                 <div className="flex items-center gap-1">
-                                                    <Activity className="text-green-500" size={16}/>
-                                                    <span className="text-xs">{event.new_status}</span>
+                                                    {event.new_status === "离线 | Offline"
+                                                        ? <Activity className="text-red-500" size={16}/>
+                                                        : <Activity className="text-green-500" size={16}/>
+                                                    }
+                                                    <span className="text-base">{event.new_status}</span>
                                                 </div>
                                             </div>
 
+                                            <Separator/>
+
                                             {(event.type_problem || event.problem_note) && (
                                                 <div className="flex flex-col gap-2">
-                                                    {event.type_problem && (
-                                                        <Badge variant="secondary" className="text-xs w-fit">
-                                                            {event.type_problem}
-                                                        </Badge>
-                                                    )}
-
                                                     {event.problem_note && (
                                                         <div className="space-y-2">
-                                                            <div
-                                                                className="text-sm text-neutral-700 whitespace-pre-wrap overflow-hidden transition-all duration-200"
+                                                            <Label
+                                                                className="text-base  whitespace-pre-wrap overflow-hidden transition-all duration-200"
                                                                 style={{
                                                                     maxHeight: isExpanded ? '1000px' : '4.5em',
                                                                     display: '-webkit-box',
@@ -238,28 +263,34 @@ const RobotHistory = ({robot}: { robot: IRobot }) => {
                                                                 }}
                                                             >
                                                                 {event.problem_note}
+                                                            </Label>
+                                                            <div className={`flex items-center gap-2 justify-between`}>
+                                                                {event.type_problem && (
+                                                                    <Label className="text-base text-primary w-fit">
+                                                                        {event.type_problem}
+                                                                    </Label>
+                                                                )}
+                                                                {hasLongNote && (
+                                                                    <Button
+                                                                        variant="ghost"
+                                                                        type="button"
+                                                                        onClick={() => toggleNoteExpansion(event.id)}
+                                                                        className="h-auto p-1 text-base text-primary hover:text-primary/80"
+                                                                    >
+                                                                        {isExpanded ? (
+                                                                            <>
+                                                                                <ChevronUp className="h-3 w-3 mr-1"/>
+                                                                                Show less
+                                                                            </>
+                                                                        ) : (
+                                                                            <>
+                                                                                <ChevronDown className="h-3 w-3 mr-1"/>
+                                                                                Show more
+                                                                            </>
+                                                                        )}
+                                                                    </Button>
+                                                                )}
                                                             </div>
-                                                            {hasLongNote && (
-                                                                <Button
-                                                                    variant="ghost"
-                                                                    size="sm"
-                                                                    type="button"
-                                                                    onClick={() => toggleNoteExpansion(event.id)}
-                                                                    className="h-auto p-1 text-xs text-primary hover:text-primary/80"
-                                                                >
-                                                                    {isExpanded ? (
-                                                                        <>
-                                                                            <ChevronUp className="h-3 w-3 mr-1"/>
-                                                                            Show less
-                                                                        </>
-                                                                    ) : (
-                                                                        <>
-                                                                            <ChevronDown className="h-3 w-3 mr-1"/>
-                                                                            Show more
-                                                                        </>
-                                                                    )}
-                                                                </Button>
-                                                            )}
                                                         </div>
                                                     )}
                                                 </div>
