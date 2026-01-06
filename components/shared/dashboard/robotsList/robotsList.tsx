@@ -4,7 +4,7 @@ import {Table, TableBody, TableCaption, TableCell, TableHead, TableHeader, Table
 import dayjs from "dayjs";
 import {Button} from "@/components/ui/button";
 import Link from "next/link";
-import {Search, X, Clock, ChevronDown} from "lucide-react";
+import {Search, X, Clock, ChevronDown, Drill} from "lucide-react";
 import {ParamValue} from "next/dist/server/request/params";
 import {useRobotsStore} from "@/store/robotsStore";
 import {Input} from "@/components/ui/input";
@@ -25,6 +25,7 @@ import {
 } from "@/components/ui/popover";
 import Image from "next/image";
 import {Separator} from "@/components/ui/separator";
+import {Label} from "@/components/ui/label";
 
 const RobotsList = ({card_id}: { card_id: ParamValue }) => {
     const {robots, setRobots} = useRobotsStore()
@@ -108,7 +109,35 @@ const RobotsList = ({card_id}: { card_id: ParamValue }) => {
         : safeRobots.slice(0, 20)
 
     return (
-        <div className="space-y-3 sm:space-y-4">
+        <div className="space-y-3 sm:space-y-4 mt-4">
+            {robots &&
+                <>
+                    <Label className={`text-xl`}><Drill /> Robots waiting for repair: ({robots.filter(item => item.status === "离线 | Offline").length})</Label>
+                    <div className={`flex items-center gap-2 flex-wrap`}>
+                        {robots.filter(item => item.status === "离线 | Offline").map((robot, index) => (
+                            <Link href={`/robot/${robot.id}`} key={index} className="flex gap-2 border border-red-500 items-center  bg-muted py-2 px-4 rounded-2xl">
+                                {robot.robot_type === "K50H"
+                                    ?
+                                    <>
+                                        {robot.status === "离线 | Offline"
+                                            ? <Image src={`/img/K50H_red.svg`} alt={`robot_img`} width={30} height={30}/>
+                                            : <Image src={`/img/K50H_green.svg`} alt={`robot_img`} width={30} height={30}/>
+                                        }
+                                    </>
+                                    :
+                                    <>
+                                        {robot.status === "离线 | Offline"
+                                            ? <Image src={`/img/A42T_red.svg`} alt={`robot_img`} width={30} height={30}/>
+                                            : <Image src={`/img/A42T_Green.svg`} alt={`robot_img`} width={30} height={30}/>
+                                        }
+                                    </>
+                                }
+                                <div className="font-mono font-semibold">{robot.robot_number}</div>
+                            </Link>
+                        ))}
+                    </div>
+                </>
+            }
             {/* Search and Filter Section */}
             <div className="space-y-3">
                 {/* Search Input */}
@@ -370,7 +399,7 @@ const RobotsList = ({card_id}: { card_id: ParamValue }) => {
                                             <div className="text-sm text-muted-foreground">{robot.robot_type}</div>
                                         </div>
                                     </div>
-                                    <Badge variant={`secondary`} className={`py-1 px-4 border-dashed ${robot.status === '在线 | Online' ? 'border-green-500' : 'border-red-500'}`}>
+                                    <Badge variant={`secondary`} className={`py-1 px-4 border ${robot.status === '在线 | Online' ? 'border-green-500' : 'border-red-500'}`}>
                                         {robot.status}
                                     </Badge>
                                 </div>

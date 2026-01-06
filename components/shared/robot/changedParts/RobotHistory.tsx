@@ -157,7 +157,7 @@ const RobotHistory = ({robot}: { robot: IRobot }) => {
                     const hasLongNote = event.type === 'status' && event.problem_note && event.problem_note.length > 150;
 
                     return (
-                        <div key={`${event.type}-${event.id}`} className="mb-2 ml-6">
+                        <div key={`${event.type}-${event.id}`} className={`mb-2 ml-6`}>
                             <span
                                 className="absolute -left-3 flex h-6 w-6 items-center justify-center rounded-full bg-secondary shadow">
                                 {event.type === 'parts' ? (
@@ -235,7 +235,7 @@ const RobotHistory = ({robot}: { robot: IRobot }) => {
                                     )}
 
                                     {event.type === 'status' && event.new_status && (
-                                        <div className="grid gap-3">
+                                        <div className={`grid gap-3 p-2 rounded`}>
                                             <div className="flex items-center gap-2">
                                                 <MoveRight size={16} className="text-neutral-400"/>
                                                 <div className="flex items-center gap-1">
@@ -247,7 +247,9 @@ const RobotHistory = ({robot}: { robot: IRobot }) => {
                                                 </div>
                                             </div>
 
-                                            <Separator/>
+                                            <div className={`${event.new_status === "离线 | Offline" ? 'bg-red-500' : 'bg-green-500'} rounded-2xl h-0.25 w-full`}>
+                                            </div>
+
 
                                             {(event.type_problem || event.problem_note) && (
                                                 <div className="flex flex-col gap-2">

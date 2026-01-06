@@ -14,7 +14,7 @@ import {Label} from "@/components/ui/label";
 import {Input} from "@/components/ui/input";
 import {Textarea} from "@/components/ui/textarea";
 import {useUserStore} from "@/store/user";
-import {BellPlus, Copy, FilePlusCorner, Loader} from "lucide-react";
+import {BellPlus, Bot, Copy, FilePlusCorner, Loader} from "lucide-react";
 import {toast} from "sonner";
 import {Select, SelectContent, SelectGroup, SelectItem, SelectLabel, SelectTrigger, SelectValue} from "@/components/ui/select";
 import {getAllParts} from "@/futures/stock/getAllParts";
@@ -191,6 +191,7 @@ const Page = () => {
                                 </div>
 
                                 <div className={`flex flex-col gap-2 w-full`}>
+                                    <Label className={`text-xs`}><Bot /> {part.part_type}</Label>
                                     <p>{part.description_eng}</p>
                                     <Separator />
                                     <p>{part.description_orginall}</p>
