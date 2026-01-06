@@ -225,8 +225,8 @@ const RobotHistory = ({robot}: { robot: IRobot }) => {
                                                              className="flex items-center gap-2 bg-secondary px-2 py-1 rounded-md"
                                                         >
                                                             <PackageMinus size={18}/>
-                                                            <p className="text-base transition group-hover:text-primary">{part.material_number}</p>
-                                                            <p className={`text-base transition group-hover:text-primary line-clamp-1`}>{part.description_orginall} - {part.description_eng}</p>
+                                                            <p className="text-xs transition group-hover:text-primary">{part.material_number}</p>
+                                                            <p className={`text-xs transition group-hover:text-primary line-clamp-1`}>{part.description_orginall} - {part.description_eng}</p>
                                                         </div>
                                                     </Link>
                                                 ))}
@@ -243,7 +243,7 @@ const RobotHistory = ({robot}: { robot: IRobot }) => {
                                                         ? <Activity className="text-red-500" size={16}/>
                                                         : <Activity className="text-green-500" size={16}/>
                                                     }
-                                                    <span className="text-base">{event.new_status}</span>
+                                                    <span className="text-xs">{event.new_status}</span>
                                                 </div>
                                             </div>
 
@@ -254,7 +254,7 @@ const RobotHistory = ({robot}: { robot: IRobot }) => {
                                                     {event.problem_note && (
                                                         <div className="space-y-2">
                                                             <Label
-                                                                className="text-base  whitespace-pre-wrap overflow-hidden transition-all duration-200"
+                                                                className="text-xs  whitespace-pre-wrap overflow-hidden transition-all duration-200"
                                                                 style={{
                                                                     maxHeight: isExpanded ? '1000px' : '4.5em',
                                                                     display: '-webkit-box',
@@ -266,7 +266,7 @@ const RobotHistory = ({robot}: { robot: IRobot }) => {
                                                             </Label>
                                                             <div className={`flex items-center gap-2 justify-between`}>
                                                                 {event.type_problem && (
-                                                                    <Label className="text-base text-primary w-fit">
+                                                                    <Label className="text-xs text-primary w-fit">
                                                                         {event.type_problem}
                                                                     </Label>
                                                                 )}
@@ -275,7 +275,7 @@ const RobotHistory = ({robot}: { robot: IRobot }) => {
                                                                         variant="ghost"
                                                                         type="button"
                                                                         onClick={() => toggleNoteExpansion(event.id)}
-                                                                        className="h-auto p-1 text-base text-primary hover:text-primary/80"
+                                                                        className="h-auto p-1 text-xs text-primary hover:text-primary/80"
                                                                     >
                                                                         {isExpanded ? (
                                                                             <>
