@@ -55,8 +55,9 @@ const PartCopy = ({robot}: { robot: IRobot }) => {
 
     const copySingle = async (part: IPartLocal) => {
         const rows = [
-            `🤖 Robot ${part.part_user_data.robot.robot_number}`,
-            `•︎︎ ${part.description_orginall} - ${part.description_eng}`,
+            `🤖 Robot ${part.part_user_data.robot.robot_number}\n`,
+            `•︎︎ ${part.description_orginall}`,
+            `•︎︎ ${part.description_eng}`,
             `•︎ ${part.material_number}`,
             `•︎ ${timeToString(part.part_user_data.created_at)} - ${part.part_user_data.user.user_name}`,
         ];
@@ -75,7 +76,8 @@ const PartCopy = ({robot}: { robot: IRobot }) => {
             robot_number = item.part_user_data.robot.robot_number;
 
             return [
-                `•︎︎ ${item.description_orginall} - ${item.description_eng}`,
+                `•︎︎ ${item.description_orginall}`,
+                `•︎︎ ${item.description_eng}`,
                 `•︎ ${item.material_number}`,
                 `•︎ ${timeToString(item.part_user_data.created_at)} - ${item.part_user_data.user.user_name}`,
             ];

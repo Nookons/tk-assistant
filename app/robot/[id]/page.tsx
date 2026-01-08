@@ -71,7 +71,7 @@ const Page = () => {
                     </div>
                 </div>
 
-                <div className={`flex  gap-2`}>
+                <div className={`flex flex-wrap gap-2`}>
 
                     <div>
                         {current_Robot.status === "在线 | Online"
