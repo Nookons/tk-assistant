@@ -113,19 +113,19 @@ const PartsPicker = ({robot}: {robot: IRobot}) => {
                         {/* Иконка №1 */}
                         <Settings
                             className="
-        absolute inset-0
-        transition-all duration-300
-        group-hover:opacity-0 group-hover:scale-75
-      "
+                                absolute inset-0
+                                transition-all duration-300
+                                group-hover:opacity-0 group-hover:scale-75
+                              "
                         />
 
                         {/* Иконка №2 */}
                         <Wrench
                             className="
-        absolute inset-0 opacity-0 scale-75
-        transition-all duration-300
-        group-hover:opacity-100 group-hover:scale-100
-      "
+                                absolute inset-0 opacity-0 scale-75
+                                transition-all duration-300
+                                group-hover:opacity-100 group-hover:scale-100
+                              "
                         />
                     </div>
 

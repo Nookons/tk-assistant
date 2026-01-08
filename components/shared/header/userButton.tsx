@@ -1,13 +1,14 @@
 'use client'
 
-import React, {useEffect, useCallback, useRef, FC} from 'react';
+import React, {useEffect, useCallback, useRef, FC, useState} from 'react';
 import {Button} from "@/components/ui/button";
 import {LayoutDashboard, LogIn, LogOut} from "lucide-react";
 import Link from "next/link";
 import {useRouter} from "next/navigation";
 import {IUser} from "@/types/user/user";
 import {useUserStore} from "@/store/user";
-import {toast} from "sonner"; // Assuming you use a toast/notification library
+import {toast} from "sonner";
+import {Skeleton} from "@/components/ui/skeleton"; // Assuming you use a toast/notification library
 
 // Define a separate interface for the component's props
 interface UserButtonProps {
@@ -28,6 +29,8 @@ declare global {
 const UserButton: FC<UserButtonProps> = ({setMobileMenuOpen}) => {
     const router = useRouter();
 
+    const [isLoading, setIsLoading] = useState<boolean>(true);
+
     // --- REVISED: Accessing store state and actions individually ---
     const user = useUserStore(state => state.current_user);
     const set_user = useUserStore(state => state.set_user);
@@ -39,7 +42,6 @@ const UserButton: FC<UserButtonProps> = ({setMobileMenuOpen}) => {
      * Fetches the current user from the API and updates the global store.
      */
     const fetchUser = useCallback(async () => {
-
         try {
             const res = await fetch("/api/auth/me", {cache: "no-store"});
 
@@ -55,6 +57,7 @@ const UserButton: FC<UserButtonProps> = ({setMobileMenuOpen}) => {
             console.error("Fetch user failed:", e);
             set_user(null);
         } finally {
+            setIsLoading(false);
             mounted.current;
         }
     }, [set_user]);
@@ -117,6 +120,8 @@ const UserButton: FC<UserButtonProps> = ({setMobileMenuOpen}) => {
     }
 
     // Don't render anything while the initial user status is being determined
+
+    if (isLoading) return <Skeleton className="h-[30px] w-[100px] rounded" />;
 
     return user ? (
         // User is logged in: Show Dashboard and Logout buttons

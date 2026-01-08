@@ -3,50 +3,19 @@ import React, {useEffect, useState} from 'react';
 import {useParams} from "next/navigation";
 import {IRobot, IRobotApiResponse} from "@/types/robot/robot";
 import {Label} from "@/components/ui/label";
-import {
-    Bubbles,
-    CirclePlus, Construction, Dot, Frown, Laugh, Loader,
-    Phone, RefreshCw, SmilePlus,
-    Warehouse
-} from "lucide-react";
-import {useUserStore} from "@/store/user";
+import {Bubbles} from "lucide-react";
 import RobotHistory from "@/components/shared/robot/changedParts/RobotHistory";
 import PartsPicker from "@/components/shared/robot/addNewParts/partsPicker";
 import AddCommentRobot from "@/components/shared/robot/addComment/AddCommentRobot";
 import CommentsList from "@/components/shared/robot/commentsList/CommentsList";
 import Image from "next/image";
-import ChangeRobotStatus from "@/components/shared/robot/changeStatus/ChangeRobotStatus";
 import {useRobotsStore} from "@/store/robotsStore";
-import {Button} from "@/components/ui/button";
-import {changeRobotStatus} from "@/futures/robots/changeRobotStatus";
-import {toast} from "sonner";
-import {Timestamp} from "next/dist/server/lib/cache-handlers/types";
-import {IUser} from "@/types/user/user";
-import {
-    Dialog, DialogClose,
-    DialogContent,
-    DialogDescription,
-    DialogFooter,
-    DialogHeader,
-    DialogTitle,
-    DialogTrigger
-} from "@/components/ui/dialog";
-import { Input } from "@/components/ui/input";
-import {
-    Select,
-    SelectContent,
-    SelectGroup, SelectItem,
-    SelectLabel,
-    SelectTrigger,
-    SelectValue
-} from "@/components/ui/select";
-import {Textarea} from "@/components/ui/textarea";
 import SendRobotToMaintance from "@/components/shared/robot/sendRobotToMaintance/sendRobotToMaintance";
 import {Badge} from "@/components/ui/badge";
-import dayjs from "dayjs";
 import {timeToString} from "@/utils/timeToString";
 import SendRobotToMap from "@/components/shared/robot/sendRobotToMap/sendRobotToMap";
 import {Empty, EmptyDescription, EmptyHeader, EmptyMedia, EmptyTitle} from "@/components/ui/empty";
+import PartCopy from "@/components/shared/dashboard/PartCopy/PartCopy";
 
 
 
@@ -100,18 +69,28 @@ const Page = () => {
                             <Label>{current_Robot.status}</Label>
                         </div>
                     </div>
+                </div>
 
-                    <div className={`grid md:grid-cols-2 gap-2`}>
+                <div className={`flex  gap-2`}>
 
+                    <div>
                         {current_Robot.status === "在线 | Online"
                             ? <SendRobotToMaintance current_Robot={current_Robot} />
                             : <SendRobotToMap current_Robot={current_Robot} />
                         }
+                    </div>
 
+                    <div>
                         <PartsPicker
                             robot={current_Robot}
                         />
                     </div>
+
+                    {current_Robot.parts_history.length > 0 &&
+                    <div>
+                        <PartCopy robot={current_Robot}/>
+                    </div>
+                    }
                 </div>
 
                 <hr className={`my-4`}/>
