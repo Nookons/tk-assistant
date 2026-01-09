@@ -15,9 +15,9 @@ import {getPartByNumber} from "@/futures/stock/getPartByNumber";
 import {IStockItemTemplate} from "@/types/stock/StockItem";
 import {timeToString} from "@/utils/timeToString";
 import {toast} from "sonner";
+import {getWorkDate} from "@/futures/Date/getWorkDate";
 
 interface IPartLocal extends IStockItemTemplate {
-
     part_user_data: IHistoryParts
 }
 
@@ -30,21 +30,29 @@ const PartCopy = ({robot}: { robot: IRobot }) => {
         const fetchParts = async () => {
             const parts_history = robot.parts_history;
 
+            const dateValue = dayjs().toDate();
+            const date = await getWorkDate(dateValue);
+
             const updatedParts = await Promise.all(
-                parts_history.map(async (part) => {
-                    const partNumbers: string[] = JSON.parse(part.parts_numbers);
+                parts_history
+                    .filter(part =>
+                        dayjs(part.created_at).format('YYYY-MM-DD') ===
+                        dayjs(date).format('YYYY-MM-DD')
+                    )
+                    .map(async (part) => {
+                        const partNumbers: string[] = JSON.parse(part.parts_numbers);
 
-                    const stockParts = await Promise.all(
-                        partNumbers.map(item => getPartByNumber(item))
-                    );
+                        const stockParts = await Promise.all(
+                            partNumbers.map(item => getPartByNumber(item))
+                        );
 
-                    const PartsToFlat = stockParts.flat();
+                        const PartsToFlat = stockParts.flat();
 
-                    return {
-                        ...PartsToFlat[0],
-                        part_user_data: part
-                    };
-                })
+                        return {
+                            ...PartsToFlat[0],
+                            part_user_data: part
+                        };
+                    })
             );
 
             setParts_data(updatedParts);
@@ -59,7 +67,7 @@ const PartCopy = ({robot}: { robot: IRobot }) => {
             `•︎︎ ${part.description_orginall}`,
             `•︎︎ ${part.description_eng}`,
             `•︎ ${part.material_number}`,
-            `•︎ ${timeToString(part.part_user_data.created_at)} - ${part.part_user_data.user.user_name}`,
+            `•︎ ${timeToString(part.part_user_data.created_at)}`,
         ];
 
         const tsvContent = rows.join('\n');
@@ -79,7 +87,7 @@ const PartCopy = ({robot}: { robot: IRobot }) => {
                 `•︎︎ ${item.description_orginall}`,
                 `•︎︎ ${item.description_eng}`,
                 `•︎ ${item.material_number}`,
-                `•︎ ${timeToString(item.part_user_data.created_at)} - ${item.part_user_data.user.user_name}`,
+                `•︎ ${timeToString(item.part_user_data.created_at)}`,
             ];
         });
 
@@ -125,6 +133,9 @@ const PartCopy = ({robot}: { robot: IRobot }) => {
                 <DialogContent className="sm:max-w-[425px]">
                     <DialogHeader>
                         <DialogTitle>Parts for a copy</DialogTitle>
+                        <DialogDescription>
+                            {timeToString(dayjs().valueOf())}
+                        </DialogDescription>
                     </DialogHeader>
                     <div className="grid gap-4">
                         <div className="grid gap-3">

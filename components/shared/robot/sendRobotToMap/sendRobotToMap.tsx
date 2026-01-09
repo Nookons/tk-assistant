@@ -33,6 +33,9 @@ import { Textarea } from "@/components/ui/textarea";
 const IssueList = [
     '软件升级 / Software Upgrade',
     '更换备件 / Replaced Spare Parts',
+    '无需更改即可解决 / Solved without changing',
+    '软件修复 / Software fix',
+    '其他 / Other',
 ];
 
 const SendRobotToMap = ({ current_Robot }: { current_Robot: IRobot }) => {
