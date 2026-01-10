@@ -1,8 +1,7 @@
 'use client';
-
 import {useEffect, useState, useMemo} from 'react';
 import {format} from 'date-fns';
-import {ChevronDown} from 'lucide-react';
+import {ChevronDown, Equal, MoveRight, Pencil, Trash2} from 'lucide-react';
 import {Button} from '@/components/ui/button';
 import {Calendar} from '@/components/ui/calendar';
 import {Popover, PopoverContent, PopoverTrigger} from '@/components/ui/popover';
@@ -20,7 +19,6 @@ import {Badge} from '@/components/ui/badge';
 import {Separator} from '@/components/ui/separator';
 import {ScrollArea} from '@/components/ui/scroll-area';
 import {Accordion, AccordionContent, AccordionItem, AccordionTrigger} from '@/components/ui/accordion';
-
 import {getWorkDate} from '@/futures/Date/getWorkDate';
 import {getInitialShift} from '@/futures/Date/getInitialShift';
 import {getShiftList} from '@/futures/exception/getShiftList';
@@ -28,7 +26,6 @@ import {ErrorRecord, generateShiftReport} from '@/futures/PDF/shiftReport';
 import {useRobotsStore} from '@/store/robotsStore';
 import {toast} from 'sonner';
 import dayjs from 'dayjs';
-
 import type {IHistoryParts, IHistoryStatus} from '@/types/robot/robot';
 import {Table, TableBody, TableCell, TableHead, TableHeader, TableRow} from "@/components/ui/table";
 import {timeToString} from "@/utils/timeToString";
@@ -37,10 +34,10 @@ import {useQuery} from "@tanstack/react-query";
 import {getStatusChanges} from "@/futures/reports/getStatusChanges";
 import {getPartByNumber} from "@/futures/stock/getPartByNumber";
 import {IStockItemTemplate} from "@/types/stock/StockItem";
+import {ButtonGroup} from "@/components/ui/button-group";
 
 export default function Page() {
-    // Инициализируем стейт с явным значением
-    const [date, setDate] = useState<Date>(() => {
+    const [date, setDate] = useState(() => {
         const initialDate = getWorkDate(new Date());
         console.log('Initial date from getWorkDate:', initialDate);
         return initialDate || new Date();
@@ -55,19 +52,15 @@ export default function Page() {
     const [data, setData] = useState<Record<string, ErrorRecord[]>>({});
     const [loading, setLoading] = useState(false);
     const [mounted, setMounted] = useState(false);
-
     const [parts_numbers, setParts_numbers] = useState<IStockItemTemplate[]>([])
 
-    /* ------------------------- robots store ------------------------- */
     const robots = useRobotsStore((s) => s.robots);
 
-    /* ------------------------- Эффект для отслеживания монтирования ------------------------- */
     useEffect(() => {
         setMounted(true);
         console.log('Component mounted');
     }, []);
 
-    /* ------------------------- history for selected date & shift ------------------------- */
     const {data: status_history, isLoading, isError} = useQuery({
         queryKey: ['status_changes', date.toString(), shift],
         queryFn: () => getStatusChanges(dayjs(date).format('MM/DD/YYYY'), shift),
@@ -79,16 +72,13 @@ export default function Page() {
 
         const dayKey = dayjs(date).format('YYYY-MM-DD');
 
-        // Определяем временные границы смены
         let shiftStart: dayjs.Dayjs;
         let shiftEnd: dayjs.Dayjs;
 
         if (shift === 'day') {
-            // Day shift: 06:00 - 18:00
             shiftStart = dayjs(date).hour(6).minute(0).second(0);
             shiftEnd = dayjs(date).hour(18).minute(0).second(0);
         } else {
-            // Night shift: 18:00 - 06:00 (следующего дня)
             shiftStart = dayjs(date).hour(18).minute(0).second(0);
             shiftEnd = dayjs(date).add(1, 'day').hour(6).minute(0).second(0);
         }
@@ -96,7 +86,6 @@ export default function Page() {
         const hp: IHistoryParts[] = [];
 
         robots.forEach((r) => {
-            // Фильтруем parts_history по времени смены
             r.parts_history
                 .filter((h) => {
                     const createdAt = dayjs(h.created_at);
@@ -108,7 +97,6 @@ export default function Page() {
         return {historyParts: hp};
     }, [robots, date, shift]);
 
-    /* ------------------------- load exceptions ------------------------- */
     const loadExceptions = async () => {
         if (!date) {
             console.log('loadExceptions: date is undefined, skipping');
@@ -123,14 +111,11 @@ export default function Page() {
         console.log('Shift:', shift);
 
         setLoading(true);
-
         try {
-            // Форматируем дату в ISO формат (YYYY-MM-DD)
             const formattedDate = dayjs(date).format('YYYY-MM-DD');
             console.log('Formatted date for API:', formattedDate);
 
             const list = await getShiftList({date: formattedDate, shift_type: shift});
-
             console.log('API Response:', list);
             console.log('Response length:', list?.length);
 
@@ -141,7 +126,6 @@ export default function Page() {
             console.log('Grouped keys:', Object.keys(grp));
 
             setData(grp);
-
         } catch (error) {
             console.error('Error loading exceptions:', error);
             toast.error('Failed to load exceptions');
@@ -161,7 +145,6 @@ export default function Page() {
         }
     }, [mounted, date, shift]);
 
-    /* ------------------------- PDF ------------------------- */
     const handlePdf = async () => {
         if (!date) return;
         if (status_history == undefined) return;
@@ -187,20 +170,18 @@ export default function Page() {
 
     const getPartsData = async () => {
         setParts_numbers([])
-        const local_array: string[][] = []; // массив массивов строк
+        const local_array: string[][] = [];
 
         historyParts.forEach((el) => {
-            if (!el?.parts_numbers) return; // если нет parts_numbers, пропускаем
-
+            if (!el?.parts_numbers) return;
             try {
-                const obj: string[] = JSON.parse(el.parts_numbers); // парсим JSON
-                local_array.push(obj); // добавляем в массив
+                const obj: string[] = JSON.parse(el.parts_numbers);
+                local_array.push(obj);
             } catch (e) {
                 console.error("Ошибка парсинга parts_numbers:", e);
             }
         });
 
-        // объединяем все массивы и создаём Set для уникальных значений
         const sorted = Array.from(new Set(local_array.flat()));
 
         for (const item of sorted) {
@@ -213,35 +194,41 @@ export default function Page() {
         getPartsData()
     }, [historyParts]);
 
-
-    /* ------------------------- UI ------------------------- */
     return (
-        <div className="mx-auto p-6 space-y-6">
-            <Card>
-                <CardHeader>
-                    <CardTitle>SHEIN REPORT PAGE</CardTitle>
-                    <CardDescription>Shift exceptions and robot history</CardDescription>
+        <div className="min-h-screen p-2 md:p-8">
+            <div className="mx-auto max-w-7xl shadow-xl">
+                <CardHeader className="space-y-1">
+                    <CardTitle className="text-2xl md:text-3xl font-bold">SHEIN REPORT PAGE</CardTitle>
+                    <CardDescription className="">
+                        Shift exceptions and robot history
+                    </CardDescription>
                 </CardHeader>
 
-                <CardContent className="flex flex-wrap items-center justify-between gap-4">
-                    <div className="grid md:grid-cols-2 items-center gap-4">
+                <CardContent className="space-y-6 p-4 md:p-6">
+                    {/* Filters - теперь адаптивные */}
+                    <div className="flex flex-col sm:flex-row gap-4">
                         {/* DATE */}
                         <Popover>
                             <PopoverTrigger asChild>
-                                <Button variant="outline" className="w-[200px] justify-between">
+                                <Button variant="outline" className="w-full sm:w-[240px] justify-start text-left font-normal">
+                                    <ChevronDown className="mr-2 h-4 w-4"/>
                                     {date ? format(date, 'PPP') : 'Pick date'}
-                                    <ChevronDown className="ml-2 h-4 w-4"/>
                                 </Button>
                             </PopoverTrigger>
-                            <PopoverContent className="w-auto p-0">
-                                <Calendar mode="single" selected={date} onSelect={(d) => d && setDate(d)} initialFocus/>
+                            <PopoverContent className="w-auto p-0" align="start">
+                                <Calendar
+                                    mode="single"
+                                    selected={date}
+                                    onSelect={(d) => d && setDate(d)}
+                                    initialFocus
+                                />
                             </PopoverContent>
                         </Popover>
 
                         {/* SHIFT */}
                         <Select value={shift} onValueChange={(v) => setShift(v as 'day' | 'night')}>
-                            <SelectTrigger className="w-[180px]">
-                                <SelectValue/>
+                            <SelectTrigger className="w-full sm:w-[200px]">
+                                <SelectValue placeholder="Select shift"/>
                             </SelectTrigger>
                             <SelectContent>
                                 <SelectGroup>
@@ -251,76 +238,145 @@ export default function Page() {
                                 </SelectGroup>
                             </SelectContent>
                         </Select>
+
+                        <Button
+                            onClick={handlePdf}
+                            disabled={loading}
+                            className="w-full sm:w-auto"
+                        >
+                            {loading ? 'Generating…' : 'PDF'}
+                        </Button>
                     </div>
 
-                    <Button onClick={handlePdf} disabled={loading || !Object.keys(data).length}>
-                        {loading ? 'Generating…' : 'PDF'}
-                    </Button>
+                    <Separator/>
+
+                    {/* CONTENT */}
+                    <div className="space-y-4">
+                        <StatusChanges date={date} shift={shift}/>
+
+                        {loading && (
+                            <div className="flex h-64 items-center justify-center">
+                                <p className="text-muted-foreground">Loading…</p>
+                            </div>
+                        )}
+
+                        {!loading && !Object.keys(data).length && (
+                            <Card className=" ">
+                                <CardContent className="p-6 text-center">
+                                    <p className="">
+                                        No errors for selected shift.
+                                        <br/>
+                                        <span className="text-sm ">
+                                          (Date: {date ? format(date, 'PPP') : 'none'}, Shift: {shift})
+                                        </span>
+                                    </p>
+                                </CardContent>
+                            </Card>
+                        )}
+
+                        {!loading && Object.keys(data).length > 0 && (
+                            <Accordion type="multiple" className="space-y-2 mt-4">
+                                {Object.entries(data).map(([emp, list], empIndex) => (
+                                    <AccordionItem
+                                        key={empIndex}
+                                        value={`emp-${empIndex}`}
+                                        className="overflow-hidden rounded-lg"
+                                    >
+                                        <AccordionTrigger className="px-4 ">
+                                            <div className="flex flex-col sm:flex-row sm:items-center gap-2 sm:gap-4 text-left">
+                                                <span className="font-semibold">{emp}</span>
+                                                <div className="flex items-center gap-2 text-sm">
+                                                    <Badge variant="destructive">
+                                                        {list.length} error{list.length > 1 ? 's' : ''}
+                                                    </Badge>
+                                                    <Badge variant="secondary">
+                                                        {list.reduce((s, e) => s + e.solving_time, 0)} min
+                                                    </Badge>
+                                                </div>
+                                            </div>
+                                        </AccordionTrigger>
+
+                                        <AccordionContent className="px-0 pb-0">
+                                            {/* Desktop table - скрыта на мобильных */}
+                                            <div className="hidden md:block overflow-x-auto">
+                                                <Table>
+                                                    <TableHeader>
+                                                        <TableRow>
+                                                            <TableHead>Robot</TableHead>
+                                                            <TableHead>Type</TableHead>
+                                                            <TableHead>Gap</TableHead>
+                                                            <TableHead>Start → End</TableHead>
+                                                            <TableHead className="text-right">Actions</TableHead>
+                                                        </TableRow>
+                                                    </TableHeader>
+                                                    <TableBody>
+                                                        {list.map((e, index) => (
+                                                            <TableRow key={index}>
+                                                                <TableCell className="font-medium">{e.error_robot}</TableCell>
+                                                                <TableCell>{e.device_type}</TableCell>
+                                                                <TableCell>
+                                                                    <Badge variant="outline">{e.solving_time} min</Badge>
+                                                                </TableCell>
+                                                                <TableCell className="text-sm text-muted-foreground">
+                                                                    {timeToString(e.error_start_time)} → {timeToString(e.error_end_time)}
+                                                                </TableCell>
+                                                                <TableCell className="text-right">
+                                                                    <div className="flex justify-end gap-2">
+                                                                        <Button variant="ghost" size="icon">
+                                                                            <Pencil className="h-4 w-4"/>
+                                                                        </Button>
+                                                                        <Button variant="ghost" size="icon">
+                                                                            <Trash2 className="h-4 w-4"/>
+                                                                        </Button>
+                                                                    </div>
+                                                                </TableCell>
+                                                            </TableRow>
+                                                        ))}
+                                                    </TableBody>
+                                                </Table>
+                                            </div>
+
+                                            {/* Mobile card view - показана только на мобильных */}
+                                            <div className="md:hidden space-y-3">
+                                                {list.map((e, index) => (
+                                                    <div key={index} className="">
+                                                        <CardContent className="p-4 space-y-3">
+                                                            <div className="flex justify-between items-center">
+                                                                <div className={`flex gap-2`}>
+                                                                    <p className="font-semibold ">{e.error_robot}</p>
+                                                                    <p className="text-sm">{e.device_type}</p>
+                                                                </div>
+                                                                <ButtonGroup>
+                                                                    <Button variant="outline" size="sm" className="flex-1">
+                                                                        <Trash2 className="h-3 w-3 mr-1"/>
+                                                                    </Button>
+                                                                </ButtonGroup>
+                                                            </div>
+
+                                                            <div className="text-sm flex items-center gap-2">
+                                                                <div className="flex justify-between">
+                                                                    <span className="font-medium">{dayjs(e.error_start_time).format("HH:mm")}</span>
+                                                                </div>
+                                                                <MoveRight size={16} />
+                                                                <div className="flex justify-between">
+                                                                    <span className="font-medium">{dayjs(e.error_end_time).format("HH:mm")}</span>
+                                                                </div>
+                                                                <Equal  size={16}/>
+                                                                <div className="flex justify-between">
+                                                                    <span className="font-medium">{e.solving_time} min</span>
+                                                                </div>
+                                                            </div>
+                                                        </CardContent>
+                                                    </div>
+                                                ))}
+                                            </div>
+                                        </AccordionContent>
+                                    </AccordionItem>
+                                ))}
+                            </Accordion>
+                        )}
+                    </div>
                 </CardContent>
-            </Card>
-
-            {/* ---------- CONTENT ---------- */}
-
-
-
-            <div className={`grid md:grid-cols-2 items-start gap-4`}>
-                <div className={`overflow-hidden`}>
-                    <StatusChanges date={date} shift={shift} />
-                </div>
-
-                {loading && (
-                    <Card>
-                        <CardContent className="pt-6">Loading…</CardContent>
-                    </Card>
-                )}
-
-                {!loading && !Object.keys(data).length && (
-                    <Card>
-                        <CardContent className="pt-6 text-sm text-muted-foreground">
-                            No errors for selected shift. (Date: {date ? format(date, 'PPP') : 'none'}, Shift: {shift})
-                        </CardContent>
-                    </Card>
-                )}
-
-                {!loading && Object.keys(data).length > 0 && (
-                    <Accordion type="single" collapsible className="space-y-4 bg-muted p-4 rounded-lg">
-                        {Object.entries(data).map(([emp, list], empIndex) => (
-                            <AccordionItem value={emp} key={emp}>
-                                <AccordionTrigger className="text-sm">
-                                    <div className="flex items-center justify-between">
-                                        <CardTitle className="text-base">{emp}</CardTitle>
-                                        <Badge variant="secondary">
-                                            {list.length} error{list.length > 1 ? 's' : ''} · {list.reduce((s, e) => s + e.solving_time, 0)} min
-                                        </Badge>
-                                    </div>
-                                </AccordionTrigger>
-
-                                <AccordionContent className="text-sm space-y-2">
-                                    <Table>
-                                        <TableHeader>
-                                            <TableRow>
-                                                <TableHead className="w-[100px]">Robot</TableHead>
-                                                <TableHead>Type</TableHead>
-                                                <TableHead>Gap</TableHead>
-                                                <TableHead>Start → End</TableHead>
-                                            </TableRow>
-                                        </TableHeader>
-                                        <TableBody>
-                                            {list.map((e, index) => (
-                                                <TableRow key={index}>
-                                                    <TableCell>{e.error_robot}</TableCell>
-                                                    <TableCell>{e.device_type}</TableCell>
-                                                    <TableCell>{e.solving_time} min</TableCell>
-                                                    <TableCell>{timeToString(e.error_start_time)} → {timeToString(e.error_end_time)}</TableCell>
-                                                </TableRow>
-                                            ))}
-                                        </TableBody>
-                                    </Table>
-                                </AccordionContent>
-                            </AccordionItem>
-                        ))}
-                    </Accordion>
-                )}
             </div>
         </div>
     );

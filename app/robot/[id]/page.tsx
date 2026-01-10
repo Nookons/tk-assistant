@@ -16,8 +16,7 @@ import {timeToString} from "@/utils/timeToString";
 import SendRobotToMap from "@/components/shared/robot/sendRobotToMap/sendRobotToMap";
 import {Empty, EmptyDescription, EmptyHeader, EmptyMedia, EmptyTitle} from "@/components/ui/empty";
 import PartCopy from "@/components/shared/dashboard/PartCopy/PartCopy";
-
-
+import RobotGraph from "@/components/shared/robot/robotGraph/RobotGraph";
 
 
 const Page = () => {
@@ -75,8 +74,8 @@ const Page = () => {
 
                     <div>
                         {current_Robot.status === "在线 | Online"
-                            ? <SendRobotToMaintance current_Robot={current_Robot} />
-                            : <SendRobotToMap current_Robot={current_Robot} />
+                            ? <SendRobotToMaintance current_Robot={current_Robot}/>
+                            : <SendRobotToMap current_Robot={current_Robot}/>
                         }
                     </div>
 
@@ -87,9 +86,9 @@ const Page = () => {
                     </div>
 
                     {current_Robot.parts_history.length > 0 &&
-                    <div>
-                        <PartCopy robot={current_Robot}/>
-                    </div>
+                        <div>
+                            <PartCopy robot={current_Robot}/>
+                        </div>
                     }
                 </div>
 
@@ -100,7 +99,7 @@ const Page = () => {
                         <div className={`flex flex-col gap-2 flex-wrap w-full`}>
 
                             {current_Robot.type_problem.length > 0
-                            ?
+                                ?
                                 <div className={`rounded p-2 w-full flex flex-col gap-2`}>
                                     <Badge variant={`destructive`} className="">{current_Robot.type_problem}</Badge>
                                     <Label className="text-xl">{current_Robot.problem_note}</Label>
@@ -109,11 +108,11 @@ const Page = () => {
                                         <p className="text-xs text-muted-foreground">{timeToString(current_Robot.updated_at)}</p>
                                     </div>
                                 </div>
-                            :
+                                :
                                 <Empty className="from-muted/50 to-background h-full bg-gradient-to-b from-30%">
                                     <EmptyHeader>
                                         <EmptyMedia variant="icon">
-                                            <Bubbles  />
+                                            <Bubbles/>
                                         </EmptyMedia>
                                         <EmptyTitle>No Issue</EmptyTitle>
                                         <EmptyDescription>
@@ -141,10 +140,14 @@ const Page = () => {
 
                 </div>
             </div>
-            <div>
-                <RobotHistory
-                    robot={current_Robot}
-                />
+
+            <div className={`flex flex-col items-start gap-4 w-full mt-4`}>
+                <RobotGraph current_Robot={current_Robot}/>
+                <div className={`w-full`}>
+                    <RobotHistory
+                        robot={current_Robot}
+                    />
+                </div>
             </div>
         </div>
     );

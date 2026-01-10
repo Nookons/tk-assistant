@@ -51,7 +51,6 @@ const PartsPicker = ({robot}: {robot: IRobot}) => {
             const response = await res.json()
 
             if (res.ok) {
-                console.log(response);
                 setOptions_Data(response)
             }
         } catch (error) {

@@ -92,6 +92,13 @@ const Page = () => {
                 }
 
                 const parts = trimmedLine.split(".");
+
+                // ✅ ADD VALIDATION HERE
+                if (parts.length < 3) {
+                    temp_wrong.push(`${current_employee || "No Employee"} - Invalid format: ${trimmedLine}`);
+                    return;
+                }
+
                 const error_string = parts[0];
                 const error_robot = parts[1];
                 const error_time = parts[2];
@@ -105,6 +112,12 @@ const Page = () => {
                 if (!error_pattern) {
                     toast.error(`Error not found: ${error_string}`);
                     temp_wrong.push(`${error_time} | ${current_employee || "No Employee"} - ${error_string} - ${error_robot}`);
+                    return;
+                }
+
+                // ✅ ADD ADDITIONAL VALIDATION FOR TIME FORMAT
+                if (!error_time || !error_time.includes(':')) {
+                    temp_wrong.push(`${current_employee || "No Employee"} - Invalid time format: ${trimmedLine}`);
                     return;
                 }
 

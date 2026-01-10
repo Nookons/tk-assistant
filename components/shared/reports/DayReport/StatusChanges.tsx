@@ -9,6 +9,7 @@ import {ArrowRight, BotOff, Bug, NotebookText} from "lucide-react";
 import {Empty, EmptyDescription, EmptyHeader, EmptyMedia, EmptyTitle} from "@/components/ui/empty";
 import {Skeleton} from "@/components/ui/skeleton";
 import {Table, TableBody, TableCaption, TableCell, TableHead, TableHeader, TableRow} from "@/components/ui/table";
+import Link from "next/link";
 
 const StatusChanges = ({date, shift}: { date: Date; shift: string }) => {
 
@@ -74,7 +75,7 @@ const StatusChanges = ({date, shift}: { date: Date; shift: string }) => {
                                         />
                                     )}
                                 </TableCell>
-                                <TableCell>{item.robot_number}</TableCell>
+                                <TableCell><Link href={`/robot/${item.robot.id}`}>{item.robot_number}</Link></TableCell>
                                 <TableCell>{item.robot.robot_type}</TableCell>
                                 <TableCell>{item.user.user_name}</TableCell>
                                 <TableCell className="flex items-center gap-2">

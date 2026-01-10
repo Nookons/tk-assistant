@@ -150,7 +150,7 @@ const RobotHistory = ({robot}: { robot: IRobot }) => {
     }
 
     return (
-        <div className="w-full max-w-2xl mx-auto p-2">
+        <div className="w-full max-w-2xl mx-auto pl-2">
             <div className="relative border-l-2 border-gray-300">
                 {filtered.slice(0, 25).map((event) => {
                     const isExpanded = expandedNotes[event.id];
