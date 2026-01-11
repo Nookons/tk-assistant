@@ -26,6 +26,8 @@ import {
 import Image from "next/image";
 import {Separator} from "@/components/ui/separator";
 import {Label} from "@/components/ui/label";
+import {ButtonGroup} from "@/components/ui/button-group";
+import {timeToString} from "@/utils/timeToString";
 
 const RobotsList = ({card_id}: { card_id: ParamValue }) => {
     const {robots, setRobots} = useRobotsStore()
@@ -112,37 +114,50 @@ const RobotsList = ({card_id}: { card_id: ParamValue }) => {
         <div className="space-y-3 sm:space-y-4 mt-4">
             {robots &&
                 <>
-                    <Label className={`text-xl`}><Drill /> Robots waiting for repair: ({robots.filter(item => item.status === "离线 | Offline").length})</Label>
-                    <div className={`flex items-center gap-2 flex-wrap`}>
-                        {robots.filter(item => item.status === "离线 | Offline").map((robot, index) => (
-                            <Link href={`/robot/${robot.id}`} key={index} className="flex gap-2 border border-red-500 items-center  bg-muted py-2 px-4 rounded-2xl">
-                                {robot.robot_type === "K50H"
-                                    ?
-                                    <>
-                                        {robot.status === "离线 | Offline"
-                                            ? <Image src={`/img/K50H_red.svg`} alt={`robot_img`} width={30} height={30}/>
-                                            : <Image src={`/img/K50H_green.svg`} alt={`robot_img`} width={30} height={30}/>
+                    <Table>
+                        <TableCaption>
+                            <p>Robots waiting for repair: ({robots.filter(item => item.status === "离线 | Offline").length})</p>
+                        </TableCaption>
+                        <TableBody>
+                            {robots.filter(item => item.status === "离线 | Offline").map((robot, index) => (
+                                <TableRow key={index}>
+                                    <TableCell className={`flex items-center gap-2 p-1`}>
+                                        {robot.robot_type === "K50H"
+                                            ?
+                                            <>
+                                                {robot.status === "离线 | Offline"
+                                                    ? <Image src={`/img/K50H_red.svg`} alt={`robot_img`} width={30}
+                                                             height={30}/>
+                                                    : <Image src={`/img/K50H_green.svg`} alt={`robot_img`} width={30}
+                                                             height={30}/>
+                                                }
+                                            </>
+                                            :
+                                            <>
+                                                {robot.status === "离线 | Offline"
+                                                    ? <Image src={`/img/A42T_red.svg`} alt={`robot_img`} width={30}
+                                                             height={30}/>
+                                                    : <Image src={`/img/A42T_Green.svg`} alt={`robot_img`} width={30}
+                                                             height={30}/>
+                                                }
+                                            </>
                                         }
-                                    </>
-                                    :
-                                    <>
-                                        {robot.status === "离线 | Offline"
-                                            ? <Image src={`/img/A42T_red.svg`} alt={`robot_img`} width={30} height={30}/>
-                                            : <Image src={`/img/A42T_Green.svg`} alt={`robot_img`} width={30} height={30}/>
-                                        }
-                                    </>
-                                }
-                                <div className="font-mono font-semibold">{robot.robot_number}</div>
-                            </Link>
-                        ))}
-                    </div>
+                                    </TableCell>
+                                    <TableCell><div className="font-mono font-semibold">{robot.robot_type}</div></TableCell>
+                                    <TableCell className={`text-right`}><Link href={`/robot/${robot.id}`} className="font-mono font-semibold">{robot.robot_number}</Link></TableCell>
+                                    <TableCell className={`text-right`}><div className="font-mono font-semibold">{timeToString(robot.updated_at)}</div></TableCell>
+                                </TableRow>
+                            ))}
+                        </TableBody>
+                    </Table>
                 </>
             }
             {/* Search and Filter Section */}
             <div className="space-y-3">
                 {/* Search Input */}
                 <div className="relative my-4">
-                    <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground pointer-events-none" />
+                    <Search
+                        className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground pointer-events-none"/>
                     <Input
                         ref={inputRef}
                         value={robot_number_value}
@@ -162,154 +177,9 @@ const RobotsList = ({card_id}: { card_id: ParamValue }) => {
                         </Button>
                     )}*/}
                 </div>
-
-                {/* Filter Toggle Button (Mobile) */}
-                <div className="flex items-center justify-between">
-                    <Button
-                        variant="outline"
-                        size="sm"
-                        className="h-9 gap-2"
-                        onClick={() => setShowFilters(!showFilters)}
-                    >
-                        Filters
-                        {(selectedStatus || selectedType) && (
-                            <Badge variant="secondary" className="ml-1 px-1.5 py-0 h-5 text-xs">
-                                {(selectedStatus ? 1 : 0) + (selectedType ? 1 : 0)}
-                            </Badge>
-                        )}
-                        <ChevronDown className={`h-4 w-4 transition-transform ${showFilters ? 'rotate-180' : ''}`} />
-                    </Button>
-
-                    {/* Results count */}
-                    <span className="text-sm text-muted-foreground">
-                        {hasActiveFilters
-                            ? `${filtered_data.length} result${filtered_data.length !== 1 ? 's' : ''}`
-                            : `${safeRobots.length} robots`
-                        }
-                    </span>
-                </div>
-
-                {/* Filters Dropdown */}
-                {showFilters && (
-                    <div className="space-y-2 p-3 bg-muted/30 rounded-lg border animate-in slide-in-from-top-2">
-                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
-                            {/* Status Filter */}
-                            <Popover>
-                                <PopoverTrigger asChild>
-                                    <Button variant="outline" size="sm" className="h-9 w-full justify-start">
-                                        <span className="truncate">
-                                            Status {selectedStatus && `: ${selectedStatus}`}
-                                        </span>
-                                    </Button>
-                                </PopoverTrigger>
-                                <PopoverContent className="w-[200px] p-0" align="start">
-                                    <Command>
-                                        <CommandInput placeholder="Search status..." />
-                                        <CommandList>
-                                            <CommandEmpty>No status found.</CommandEmpty>
-                                            <CommandGroup>
-                                                <CommandItem
-                                                    onSelect={() => setSelectedStatus("")}
-                                                >
-                                                    All Statuses
-                                                </CommandItem>
-                                                {uniqueStatuses.map((status) => (
-                                                    <CommandItem
-                                                        key={status}
-                                                        onSelect={() => setSelectedStatus(status)}
-                                                    >
-                                                        {status.toUpperCase()}
-                                                    </CommandItem>
-                                                ))}
-                                            </CommandGroup>
-                                        </CommandList>
-                                    </Command>
-                                </PopoverContent>
-                            </Popover>
-
-                            {/* Type Filter */}
-                            <Popover>
-                                <PopoverTrigger asChild>
-                                    <Button variant="outline" size="sm" className="h-9 w-full justify-start">
-                                        <span className="truncate">
-                                            Type {selectedType && `: ${selectedType}`}
-                                        </span>
-                                    </Button>
-                                </PopoverTrigger>
-                                <PopoverContent className="w-[200px] p-0" align="start">
-                                    <Command>
-                                        <CommandInput placeholder="Search type..." />
-                                        <CommandList>
-                                            <CommandEmpty>No type found.</CommandEmpty>
-                                            <CommandGroup>
-                                                <CommandItem
-                                                    onSelect={() => setSelectedType("")}
-                                                >
-                                                    All Types
-                                                </CommandItem>
-                                                {uniqueTypes.map((type) => (
-                                                    <CommandItem
-                                                        key={type}
-                                                        onSelect={() => setSelectedType(type)}
-                                                    >
-                                                        {type}
-                                                    </CommandItem>
-                                                ))}
-                                            </CommandGroup>
-                                        </CommandList>
-                                    </Command>
-                                </PopoverContent>
-                            </Popover>
-                        </div>
-
-                        {/* Clear Filters */}
-                        {hasActiveFilters && (
-                            <Button
-                                variant="ghost"
-                                size="sm"
-                                className="h-8 w-full"
-                                onClick={clearFilters}
-                            >
-                                Clear all filters
-                            </Button>
-                        )}
-                    </div>
-                )}
-
-                {/* Active Filters Pills */}
-                {hasActiveFilters && !showFilters && (
-                    <div className="flex flex-wrap gap-2">
-                        {selectedStatus && (
-                            <Badge variant="secondary" className="gap-1 pl-2 pr-1">
-                                Status: {selectedStatus}
-                                <Button
-                                    variant="ghost"
-                                    size="sm"
-                                    className="h-4 w-4 p-0 hover:bg-transparent"
-                                    onClick={() => setSelectedStatus("")}
-                                >
-                                    <X className="h-3 w-3" />
-                                </Button>
-                            </Badge>
-                        )}
-                        {selectedType && (
-                            <Badge variant="secondary" className="gap-1 pl-2 pr-1">
-                                Type: {selectedType}
-                                <Button
-                                    variant="ghost"
-                                    size="sm"
-                                    className="h-4 w-4 p-0 hover:bg-transparent"
-                                    onClick={() => setSelectedType("")}
-                                >
-                                    <X className="h-3 w-3" />
-                                </Button>
-                            </Badge>
-                        )}
-                    </div>
-                )}
             </div>
 
-            <Separator />
+            <Separator/>
 
             {/* Table - Desktop */}
             <div className="hidden md:block">
@@ -369,28 +239,33 @@ const RobotsList = ({card_id}: { card_id: ParamValue }) => {
             <div className="md:hidden flex flex-col gap-2">
                 {displayedRobots.length === 0 ? (
                     <div className="text-center py-12 text-muted-foreground">
-                        <Search className="h-12 w-12 mx-auto mb-3 opacity-20" />
+                        <Search className="h-12 w-12 mx-auto mb-3 opacity-20"/>
                         <p>No robots found</p>
                     </div>
                 ) : (
                     displayedRobots.slice(0, 20).map((robot, index) => (
                         <Link key={index} href={`/robot/${robot.id}`}>
-                            <div className="border rounded-lg p-4 hover:bg-muted/50 transition-colors active:scale-[0.98]">
+                            <div
+                                className="border rounded-lg p-4 hover:bg-muted/50 transition-colors active:scale-[0.98]">
                                 <div className="flex items-start justify-between mb-3">
                                     <div className="flex items-center gap-3">
                                         {robot.robot_type === "K50H"
                                             ?
                                             <>
                                                 {robot.status === "离线 | Offline"
-                                                    ? <Image src={`/img/K50H_red.svg`} alt={`robot_img`} width={32} height={32} />
-                                                    : <Image src={`/img/K50H_green.svg`} alt={`robot_img`} width={32} height={32} />
+                                                    ? <Image src={`/img/K50H_red.svg`} alt={`robot_img`} width={32}
+                                                             height={32}/>
+                                                    : <Image src={`/img/K50H_green.svg`} alt={`robot_img`} width={32}
+                                                             height={32}/>
                                                 }
                                             </>
                                             :
                                             <>
                                                 {robot.status === "离线 | Offline"
-                                                    ? <Image src={`/img/A42T_red.svg`} alt={`robot_img`} width={32} height={32} />
-                                                    : <Image src={`/img/A42T_Green.svg`} alt={`robot_img`} width={32} height={32} />
+                                                    ? <Image src={`/img/A42T_red.svg`} alt={`robot_img`} width={32}
+                                                             height={32}/>
+                                                    : <Image src={`/img/A42T_Green.svg`} alt={`robot_img`} width={32}
+                                                             height={32}/>
                                                 }
                                             </>
                                         }
@@ -399,13 +274,14 @@ const RobotsList = ({card_id}: { card_id: ParamValue }) => {
                                             <div className="text-sm text-muted-foreground">{robot.robot_type}</div>
                                         </div>
                                     </div>
-                                    <Badge variant={`secondary`} className={`py-1 px-4 border ${robot.status === '在线 | Online' ? 'border-green-500' : 'border-red-500'}`}>
+                                    <Badge variant={`secondary`}
+                                           className={`py-1 px-4 border ${robot.status === '在线 | Online' ? 'border-green-500' : 'border-red-500'}`}>
                                         {robot.status}
                                     </Badge>
                                 </div>
-                               <div className="space-y-1 text-sm text-muted-foreground">
+                                <div className="space-y-1 text-sm text-muted-foreground">
                                     <div className="flex items-center gap-1.5">
-                                        <Clock className="h-3.5 w-3.5" />
+                                        <Clock className="h-3.5 w-3.5"/>
                                         <span>Updated: {dayjs(robot.updated_at).format('MMM D, YYYY HH:mm')}</span>
                                     </div>
                                 </div>

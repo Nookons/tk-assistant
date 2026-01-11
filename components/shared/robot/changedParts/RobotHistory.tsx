@@ -235,7 +235,7 @@ const RobotHistory = ({robot}: { robot: IRobot }) => {
                                     )}
 
                                     {event.type === 'status' && event.new_status && (
-                                        <div className={`grid gap-3 p-2 rounded`}>
+                                        <div className={`grid gap-3 rounded`}>
                                             <div className="flex items-center gap-2">
                                                 <MoveRight size={16} className="text-neutral-400"/>
                                                 <div className="flex items-center gap-1">
@@ -247,16 +247,12 @@ const RobotHistory = ({robot}: { robot: IRobot }) => {
                                                 </div>
                                             </div>
 
-                                            <div className={`${event.new_status === "离线 | Offline" ? 'bg-red-500' : 'bg-green-500'} rounded-2xl h-0.25 w-full`}>
-                                            </div>
-
-
                                             {(event.type_problem || event.problem_note) && (
                                                 <div className="flex flex-col gap-2">
                                                     {event.problem_note && (
                                                         <div className="space-y-2">
                                                             <Label
-                                                                className="text-xs  whitespace-pre-wrap overflow-hidden transition-all duration-200"
+                                                                className="text-base  whitespace-pre-wrap overflow-hidden transition-all duration-200"
                                                                 style={{
                                                                     maxHeight: isExpanded ? '1000px' : '4.5em',
                                                                     display: '-webkit-box',
@@ -268,7 +264,7 @@ const RobotHistory = ({robot}: { robot: IRobot }) => {
                                                             </Label>
                                                             <div className={`flex items-center gap-2 justify-between`}>
                                                                 {event.type_problem && (
-                                                                    <Label className="text-xs text-primary w-fit">
+                                                                    <Label className="text-xs text-muted-foreground w-fit">
                                                                         {event.type_problem}
                                                                     </Label>
                                                                 )}
