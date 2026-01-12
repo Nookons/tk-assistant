@@ -88,10 +88,6 @@ const CommentItem: React.FC<CommentItemProps> = ({
             <div
                 className={`p-4 border-l-2 relative ${isRoot ? 'border-primary' : 'border-green-500'}`}>
 
-                {isNested &&
-                    <div className="absolute top-0 left-1/2 w-1 h-[20px] bg-green-500"></div>
-                }
-
                 <div className="flex justify-between items-start gap-2 mb-3">
                     <div className="flex items-center gap-2">
                         <div className="flex flex-col">
