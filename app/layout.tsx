@@ -27,8 +27,11 @@ export default function RootLayout({children,}: Readonly<{ children: React.React
                 <Toaster richColors position="bottom-right"/>
                 <div className="">
                     <Header/>
-                    <MainProvider />
+                    <MainProvider/>
                     {children}
+                    <div className={`flex justify-center items-center w-full h-full bg-background-foreground`}>
+                        <p className={`py-8 text-muted-foreground`}>TK Service by Kolomiiets Dmytro</p>
+                    </div>
                 </div>
             </QueryProvider>
         </ThemeProvider>

@@ -1,7 +1,7 @@
 'use client'
 import React, {useEffect, useState} from 'react';
 import {useParams} from "next/navigation";
-import {IRobot, IRobotApiResponse} from "@/types/robot/robot";
+import {IRobot} from "@/types/robot/robot";
 import {Label} from "@/components/ui/label";
 import {Bubbles} from "lucide-react";
 import RobotHistory from "@/components/shared/robot/changedParts/RobotHistory";
@@ -10,13 +10,13 @@ import AddCommentRobot from "@/components/shared/robot/addComment/AddCommentRobo
 import CommentsList from "@/components/shared/robot/commentsList/CommentsList";
 import Image from "next/image";
 import {useRobotsStore} from "@/store/robotsStore";
-import SendRobotToMaintance from "@/components/shared/robot/sendRobotToMaintance/sendRobotToMaintance";
 import {Badge} from "@/components/ui/badge";
 import {timeToString} from "@/utils/timeToString";
-import SendRobotToMap from "@/components/shared/robot/sendRobotToMap/sendRobotToMap";
 import {Empty, EmptyDescription, EmptyHeader, EmptyMedia, EmptyTitle} from "@/components/ui/empty";
 import PartCopy from "@/components/shared/dashboard/PartCopy/PartCopy";
 import RobotGraph from "@/components/shared/robot/robotGraph/RobotGraph";
+import RobotStatusDialog from "@/components/shared/robot/EditStatus/RobotEditStatus";
+import {Separator} from "@/components/ui/separator";
 
 
 const Page = () => {
@@ -39,7 +39,7 @@ const Page = () => {
     if (!current_Robot) return null;
 
     return (
-        <div className="max-w-[1600px] m-auto grid md:grid-cols-[1fr_650px] gap-8 px-4">
+        <div className="max-w-[1600px] min-h-screen m-auto grid md:grid-cols-[1fr_650px] gap-8 px-4">
             {/* ROBOT INFO */}
             <div className="">
                 <div className={`grid md:grid-cols-2 gap-4 py-4`}>
@@ -74,8 +74,16 @@ const Page = () => {
 
                     <div>
                         {current_Robot.status === "在线 | Online"
-                            ? <SendRobotToMaintance current_Robot={current_Robot}/>
-                            : <SendRobotToMap current_Robot={current_Robot}/>
+                            ?
+                            <RobotStatusDialog
+                                currentRobot={current_Robot}
+                                actionType="sendToMaintenance"
+                            />
+                            :
+                            <RobotStatusDialog
+                                currentRobot={current_Robot}
+                                actionType="sendToMap"
+                            />
                         }
                     </div>
 
@@ -96,16 +104,24 @@ const Page = () => {
 
                 <div className="">
                     <div className={`flex flex-col md:grid md:grid-cols-1  items-start gap-4`}>
-                        <div className={`flex flex-col gap-2 flex-wrap w-full`}>
-
+                        <div className={`flex flex-col gap-2 flex-wrap w-full mb-8`}>
                             {current_Robot.type_problem.length > 0
                                 ?
                                 <div className={`rounded p-2 w-full flex flex-col gap-2`}>
-                                    <Badge variant={`destructive`} className="">{current_Robot.type_problem}</Badge>
+                                    <div className={`flex items-center justify-between gap-2`}>
+                                        <Badge variant={`destructive`} className="">{current_Robot.type_problem}</Badge>
+
+                                        <RobotStatusDialog
+                                            currentRobot={current_Robot}
+                                            actionType="edit"
+                                        />
+                                    </div>
                                     <Label className="text-xl">{current_Robot.problem_note}</Label>
-                                    <div className={`mt-4`}>
-                                        <p className="text-xs text-muted-foreground">{current_Robot.updated_by?.user_name} - {current_Robot.updated_by?.warehouse}</p>
-                                        <p className="text-xs text-muted-foreground">{timeToString(current_Robot.updated_at)}</p>
+                                    <div className={`flex items-center justify-between gap-2`}>
+                                        <div className={`mt-4`}>
+                                            <p className="text-xs text-muted-foreground">{current_Robot.updated_by?.user_name} - {current_Robot.updated_by?.warehouse}</p>
+                                            <p className="text-xs text-muted-foreground">{timeToString(current_Robot.updated_at)}</p>
+                                        </div>
                                     </div>
                                 </div>
                                 :
@@ -121,8 +137,9 @@ const Page = () => {
                                     </EmptyHeader>
                                 </Empty>
                             }
-
                         </div>
+
+                        <Separator className={`my-4`} />
 
                         <div className={`w-full`}>
                             <div className={`rounded mb-4 w-full`}>
@@ -136,10 +153,12 @@ const Page = () => {
                                 />
                             </div>
                         </div>
-                    </div>
 
+                        <Separator />
+                    </div>
                 </div>
             </div>
+
 
             <div className={`flex flex-col items-start gap-4 w-full mt-4`}>
                 <RobotGraph current_Robot={current_Robot}/>
