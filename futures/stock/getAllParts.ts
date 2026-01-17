@@ -1,5 +1,6 @@
+import {IStockItemTemplate} from "@/types/stock/StockItem";
 
-export const getAllParts = async () => {
+export const getAllParts = async (): Promise<IStockItemTemplate[]> => {
     const res = await fetch(`/api/stock/get-all-parts`, {
         method: 'GET',
         headers: {

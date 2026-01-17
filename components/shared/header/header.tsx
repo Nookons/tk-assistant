@@ -1,7 +1,17 @@
 "use client"
 import * as React from "react"
 import Link from "next/link"
-import {Menu, X, FileText, Package, ChevronRight, LucideIcon, CalendarArrowDown, WandSparkles} from "lucide-react"
+import {
+    Menu,
+    X,
+    FileText,
+    Package,
+    ChevronRight,
+    LucideIcon,
+    CalendarArrowDown,
+    WandSparkles,
+    Boxes
+} from "lucide-react"
 import { ThemeToggle } from "@/components/shared/theme/theme-toggle"
 import { Button } from "@/components/ui/button"
 import UserButton from "@/components/shared/header/userButton"
@@ -56,13 +66,19 @@ const navigation: NavigationSection[] = [
         ]
     },
     {
-        name: "Inventory",
+        name: "Stock",
         items: [
             {
-                name: "Inventory Stock",
+                name: "Items Template",
                 href: "/stock",
-                description: "Manage warehouse inventory",
+                description: "Stock items template",
                 icon: Package
+            },
+            {
+                name: "Inventory",
+                href: "/stock/inventory",
+                description: "Page for managing inventory",
+                icon: Boxes
             },
         ]
     },
