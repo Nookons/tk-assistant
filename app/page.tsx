@@ -151,7 +151,7 @@ export default function Home() {
                                 formatter={(value, _, props) => (
                                     <div className="flex flex-col gap-1">
                                         <div className="font-semibold">{props.payload.employee}</div>
-                                        <div>{dataKey === 'desktop' ? 'Errors' : dataKey === 'totalTime' ? 'Time' : 'Parts'}: {formatNumber(value)}</div>
+                                        <div>{dataKey === 'desktop' ? 'Errors' : dataKey === 'totalTime' ? 'Time' : 'Parts'}: {formatNumber(Number(value))}</div>
                                     </div>
                                 )}
                             />}
