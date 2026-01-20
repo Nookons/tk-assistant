@@ -10,13 +10,13 @@ import {
     LucideIcon,
     CalendarArrowDown,
     WandSparkles,
-    Boxes
+    Boxes, Warehouse
 } from "lucide-react"
-import { ThemeToggle } from "@/components/shared/theme/theme-toggle"
-import { Button } from "@/components/ui/button"
+import {ThemeToggle} from "@/components/shared/theme/theme-toggle"
+import {Button} from "@/components/ui/button"
 import UserButton from "@/components/shared/header/userButton"
 import Image from "next/image"
-import { cn } from "@/lib/utils"
+import {cn} from "@/lib/utils"
 import {useTheme} from "next-themes";
 import {useEffect} from "react";
 import {Label} from "@/components/ui/label";
@@ -69,6 +69,12 @@ const navigation: NavigationSection[] = [
         name: "Stock",
         items: [
             {
+                name: "Stock Screen",
+                href: "/stock/stock-screen",
+                description: "",
+                icon: Warehouse
+            },
+            {
                 name: "Items Template",
                 href: "/stock",
                 description: "Stock items template",
@@ -88,7 +94,7 @@ export function Header() {
     const [mobileMenuOpen, setMobileMenuOpen] = React.useState<boolean>(false)
     const [activeDropdown, setActiveDropdown] = React.useState<string | null>(null)
 
-    const { theme } = useTheme()
+    const {theme} = useTheme()
     const [mounted, setMounted] = React.useState(false)
 
     useEffect(() => {
@@ -107,25 +113,22 @@ export function Header() {
     }, []);
 
 
-
     return (
         <header className="sticky bg-muted-foreground/5 backdrop-blur-2xl mb-2 top-0 z-50 w-full">
             <div className="flex items-center justify-between px-2 py-2">
                 {/* Logo */}
-                <Link href="/" className="flex items-center gap-3" aria-label="Go to Homepage">
+                <Link href="/" className="flex items-center gap-4" aria-label="Go to Homepage">
                     <div className="rounded-lg flex items-center">
-                        <div className="rounded-lg flex items-center">
-                            <Label className={`font-bold text-primary`}>TK Service</Label>
-                            {/*{mounted && (
-                                <Image
-                                    alt="Tk Service Logo"
-                                    className={`rounded-2xl my-2`}
-                                    src={theme === "light" ? "/img/black.png" : "/img/black.png"}
-                                    width={75}
-                                    height={75}
-                                    priority
-                                />
-                            )}*/}
+                        <div className="rounded-lg flex gap-2 items-center">
+                            <Image
+                                alt="Tk Service Logo"
+                                className={`rounded-2xl my-2`}
+                                src={"/img/favicon.png"}
+                                width={35}
+                                height={35}
+                                priority
+                            />
+                            <Label className={`font-bold text-base text-primary`}>TK Service</Label>
                         </div>
                     </div>
                 </Link>
@@ -150,7 +153,7 @@ export function Header() {
                                 <ChevronRight className={cn(
                                     "h-4 w-4 transition-transform",
                                     activeDropdown === section.name && "rotate-90"
-                                )} />
+                                )}/>
                             </Button>
 
                             {/* Dropdown */}
@@ -172,7 +175,8 @@ export function Header() {
                                                 )}
                                             >
                                                 <div className="flex  items-start gap-3">
-                                                    {item.icon && <item.icon className="h-5 w-5 mt-0.5 text-muted-foreground" />}
+                                                    {item.icon &&
+                                                        <item.icon className="h-5 w-5 mt-0.5 text-muted-foreground"/>}
                                                     <div className="flex-1">
                                                         <div className="font-medium text-sm mb-0.5">
                                                             {item.name}
@@ -194,8 +198,8 @@ export function Header() {
                 {/* Right Side Controls */}
                 <div className="flex items-end gap-2">
                     <div className="hidden sm:flex items-center gap-2">
-                        <UserButton setMobileMenuOpen={setMobileMenuOpen} />
-                        <ThemeToggle />
+                        <UserButton setMobileMenuOpen={setMobileMenuOpen}/>
+                        <ThemeToggle/>
                     </div>
 
                     {/* Mobile Menu Button */}
@@ -208,9 +212,9 @@ export function Header() {
                         aria-expanded={mobileMenuOpen}
                     >
                         {mobileMenuOpen ? (
-                            <X className="h-5 w-5" />
+                            <X className="h-5 w-5"/>
                         ) : (
-                            <Menu className="h-5 w-5" />
+                            <Menu className="h-5 w-5"/>
                         )}
                     </Button>
                 </div>
@@ -223,8 +227,8 @@ export function Header() {
                         {/* Mobile User Controls - Only shown on smallest screens */}
                         <div className="flex sm:hidden items-center justify-end gap-2 pb-4 border-b">
                             {/* 🔥 FIX: Pass the required prop here as well */}
-                            <UserButton setMobileMenuOpen={setMobileMenuOpen} />
-                            <ThemeToggle />
+                            <UserButton setMobileMenuOpen={setMobileMenuOpen}/>
+                            <ThemeToggle/>
                         </div>
 
                         {/* Navigation Sections */}
@@ -242,7 +246,8 @@ export function Header() {
                                             onClick={handleNavigationClick}
                                             className="flex items-start gap-3 rounded-md p-3 transition-colors hover:bg-accent"
                                         >
-                                            {item.icon && <item.icon className="h-5 w-5 mt-0.5 text-muted-foreground flex-shrink-0" />}
+                                            {item.icon && <item.icon
+                                                className="h-5 w-5 mt-0.5 text-muted-foreground flex-shrink-0"/>}
                                             <div className="flex-1 min-w-0">
                                                 <div className="font-medium text-sm">
                                                     {item.name}

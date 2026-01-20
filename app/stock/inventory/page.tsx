@@ -22,6 +22,7 @@ import {toast} from "sonner";
 import CreateNewStockTemplate from "@/components/shared/Stock/CreateNewStockTemplate";
 import {AddToStock} from "@/futures/stock/AddToStock";
 import {AddToStockHistory} from "@/futures/stock/AddToStockHistory";
+import {Separator} from "@radix-ui/react-select";
 
 const Page = () => {
     const [selected, setSelected] = useState("")
@@ -44,6 +45,10 @@ const Page = () => {
             if (!user_store) throw new Error("User not found")
             if (!picked_template) throw new Error("Template not found")
 
+            if (!location) throw new Error("Location can't be empty")
+            if (!quantity) throw new Error("Quantity can't be empty")
+            if (!warehouse) throw new Error("Warehouse can't be empty")
+
             await AddToStock({
                 card_id: user_store.card_id.toString(),
                 material_number: picked_template.material_number,
@@ -58,6 +63,11 @@ const Page = () => {
                 location,
                 value: quantity
             })
+
+            toast.success("Added to stock")
+
+            setLocation("")
+            setQuantity("")
 
         } catch (error) {
             error && toast.error(error.toString() || "Unknown error")
@@ -78,12 +88,12 @@ const Page = () => {
             toast.error("Quantity must be 4 digits")
             return
         }
-        setLocation(value)
+        setLocation(value.toUpperCase())
     }
 
 
     return (
-        <div className={`p-4`}>
+        <div className={`p-4 max-w-[800px] m-auto flex flex-col gap-4`}>
             <CreateNewStockTemplate />
 
             <AllPartsPicker
@@ -91,21 +101,16 @@ const Page = () => {
                 setSelected={setSelected}
             />
 
-            {selected && (
-                <div className={`max-w-full mt-4 p-4 border rounded-lg shadow-lg `}>
-                    <div className={`flex flex-wrap overflow-hidden rounded-2xl gap-2`}>
-                        <Badge variant={`secondary`} className={`text-base`}>{picked_template?.part_type}</Badge>
-                        <Badge variant={`secondary`} className={`max-w-full`}><p
-                            className={`line-clamp-1 text-base`}>{picked_template?.description_eng}</p></Badge>
-                        <Badge variant={`secondary`} className={`max-w-full`}><p
-                            className={`line-clamp-1 text-base`}>{picked_template?.description_orginall}</p></Badge>
-                    </div>
+            <hr className={`w-full`} />
 
+            {selected && (
+                <div className={`max-w-full mt-4`}>
                     <div className={`grid md:grid-cols-3 items-center gap-4 mt-4`}>
                         <div>
                             <label>Quantity</label>
                             <Input
                                 value={quantity}
+                                type={`number`}
                                 onChange={(e) => handleQuantityChange(e.target.value)}
                             />
                         </div>
@@ -154,6 +159,10 @@ const Page = () => {
                         <Button onClick={handleCreateNew}>
                             Add
                         </Button>
+                    </div>
+
+                    <div className={`flex flex-col overflow-hidden gap-2 mt-4`}>
+                        <p className={`text-base text-muted-foreground`}>{picked_template?.part_type} - {picked_template?.description_eng} - {picked_template?.description_orginall}</p>
                     </div>
                 </div>
             )}
