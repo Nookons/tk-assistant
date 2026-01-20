@@ -138,9 +138,10 @@ const Page = () => {
                                 maxLength={6}
                                 value={location}
                                 onChange={handleLocationChange}
+                                inputMode="text"
                             >
                                 <InputOTPGroup>
-                                    <InputOTPSlot index={0}/>
+                                    <InputOTPSlot  index={0}/>
                                     <InputOTPSlot index={1}/>
                                 </InputOTPGroup>
                                 <InputOTPSeparator/>
