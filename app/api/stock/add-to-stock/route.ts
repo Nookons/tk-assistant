@@ -4,7 +4,9 @@ import { supabase } from '@/lib/supabaseClient';
 export async function POST(request: Request) {
     const body = await request.json();
 
-    const {card_id, material_number, selected, warehouse, quantity} = body;
+    const {card_id, material_number, selected, warehouse, location, quantity} = body;
+
+    console.log(body)
 
     // Сначала ищем существующую запись
     const { data: existingData, error: searchError } = await supabase
@@ -12,6 +14,7 @@ export async function POST(request: Request) {
         .select('*')
         .eq('warehouse', warehouse)
         .eq('material_number', material_number)
+        .eq('location', location)
         .single();
 
     if (searchError && searchError.code !== 'PGRST116') {
@@ -48,6 +51,7 @@ export async function POST(request: Request) {
                 material_number,
                 selected,
                 warehouse,
+                location,
                 quantity
             })
             .select();

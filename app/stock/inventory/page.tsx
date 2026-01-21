@@ -108,6 +108,7 @@ const Page = () => {
                 card_id: user_store!.card_id.toString(),
                 material_number: picked_template!.material_number,
                 warehouse,
+                location,
                 quantity
             })
 
@@ -123,7 +124,6 @@ const Page = () => {
                 description: `${quantity} units of ${picked_template!.material_number}`
             })
 
-            setLocation("")
             setQuantity("")
 
         } catch (error) {
@@ -173,7 +173,6 @@ const Page = () => {
                 <div className="space-y-4">
                     {/* Material Picker */}
                     <div className="space-y-2">
-                        <label className="text-sm font-medium">Material</label>
                         <AllPartsPicker
                             setSelected={setSelected}
                             selected={selected}

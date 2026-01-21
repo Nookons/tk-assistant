@@ -61,15 +61,11 @@ const AllPartsPicker: React.FC<IProps> = ({selected, setSelected}) => {
 
     return (
         <div>
-            <p className="text-xs text-muted-foreground mb-1">
-                Total: {items.length}
-            </p>
-
             <Popover open={open} onOpenChange={setOpen}>
                 <PopoverTrigger asChild>
                     <Button
                         variant="outline"
-                        className="w-full h-11 text-base justify-between"
+                        className="w-full h-8 text-base justify-between"
                     >
                         <span className="truncate">
                             {selected || "Select material"}
@@ -89,11 +85,11 @@ const AllPartsPicker: React.FC<IProps> = ({selected, setSelected}) => {
                             placeholder="Search by number or description"
                             value={search}
                             onValueChange={setSearch}
-                            className="h-11 text-base"
+                            className="h-14 text-base"
                             autoCorrect="off"
                         />
 
-                        <CommandList className="max-h-[50vh] overflow-y-auto overscroll-contain">
+                        <CommandList className="max-h-[35vh] overflow-y-auto overscroll-contain">
                             <CommandEmpty>No results found</CommandEmpty>
 
                             <CommandGroup>
@@ -101,15 +97,15 @@ const AllPartsPicker: React.FC<IProps> = ({selected, setSelected}) => {
                                     <CommandItem
                                         key={item.id}
                                         onSelect={() => handleSelect(item.material_number)}
-                                        className="py-3"
+                                        className="py-1 rounded-none"
                                     >
-                                        <div className="flex flex-col gap-0.5">
+                                        <div className="flex flex-col max-w-full gap-0.5">
                                             <span className="font-mono text-sm">
                                                 {item.material_number}
                                             </span>
-                                            <span className="text-xs text-muted-foreground truncate">
+                                            <p className="text-xs line-clamp-1 text-muted-foreground truncate">
                                                 {item.description_eng} - {item.description_orginall}
-                                            </span>
+                                            </p>
                                         </div>
 
                                         <Check
@@ -126,6 +122,9 @@ const AllPartsPicker: React.FC<IProps> = ({selected, setSelected}) => {
                     </Command>
                 </PopoverContent>
             </Popover>
+            <p className="text-xs text-muted-foreground mt-2">
+                Pick you material from the list.
+            </p>
         </div>
     )
 }
