@@ -39,6 +39,7 @@ import {Separator} from "@/components/ui/separator";
 import {getPartByNumber} from "@/futures/stock/getPartByNumber";
 import {IStockItemTemplate} from "@/types/stock/StockItem";
 import Link from "next/link";
+import {toast} from "sonner";
 
 interface StatusHistoryItem {
     id: number;
@@ -119,13 +120,14 @@ const RobotHistory = ({robot}: { robot: IRobot }) => {
     const getPartsRemove = async (parts_id: number) => {
         try {
             setIsLoading(true);
-            const res = await removeParts(parts_id.toString());
+            const res = await removeParts(parts_id.toString(), user?.card_id.toString() || '');
 
             if (res) {
                 removeFromStock(res.robot_id, res.id);
             }
         } catch (err) {
             console.log(err);
+            toast.error(`Error deleting parts history ${err}`);
         } finally {
             setTimeout(() => {
                 setIsLoading(false);

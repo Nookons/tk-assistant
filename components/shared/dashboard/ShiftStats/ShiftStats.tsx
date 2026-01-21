@@ -144,7 +144,7 @@ const ShiftStats = () => {
     }
 
     return (
-        <div className="py-5 mask-b-from-50%">
+        <div className="py-5">
             <div className="flex justify-between gap-3">
                 {/* Выбор даты */}
                 <Popover open={open} onOpenChange={setOpen}>

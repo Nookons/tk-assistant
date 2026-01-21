@@ -28,5 +28,14 @@ export const addNewException = async ({data}: {data: ILocalIssue}) => {
         throw new Error('Failed to add robot');
     }
 
+    await fetch(`/api/user/update-user-score`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+            card_id: data.add_by,
+            value: 0.01,
+        })
+    })
+
     return await res.json(); // если хочешь вернуть данные
 }

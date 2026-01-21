@@ -10,40 +10,19 @@ import {useRobotsStore} from "@/store/robotsStore";
 import {Input} from "@/components/ui/input";
 import {IRobot} from "@/types/robot/robot";
 import {Badge} from "@/components/ui/badge";
-import {
-    Command,
-    CommandEmpty,
-    CommandGroup,
-    CommandInput,
-    CommandItem,
-    CommandList,
-} from "@/components/ui/command";
-import {
-    Popover,
-    PopoverContent,
-    PopoverTrigger,
-} from "@/components/ui/popover";
 import Image from "next/image";
 import {Separator} from "@/components/ui/separator";
-import {Label} from "@/components/ui/label";
-import {ButtonGroup} from "@/components/ui/button-group";
-import {timeToString} from "@/utils/timeToString";
 
-const RobotsList = ({card_id}: { card_id: ParamValue }) => {
+const RobotsList = () => {
     const {robots, setRobots} = useRobotsStore()
     const [robot_number_value, setRobot_number_value] = useState("")
     const [filtered_data, setFiltered_data] = useState<IRobot[]>([])
     const [selectedStatus, setSelectedStatus] = useState("")
     const [selectedType, setSelectedType] = useState("")
-    const [showFilters, setShowFilters] = useState(false)
     const inputRef = useRef(null)
 
-    // Ensure robots is always an array
     const safeRobots = robots || []
 
-    // Get unique statuses and types for filters
-    const uniqueStatuses = [...new Set(safeRobots.map(r => r.status))]
-    const uniqueTypes = [...new Set(safeRobots.map(r => r.robot_type))]
 
     useEffect(() => {
         let filtered = safeRobots
@@ -112,46 +91,6 @@ const RobotsList = ({card_id}: { card_id: ParamValue }) => {
 
     return (
         <div className="space-y-3 sm:space-y-4 mt-4">
-            {robots &&
-                <>
-                    <Table>
-                        <TableCaption>
-                            <p>Robots waiting for repair: ({robots.filter(item => item.status === "离线 | Offline").length})</p>
-                        </TableCaption>
-                        <TableBody>
-                            {robots.filter(item => item.status === "离线 | Offline").map((robot, index) => (
-                                <TableRow key={index}>
-                                    <TableCell className={`flex items-center gap-2 p-1`}>
-                                        {robot.robot_type === "K50H"
-                                            ?
-                                            <>
-                                                {robot.status === "离线 | Offline"
-                                                    ? <Image src={`/img/K50H_red.svg`} alt={`robot_img`} width={30}
-                                                             height={30}/>
-                                                    : <Image src={`/img/K50H_green.svg`} alt={`robot_img`} width={30}
-                                                             height={30}/>
-                                                }
-                                            </>
-                                            :
-                                            <>
-                                                {robot.status === "离线 | Offline"
-                                                    ? <Image src={`/img/A42T_red.svg`} alt={`robot_img`} width={30}
-                                                             height={30}/>
-                                                    : <Image src={`/img/A42T_Green.svg`} alt={`robot_img`} width={30}
-                                                             height={30}/>
-                                                }
-                                            </>
-                                        }
-                                    </TableCell>
-                                    <TableCell><div className="font-mono font-semibold">{robot.robot_type}</div></TableCell>
-                                    <TableCell className={`text-right`}><Link href={`/robot/${robot.id}`} className="font-mono font-semibold">{robot.robot_number}</Link></TableCell>
-                                    <TableCell className={`text-right`}><div className="font-mono font-semibold">{timeToString(robot.updated_at)}</div></TableCell>
-                                </TableRow>
-                            ))}
-                        </TableBody>
-                    </Table>
-                </>
-            }
             {/* Search and Filter Section */}
             <div className="space-y-3">
                 {/* Search Input */}

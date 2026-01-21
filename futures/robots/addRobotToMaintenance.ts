@@ -23,5 +23,14 @@ export const addRobotToMaintenance = async (robot_data: ILocalData) => {
         throw new Error('Failed to add robot');
     }
 
+    await fetch(`/api/user/update-user-score`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+            card_id: robot_data.card_id,
+            value: 0.1,
+        })
+    })
+
     return await res.json(); // если хочешь вернуть данные
 };

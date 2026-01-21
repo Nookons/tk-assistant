@@ -9,6 +9,8 @@ import ShiftStats from "@/components/shared/dashboard/ShiftStats/ShiftStats";
 import {useUserStore} from "@/store/user";
 import Important from "@/components/shared/dashboard/Important/Important";
 import ImportantScreen from "@/components/shared/dashboard/Important/ImportantScreen";
+import WaitingRepair from "@/components/shared/Robots/WaitingRepair";
+import {Separator} from "@/components/ui/separator";
 
 const Page = () => {
     const params = useParams();
@@ -19,27 +21,33 @@ const Page = () => {
     if (!user_store) return <LoaderCircle className={`animate-spin w-full`}/>
 
     return (
-        <div className={`px-4 flex flex-col gap-4 max-w-[1600px] m-auto`}>
-            <div className={`flex items-center justify-between mt-4`}>
-                <div className={`flex items-center gap-2`}>
-                    <Label className={`text-base`}>{user_store.user_name}</Label>
+        <div className={`p-4 flex flex-col gap-4`}>
+            <div className={`flex flex-col gap-4`}>
+                <div className={`flex items-center justify-between`}>
+                    <div className={`flex items-center gap-2`}>
+                        <Label className={`text-base`}>{user_store.user_name}</Label>
+                    </div>
+                    <div className={`flex items-center gap-4`}>
+                        <UserStar size={24}/>
+                        <Badge className={`text-base px-2`}
+                               variant={user_store.score < 0 ? `destructive` : "secondary"}>
+                            {user_store.score.toFixed(2)}
+                        </Badge>
+                        <Important/>
+                    </div>
                 </div>
-                <div className={`flex items-center gap-4`}>
-                    <UserStar size={24}/>
-                    <Badge className={`text-base px-2`} variant={user_store.score < 0 ? `destructive` : "secondary"}>
-                        {user_store.score.toFixed(2)}
-                    </Badge>
-                    <Important />
+                <div className={`flex flex-col gap-2`}>
+                    <ImportantScreen/>
                 </div>
             </div>
 
-            <div className={`flex flex-col gap-2`}>
-                <ImportantScreen />
-            </div>
-
-            <div className={``}>
+            <div className={`grid md:grid-cols-2 gap-4`}>
+                <div>
+                    <WaitingRepair/>
+                    <Separator className={`my-4`} />
+                    <ShiftStats/>
+                </div>
                 <RobotListProvider card_id={card_id}/>
-                <ShiftStats />
             </div>
         </div>
     );

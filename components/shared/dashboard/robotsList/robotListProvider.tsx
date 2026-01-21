@@ -4,9 +4,10 @@ import RobotsList from "@/components/shared/dashboard/robotsList/robotsList";
 
 const robotsListProvider = ({card_id}: {card_id: ParamValue}) => {
     if (!card_id) return null;
+
     return (
         <div>
-            <RobotsList card_id={card_id} />
+            <RobotsList />
         </div>
     )
 };

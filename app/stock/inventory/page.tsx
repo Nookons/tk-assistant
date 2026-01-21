@@ -1,5 +1,4 @@
 'use client'
-
 import React, {useEffect, useState} from 'react';
 import AllPartsPicker from "@/components/shared/AllPartsPicker/AllPartsPicker";
 import {Input} from "@/components/ui/input";
@@ -16,67 +15,134 @@ import {
 import {useUserStore} from "@/store/user";
 import {useStockStore} from "@/store/stock";
 import {IStockItemTemplate} from "@/types/stock/StockItem";
-import {InputOTP, InputOTPGroup, InputOTPSeparator, InputOTPSlot} from "@/components/ui/input-otp";
+import {InputOTP, InputOTPGroup, InputOTPSlot} from "@/components/ui/input-otp";
 import {Badge} from "@/components/ui/badge";
 import {toast} from "sonner";
 import CreateNewStockTemplate from "@/components/shared/Stock/CreateNewStockTemplate";
 import {AddToStock} from "@/futures/stock/AddToStock";
 import {AddToStockHistory} from "@/futures/stock/AddToStockHistory";
-import {Separator} from "@radix-ui/react-select";
+import {Loader2, Package} from "lucide-react";
 
 const Page = () => {
-    const [selected, setSelected] = useState("")
-    const [location, setLocation] = useState("")
-    const [warehouse, setWarehouse] = useState("")
-    const [quantity, setQuantity] = useState("")
+    const [selected, setSelected] = useState<string>("")
+    const [location, setLocation] = useState<string>("")
+    const [warehouse, setWarehouse] = useState<string>("")
+    const [quantity, setQuantity] = useState<string>("")
+    const [isSubmitting, setIsSubmitting] = useState(false)
+    const [isLoadingTemplate, setIsLoadingTemplate] = useState(false)
 
     const user_store = useUserStore(state => state.current_user)
     const items_templates = useStockStore(state => state.items_templates)
     const [picked_template, setPicked_template] = useState<IStockItemTemplate | null>(null)
 
     useEffect(() => {
-        const find_res = items_templates?.find(item => item.material_number === selected)
-        setPicked_template(find_res || null)
-    }, [selected, items_templates]);
+        if (!selected) {
+            setPicked_template(null)
+            return
+        }
+
+        if (!items_templates || !Array.isArray(items_templates)) {
+            setPicked_template(null)
+            return
+        }
+
+        setIsLoadingTemplate(true)
+
+        const timeoutId = setTimeout(() => {
+            try {
+                const find_res = items_templates.find(item =>
+                    item?.material_number === selected
+                )
+                setPicked_template(find_res || null)
+
+                if (!find_res && selected) {
+                    toast.error("Template not found for selected material")
+                }
+            } catch (error) {
+                console.error("Error finding template:", error)
+                setPicked_template(null)
+            } finally {
+                setIsLoadingTemplate(false)
+            }
+        }, 100)
+
+        return () => clearTimeout(timeoutId)
+    }, [selected, items_templates])
+
+    const validateForm = () => {
+        if (!user_store) {
+            toast.error("User not found. Please log in.")
+            return false
+        }
+
+        if (!picked_template) {
+            toast.error("Please select a material")
+            return false
+        }
+
+        if (!warehouse) {
+            toast.error("Please select a warehouse")
+            return false
+        }
+
+        if (!location || location.length !== 4) {
+            toast.error("Location must be exactly 4 characters")
+            return false
+        }
+
+        if (!quantity || parseInt(quantity) <= 0) {
+            toast.error("Please enter a valid quantity")
+            return false
+        }
+
+        return true
+    }
 
     const handleCreateNew = async () => {
+        if (!validateForm()) return
+
+        setIsSubmitting(true)
+
         try {
-
-            if (!user_store) throw new Error("User not found")
-            if (!picked_template) throw new Error("Template not found")
-
-            if (!location) throw new Error("Location can't be empty")
-            if (!quantity) throw new Error("Quantity can't be empty")
-            if (!warehouse) throw new Error("Warehouse can't be empty")
-
             await AddToStock({
-                card_id: user_store.card_id.toString(),
-                material_number: picked_template.material_number,
+                card_id: user_store!.card_id.toString(),
+                material_number: picked_template!.material_number,
                 warehouse,
                 quantity
             })
 
             await AddToStockHistory({
-                card_id: user_store.card_id.toString(),
-                material_number: picked_template.material_number,
+                card_id: user_store!.card_id.toString(),
+                material_number: picked_template!.material_number,
                 warehouse,
                 location,
                 value: quantity
             })
 
-            toast.success("Added to stock")
+            toast.success("Successfully added to stock", {
+                description: `${quantity} units of ${picked_template!.material_number}`
+            })
 
             setLocation("")
             setQuantity("")
 
         } catch (error) {
-            error && toast.error(error.toString() || "Unknown error")
-            console.log(error);
+            const errorMessage = error instanceof Error
+                ? error.message
+                : "Failed to add to stock. Please try again."
+
+            toast.error(errorMessage)
+            console.error("Error adding to stock:", error)
+        } finally {
+            setIsSubmitting(false)
         }
     }
 
-    const handleQuantityChange = (value: string) => {
-        setQuantity(value)
+    const handleQuantityChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+        const value = e.target.value
+        if (value === "" || /^\d+$/.test(value)) {
+            setQuantity(value)
+        }
     }
 
     const handleWarehouseChange = (value: string) => {
@@ -85,90 +151,188 @@ const Page = () => {
 
     const handleLocationChange = (value: string) => {
         if (value.length > 4) {
-            toast.error("Quantity must be 4 digits")
             return
         }
         setLocation(value.toUpperCase())
     }
 
+    const isFormValid = picked_template && warehouse && location.length === 4 && quantity && parseInt(quantity) > 0
 
     return (
-        <div className={`p-4 max-w-[800px] m-auto flex flex-col gap-4`}>
-            <CreateNewStockTemplate />
-
-            <AllPartsPicker
-                selected={selected}
-                setSelected={setSelected}
-            />
-
-            <hr className={`w-full`} />
-
-            {selected && (
-                <div className={`max-w-full mt-4`}>
-                    <div className={`grid md:grid-cols-3 items-center gap-4 mt-4`}>
-                        <div>
-                            <label>Quantity</label>
-                            <Input
-                                value={quantity}
-                                type={`number`}
-                                onChange={(e) => handleQuantityChange(e.target.value)}
-                            />
-                        </div>
-
-                        <div>
-                            <label className={`mb-1`}>Warehouses</label>
-                            <Select value={warehouse} onValueChange={handleWarehouseChange}>
-                                <SelectTrigger className={`w-full`}>
-                                    <SelectValue placeholder="Select warehouse"/>
-                                </SelectTrigger>
-                                <SelectContent>
-                                    <SelectGroup>
-                                        <SelectLabel>Warehouses</SelectLabel>
-                                        <SelectItem value="GLPC">GLPC</SelectItem>
-                                        <SelectItem value="SMALL_P3">SMALL P3</SelectItem>
-                                        <SelectItem value="PNT">PNT</SelectItem>
-                                    </SelectGroup>
-                                </SelectContent>
-                            </Select>
-                        </div>
-
-                        <div>
-                            <label className={`mb-1`}>Location</label>
-                            <InputOTP
-                                maxLength={6}
-                                value={location}
-                                onChange={handleLocationChange}
-                                inputMode="text"
-                            >
-                                <InputOTPGroup>
-                                    <InputOTPSlot  index={0}/>
-                                    <InputOTPSlot index={1}/>
-                                </InputOTPGroup>
-                                <InputOTPSeparator/>
-                                <InputOTPGroup>
-                                    <InputOTPSlot index={2}/>
-                                </InputOTPGroup>
-                                <InputOTPSeparator/>
-                                <InputOTPGroup>
-                                    <InputOTPSlot index={3}/>
-                                </InputOTPGroup>
-                            </InputOTP>
-                        </div>
-                    </div>
-
-                    <div className={`flex flex-col justify-end mt-4`}>
-                        <Button onClick={handleCreateNew}>
-                            Add
-                        </Button>
-                    </div>
-
-                    <div className={`flex flex-col overflow-hidden gap-2 mt-4`}>
-                        <p className={`text-base text-muted-foreground`}>{picked_template?.part_type} - {picked_template?.description_eng} - {picked_template?.description_orginall}</p>
-                    </div>
+        <div className="min-h-screen bg-background">
+            <div className="container max-w-2xl mx-auto p-4 sm:p-6 space-y-6">
+                {/* Header */}
+                <div className="space-y-1">
+                    <h1 className="text-2xl sm:text-3xl font-bold tracking-tight">Add to Stock</h1>
+                    <p className="text-sm text-muted-foreground">
+                        Select material and enter stock details
+                    </p>
                 </div>
-            )}
-        </div>
-    );
-};
 
-export default Page;
+                {/* Main Form */}
+                <div className="space-y-4">
+                    {/* Material Picker */}
+                    <div className="space-y-2">
+                        <label className="text-sm font-medium">Material</label>
+                        <AllPartsPicker
+                            onPick={setSelected}
+                            selected={selected}
+                            placeholder="Select a part..."
+                            disabled={isSubmitting}
+                        />
+                    </div>
+
+                    {/* Create New Template */}
+                    <CreateNewStockTemplate />
+
+                    {/* Loading State */}
+                    {isLoadingTemplate && (
+                        <div className="flex items-center gap-2 p-4 rounded-lg border bg-muted/50">
+                            <Loader2 className="h-4 w-4 animate-spin" />
+                            <span className="text-sm text-muted-foreground">Loading template...</span>
+                        </div>
+                    )}
+
+                    {/* Selected Template Info & Form */}
+                    {selected && picked_template && !isLoadingTemplate && (
+                        <div className="space-y-4 p-4 sm:p-6 border rounded-lg bg-card shadow-sm">
+                            {/* Template Info */}
+                            <div className="space-y-3">
+                                <div className="flex items-start gap-2">
+                                    <Package className="h-5 w-5 text-muted-foreground mt-0.5" />
+                                    <div className="space-y-1 flex-1 min-w-0">
+                                        <p className="text-sm font-medium">
+                                            {picked_template.material_number}
+                                        </p>
+                                        <p className="text-sm text-muted-foreground">
+                                            {picked_template.description_eng || picked_template.description_orginall}
+                                        </p>
+                                    </div>
+                                </div>
+
+                                <div className="flex gap-2 flex-wrap">
+                                    <Badge variant="outline">{picked_template.part_type || 'N/A'}</Badge>
+                                    {picked_template.description_orginall && picked_template.description_eng && (
+                                        <Badge variant="secondary">{picked_template.description_orginall}</Badge>
+                                    )}
+                                </div>
+                            </div>
+
+                            {/* Divider */}
+                            <div className="border-t" />
+
+                            {/* Form Fields */}
+                            <div className="space-y-4">
+                                <div className={`flex items-start gap-4 ${isSubmitting ? 'opacity-50' : ''}`}>
+                                    {/* Quantity */}
+                                    <div className="space-y-2 w-full">
+                                        <div>
+                                            <label className="text-sm font-medium">
+                                                Quantity <span className="text-destructive">*</span>
+                                            </label>
+                                        </div>
+                                        <Input
+                                            type="text"
+                                            inputMode="numeric"
+                                            placeholder="Enter quantity"
+                                            value={quantity}
+                                            onChange={handleQuantityChange}
+                                            disabled={isSubmitting}
+                                            className="text-base w-full"
+                                        />
+                                    </div>
+
+                                    {/* Warehouse */}
+                                    <div className="space-y-2 min-w-[150px]">
+                                        <div>
+                                            <label className="text-sm font-medium">
+                                                Warehouse <span className="text-destructive">*</span>
+                                            </label>
+                                        </div>
+                                        <Select
+                                            value={warehouse}
+                                            onValueChange={handleWarehouseChange}
+                                            disabled={isSubmitting}
+                                        >
+                                            <SelectTrigger className="text-base w-full">
+                                                <SelectValue placeholder="Select warehouse" />
+                                            </SelectTrigger>
+                                            <SelectContent>
+                                                <SelectGroup>
+                                                    <SelectLabel>Available Warehouses</SelectLabel>
+                                                    <SelectItem value="GLPC">GLPC</SelectItem>
+                                                    <SelectItem value="SMALL">SMALL</SelectItem>
+                                                    <SelectItem value="P3">P3</SelectItem>
+                                                    <SelectItem value="PNT">PNT</SelectItem>
+                                                </SelectGroup>
+                                            </SelectContent>
+                                        </Select>
+                                    </div>
+                                </div>
+
+                                {/* Location */}
+                                <div className="space-y-2">
+                                    <div>
+                                        <label className="text-sm font-medium">
+                                            Location (4 characters) <span className="text-destructive">*</span>
+                                        </label>
+                                    </div>
+                                    <InputOTP
+                                        maxLength={4}
+                                        value={location}
+                                        onChange={handleLocationChange}
+                                        disabled={isSubmitting}
+                                    >
+                                        <InputOTPGroup className="w-full justify-center">
+                                            <InputOTPSlot index={0} className="w-full h-10 text-base" />
+                                            <InputOTPSlot index={1} className="w-full h-10 text-base" />
+                                            <InputOTPSlot index={2} className="w-full h-10 text-base" />
+                                            <InputOTPSlot index={3} className="w-full h-10 text-base" />
+                                        </InputOTPGroup>
+                                    </InputOTP>
+                                    <p className="text-xs text-muted-foreground">
+                                        Enter the 4-character storage location code
+                                    </p>
+                                </div>
+
+                                {/* Submit Button */}
+                                <Button
+                                    onClick={handleCreateNew}
+                                    disabled={!isFormValid || isSubmitting}
+                                    className="w-full h-11 text-base"
+                                    size="lg"
+                                >
+                                    {isSubmitting ? (
+                                        <>
+                                            <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                                            Adding to stock...
+                                        </>
+                                    ) : (
+                                        <>
+                                            <Package className="mr-2 h-4 w-4" />
+                                            Add to Stock
+                                        </>
+                                    )}
+                                </Button>
+                            </div>
+                        </div>
+                    )}
+
+                    {/* No Template Found */}
+                    {selected && !picked_template && !isLoadingTemplate && (
+                        <div className="p-4 border border-destructive/50 rounded-lg bg-destructive/10">
+                            <p className="text-sm text-destructive font-medium">
+                                Template not found
+                            </p>
+                            <p className="text-xs text-destructive/80 mt-1">
+                                No template found for material number: {selected}
+                            </p>
+                        </div>
+                    )}
+                </div>
+            </div>
+        </div>
+    )
+}
+
+export default Page

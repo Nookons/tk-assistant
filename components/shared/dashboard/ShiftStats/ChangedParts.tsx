@@ -135,7 +135,7 @@ const ChangedParts = ({robots}: { robots: IRobotExtend[] }) => {
             </div>
             <Separator/>
             <div className="p-0">
-                <ScrollArea className="h-[300px] sm:h-[450px]">
+                <ScrollArea className="">
                     <div className="grid grid-cols-2 md:grid-cols-1 gap-4 my-2">
                         {robots.map((robot) => {
                             if (!robot) return null;

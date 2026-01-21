@@ -17,5 +17,14 @@ export const addChangeParts = async ({parts, card_id, robot_id}: {parts: string[
         throw new Error('Failed to add robot');
     }
 
+    await fetch(`/api/user/update-user-score`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+            card_id,
+            value: 0.05,
+        })
+    })
+
     return await res.json(); // если хочешь вернуть данные
 }
