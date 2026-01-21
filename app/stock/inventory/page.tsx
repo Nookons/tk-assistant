@@ -175,10 +175,8 @@ const Page = () => {
                     <div className="space-y-2">
                         <label className="text-sm font-medium">Material</label>
                         <AllPartsPicker
-                            onPick={setSelected}
+                            setSelected={setSelected}
                             selected={selected}
-                            placeholder="Select a part..."
-                            disabled={isSubmitting}
                         />
                     </div>
 
@@ -282,6 +280,10 @@ const Page = () => {
                                         value={location}
                                         onChange={handleLocationChange}
                                         disabled={isSubmitting}
+                                        inputMode="text"                 // 🔑 ВАЖНО
+                                        autoCapitalize="characters"
+                                        autoCorrect="off"
+                                        spellCheck={false}
                                     >
                                         <InputOTPGroup className="w-full justify-center">
                                             <InputOTPSlot index={0} className="w-full h-10 text-base" />
