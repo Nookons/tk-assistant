@@ -5,14 +5,14 @@ export async function POST(request: Request) {
     try {
         // 1️⃣ Получаем тело запроса
         const body = await request.json();
-        const { card_id, value } = body; // возьми нужное поле из body
+        const { employee_n, value } = body; // возьми нужное поле из body
 
-        if (card_id) {
+        if (employee_n) {
             // Получаем текущее значение
             const { data: employee, error: selectError } = await supabase
                 .from('employees')
                 .select('score') // ← укажи нужное числовое поле
-                .eq('card_id', card_id)
+                .eq('user_name', employee_n)
                 .single();
 
             if (selectError) {
@@ -21,7 +21,7 @@ export async function POST(request: Request) {
             }
 
             // Вычисляем новое значение
-            const newValue = Number(employee.score ?? 0) + Number(value);
+            const newValue = (employee.score ?? 0) + Number(value);
 
             console.log(newValue);
             console.log(value);
@@ -29,7 +29,7 @@ export async function POST(request: Request) {
             const { error: updateError } = await supabase
                 .from('employees')
                 .update({ score: newValue })
-                .eq('card_id', card_id);
+                .eq('user_name', employee_n);
 
             if (updateError) {
                 console.error('Error updating employees table:', updateError);

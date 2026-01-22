@@ -22,7 +22,7 @@ export const addChangeParts = async ({parts, card_id, robot_id}: {parts: string[
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
             card_id,
-            value: 0.05,
+            value: Number(0.5),
         })
     })
 

@@ -45,7 +45,9 @@ const Page = () => {
                 <div>
                     <WaitingRepair/>
                     <Separator className={`my-4`} />
-                    <ShiftStats/>
+                    <div className={`hidden md:block`} >
+                        <ShiftStats/>
+                    </div>
                 </div>
                 <RobotListProvider card_id={card_id}/>
             </div>

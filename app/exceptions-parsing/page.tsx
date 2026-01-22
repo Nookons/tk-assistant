@@ -18,6 +18,8 @@ import {IUser} from "@/types/user/user";
 import {addNewException} from "@/futures/exception/addNewException";
 import {getInitialShift, getInitialShiftByTime} from "@/futures/Date/getInitialShift";
 import {getWorkDate} from "@/futures/Date/getWorkDate";
+import {updateUserScoreByName} from "@/futures/user/updateUserScoreByName";
+import {setInterval} from "node:timers";
 
 dayjs.extend(duration);
 dayjs.extend(utc);
@@ -162,6 +164,23 @@ const Page = () => {
         }
     };
 
+    /*useEffect(() => {
+        if (!parsed || !Array.isArray(parsed)) return;
+
+        const counts = parsed.reduce<Record<string, number>>((acc, item) => {
+            const key = item.employee;
+            if (!key) return acc;
+
+            acc[key] = (acc[key] ?? 0) + 1;
+            return acc;
+        }, {});
+
+        for (const [employee, count] of Object.entries(counts)) {
+            const score = count * 0.1;
+            updateUserScoreByName(employee, score)
+        }
+    }, [parsed]);
+*/
 
     useEffect(() => {
         const send = async () => {
@@ -170,18 +189,20 @@ const Page = () => {
 
                 await Promise.all(
                     parsed.map(async (issue) => {
-                        const date = issue.error_start_time;
-                        const user = users.find((u: IUser) => u.user_name === issue.employee)!;
-                        const shift = getInitialShiftByTime(date);
+                        setInterval(() => {
+                            const date = issue.error_start_time;
+                            const user = users.find((u: IUser) => u.user_name === issue.employee)!;
+                            const shift = getInitialShiftByTime(date);
 
-                        await addNewException({
-                            data: {
-                                ...issue,
-                                add_by: user.card_id,
-                                shift_type: shift,
-                                uniq_key: `${issue.employee}.${issue.error_robot}.${dayjs(issue.error_start_time).format('YYYYMMDDHHmm')}`
-                            }
-                        });
+                            addNewException({
+                                data: {
+                                    ...issue,
+                                    add_by: user.card_id.toString(),
+                                    shift_type: shift,
+                                    uniq_key: `${issue.employee}.${issue.error_robot}.${dayjs(issue.error_start_time).format('YYYYMMDDHHmm')}`
+                                }
+                            });
+                        }, 150)
                     })
                 );
                 toast.success('All exceptions saved');
@@ -207,7 +228,7 @@ const Page = () => {
                     return [
                         dayjs().format('MM/DD/YYYY'),
                         "Inventory Warehouse",
-                        Number(error.error_robot) < 150 ? "A42T-E1 Clamp" : "K50H",
+                        error.device_type,
                         error.error_robot,
                         error.issue_type,
                         error.first_column,

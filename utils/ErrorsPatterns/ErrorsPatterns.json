@@ -694,7 +694,7 @@
   },
   {
     "id": 68,
-    "employee_title": "安全装置被触发 Safety device was triggered",
+    "employee_title": "机器人安全装置触发Robot safety device triggered",
     "first_column": "机器人安全装置触发Robot safety device triggered",
     "second_column": "安全模块故障 Security module failure",
     "issue_description": "Safety system activated",

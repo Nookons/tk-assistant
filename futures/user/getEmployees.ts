@@ -1,4 +1,6 @@
-export const getEmployeesList = async () => {
+import {IUser} from "@/types/user/user";
+
+export const getEmployeesList = async (): Promise<IUser[]> => {
     const res = await fetch(`/api/user/get-employees-list`, {
         method: 'GET',
         headers: {

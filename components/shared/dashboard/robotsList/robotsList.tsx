@@ -148,7 +148,7 @@ const RobotsList = () => {
                             </TableRow>
                         ) : (
                             displayedRobots.map((robot, index) => (
-                                <TableRow key={index} className="hover:bg-muted/50 transition-colors">
+                                <TableRow key={index} className={`hover:bg-muted/50 transition-colors ${robot_number_value === robot.robot_number.toString() && "bg-gradient-to-l from-background to-lime-500/25"}`}>
                                     <TableCell className="font-medium">{index + 1}</TableCell>
                                     <TableCell className="font-mono">
                                         <Link href={`/robot/${robot.id}`} className="hover:underline">
@@ -175,7 +175,7 @@ const RobotsList = () => {
             </div>
 
             {/* Cards - Mobile */}
-            <div className="md:hidden flex flex-col gap-2">
+            <div className={`md:hidden flex flex-col transition  p-1 gap-2 ${filtered_data.length < 5 && "h-[700px] bg-muted/50 rounded-xl"}`}>
                 {displayedRobots.length === 0 ? (
                     <div className="text-center py-12 text-muted-foreground">
                         <Search className="h-12 w-12 mx-auto mb-3 opacity-20"/>
@@ -185,7 +185,7 @@ const RobotsList = () => {
                     displayedRobots.slice(0, 20).map((robot, index) => (
                         <Link key={index} href={`/robot/${robot.id}`}>
                             <div
-                                className="border rounded-lg p-4 hover:bg-muted/50 transition-colors active:scale-[0.98]">
+                                className={`border rounded-lg p-4 hover:bg-muted/50 transition active:scale-[0.98] bg-gradient-to-r from-background to-background ${robot_number_value === robot.robot_number.toString() && "border-green-500 bg-gradient-to-r from-background to-lime-500/25"}`}>
                                 <div className="flex items-start justify-between mb-3">
                                     <div className="flex items-center gap-3">
                                         {robot.robot_type === "K50H"

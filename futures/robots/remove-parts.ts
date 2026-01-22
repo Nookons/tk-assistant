@@ -19,7 +19,7 @@ export const removeParts = async (parts_id: string, card_id: string) => {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
             card_id,
-            value: -0.05,
+            value: Number(-0.5),
         })
     })
 
