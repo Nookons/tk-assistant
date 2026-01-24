@@ -7,6 +7,8 @@ import {timeToString} from "@/utils/timeToString";
 import dayjs from "dayjs";
 import {Button} from "@/components/ui/button";
 import {IHistoryStockItem} from "@/types/stock/HistoryStock";
+import {getStockSummary} from "@/futures/stock/getStockSummary";
+import SummaryScreen from "@/components/shared/Stock/SummaryScreen";
 
 const Page = () => {
 
@@ -15,6 +17,7 @@ const Page = () => {
         queryFn: async () => getAllStockHistory(),
         retry: 3
     })
+
 
     const removeRecord = async (el: IHistoryStockItem) => {
         try {
@@ -47,6 +50,9 @@ const Page = () => {
 
     return (
         <div className={`max-w-[1200px] m-auto p-4`}>
+            <div>
+                <SummaryScreen />
+            </div>
             <Table>
                 <TableHeader>
                     <TableRow>

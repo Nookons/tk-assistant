@@ -26,7 +26,7 @@ import {Loader2, Package} from "lucide-react";
 const Page = () => {
     const [selected, setSelected] = useState<string>("")
     const [location, setLocation] = useState<string>("")
-    const [warehouse, setWarehouse] = useState<string>("")
+    const [warehouse, setWarehouse] = useState<string>("SMALL_P3")
     const [quantity, setQuantity] = useState<string>("")
     const [isSubmitting, setIsSubmitting] = useState(false)
     const [isLoadingTemplate, setIsLoadingTemplate] = useState(false)
@@ -153,7 +153,8 @@ const Page = () => {
         if (value.length > 4) {
             return
         }
-        setLocation(value.toUpperCase())
+
+        setLocation(value.replace("-", "").toUpperCase())
     }
 
     const isFormValid = picked_template && warehouse && location.length === 4 && quantity && parseInt(quantity) > 0
@@ -161,26 +162,40 @@ const Page = () => {
     return (
         <div className="min-h-screen bg-background">
             <div className="container max-w-2xl mx-auto p-4 sm:p-6 space-y-6">
-                {/* Header */}
-                <div className="space-y-1">
-                    <h1 className="text-2xl sm:text-3xl font-bold tracking-tight">Add to Stock</h1>
-                    <p className="text-sm text-muted-foreground">
-                        Select material and enter stock details
-                    </p>
-                </div>
-
                 {/* Main Form */}
                 <div className="space-y-4">
-                    {/* Material Picker */}
                     <div className="space-y-2">
-                        <AllPartsPicker
-                            setSelected={setSelected}
-                            selected={selected}
-                        />
+                        <div>
+                            <label className="text-sm font-medium">
+                                Location (4 characters) <span className="text-destructive">*</span>
+                            </label>
+                        </div>
+                        <InputOTP
+                            maxLength={4}
+                            value={location}
+                            onChange={handleLocationChange}
+                            disabled={isSubmitting}
+                            inputMode="text"                 // 🔑 ВАЖНО
+                            autoCapitalize="characters"
+                            autoCorrect="off"
+                            spellCheck={false}
+                        >
+                            <InputOTPGroup className="w-full justify-center">
+                                <InputOTPSlot index={0} className="w-full h-10 text-base" />
+                                <InputOTPSlot index={1} className="w-full h-10 text-base" />
+                                <InputOTPSlot index={2} className="w-full h-10 text-base" />
+                                <InputOTPSlot index={3} className="w-full h-10 text-base" />
+                            </InputOTPGroup>
+                        </InputOTP>
+                        <p className="text-xs text-muted-foreground">
+                            Enter the 4-character storage location code
+                        </p>
                     </div>
 
+                    {/* Material Picker */}
+
                     {/* Create New Template */}
-                    <CreateNewStockTemplate />
+                    {/*<CreateNewStockTemplate />*/}
 
                     {/* Loading State */}
                     {isLoadingTemplate && (
@@ -191,10 +206,10 @@ const Page = () => {
                     )}
 
                     {/* Selected Template Info & Form */}
-                    {selected && picked_template && !isLoadingTemplate && (
-                        <div className="space-y-4 p-4 sm:p-6 border rounded-lg bg-card shadow-sm">
+                    {location && (
+                        <div className="space-y-4 sm:p-6 rounded-lg">
                             {/* Template Info */}
-                            <div className="space-y-3">
+                            {/*<div className="space-y-3">
                                 <div className="flex items-start gap-2">
                                     <Package className="h-5 w-5 text-muted-foreground mt-0.5" />
                                     <div className="space-y-1 flex-1 min-w-0">
@@ -213,87 +228,62 @@ const Page = () => {
                                         <Badge variant="secondary">{picked_template.description_orginall}</Badge>
                                     )}
                                 </div>
-                            </div>
-
-                            {/* Divider */}
-                            <div className="border-t" />
+                            </div>*/}
 
                             {/* Form Fields */}
                             <div className="space-y-4">
-                                <div className={`flex items-start gap-4 ${isSubmitting ? 'opacity-50' : ''}`}>
-                                    {/* Quantity */}
+                                <div className={`flex flex-wrap items-start gap-4 ${isSubmitting ? 'opacity-50' : ''}`}>
                                     <div className="space-y-2 w-full">
-                                        <div>
-                                            <label className="text-sm font-medium">
-                                                Quantity <span className="text-destructive">*</span>
-                                            </label>
-                                        </div>
-                                        <Input
-                                            type="text"
-                                            inputMode="numeric"
-                                            placeholder="Enter quantity"
-                                            value={quantity}
-                                            onChange={handleQuantityChange}
-                                            disabled={isSubmitting}
-                                            className="text-base w-full"
+                                        <AllPartsPicker
+                                            setSelected={setSelected}
+                                            selected={selected}
                                         />
                                     </div>
+                                   <div className={`grid w-full grid-cols-2 gap-4 ${isSubmitting ? 'opacity-50' : ''}`}>
+                                       {/* Quantity */}
+                                       <div className="space-y-2 w-full">
+                                           <div>
+                                               <label className="text-sm font-medium">
+                                                   Quantity <span className="text-destructive">*</span>
+                                               </label>
+                                           </div>
+                                           <Input
+                                               type="text"
+                                               inputMode="numeric"
+                                               placeholder="Enter quantity"
+                                               value={quantity}
+                                               onChange={handleQuantityChange}
+                                               disabled={isSubmitting}
+                                               className="text-base w-full"
+                                           />
+                                       </div>
 
-                                    {/* Warehouse */}
-                                    <div className="space-y-2 min-w-[150px]">
-                                        <div>
-                                            <label className="text-sm font-medium">
-                                                Warehouse <span className="text-destructive">*</span>
-                                            </label>
-                                        </div>
-                                        <Select
-                                            value={warehouse}
-                                            onValueChange={handleWarehouseChange}
-                                            disabled={isSubmitting}
-                                        >
-                                            <SelectTrigger className="text-base w-full">
-                                                <SelectValue placeholder="Select warehouse" />
-                                            </SelectTrigger>
-                                            <SelectContent>
-                                                <SelectGroup>
-                                                    <SelectLabel>Available Warehouses</SelectLabel>
-                                                    <SelectItem value="GLPC">GLPC</SelectItem>
-                                                    <SelectItem value="SMALL">SMALL</SelectItem>
-                                                    <SelectItem value="P3">P3</SelectItem>
-                                                    <SelectItem value="PNT">PNT</SelectItem>
-                                                </SelectGroup>
-                                            </SelectContent>
-                                        </Select>
-                                    </div>
-                                </div>
-
-                                {/* Location */}
-                                <div className="space-y-2">
-                                    <div>
-                                        <label className="text-sm font-medium">
-                                            Location (4 characters) <span className="text-destructive">*</span>
-                                        </label>
-                                    </div>
-                                    <InputOTP
-                                        maxLength={4}
-                                        value={location}
-                                        onChange={handleLocationChange}
-                                        disabled={isSubmitting}
-                                        inputMode="text"                 // 🔑 ВАЖНО
-                                        autoCapitalize="characters"
-                                        autoCorrect="off"
-                                        spellCheck={false}
-                                    >
-                                        <InputOTPGroup className="w-full justify-center">
-                                            <InputOTPSlot index={0} className="w-full h-10 text-base" />
-                                            <InputOTPSlot index={1} className="w-full h-10 text-base" />
-                                            <InputOTPSlot index={2} className="w-full h-10 text-base" />
-                                            <InputOTPSlot index={3} className="w-full h-10 text-base" />
-                                        </InputOTPGroup>
-                                    </InputOTP>
-                                    <p className="text-xs text-muted-foreground">
-                                        Enter the 4-character storage location code
-                                    </p>
+                                       {/* Warehouse */}
+                                       <div className="space-y-2 min-w-[150px]">
+                                           <div>
+                                               <label className="text-sm font-medium">
+                                                   Warehouse <span className="text-destructive">*</span>
+                                               </label>
+                                           </div>
+                                           <Select
+                                               value={warehouse}
+                                               onValueChange={handleWarehouseChange}
+                                               disabled={isSubmitting}
+                                           >
+                                               <SelectTrigger className="text-base w-full">
+                                                   <SelectValue defaultValue={"SMALL_P3"} placeholder="Select warehouse" />
+                                               </SelectTrigger>
+                                               <SelectContent>
+                                                   <SelectGroup>
+                                                       <SelectLabel>Available Warehouses</SelectLabel>
+                                                       <SelectItem value="GLPC">GLPC</SelectItem>
+                                                       <SelectItem value="SMALL_P3">SMALL P3</SelectItem>
+                                                       <SelectItem value="PNT">PNT</SelectItem>
+                                                   </SelectGroup>
+                                               </SelectContent>
+                                           </Select>
+                                       </div>
+                                   </div>
                                 </div>
 
                                 {/* Submit Button */}
