@@ -38,7 +38,7 @@ const SummaryScreen = () => {
 
     const WAREHOUSE_MAP = {
         "GLPC": "GLPC",
-        "SMALL P3": "SMALL_P3",
+        "SMALL_P3": "SMALL_P3",
     } as const
 
 
@@ -91,7 +91,7 @@ const SummaryScreen = () => {
                                   {key}
                                 </span>
                                 <span className="text-lg leading-none font-bold sm:text-3xl">
-                                  {stockSummary.filter((item) => item.warehouse === key).reduce((sum, item) => sum + item.quantity, 0).toFixed()}
+                                  {stockSummary.filter((item) => item.warehouse === key).reduce((sum, item) => sum + item.quantity, 0).toLocaleString()}
                                 </span>
                             </button>
                         )

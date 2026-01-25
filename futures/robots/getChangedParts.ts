@@ -11,6 +11,5 @@ export const getChangedParts = async (robot_id: number) => {
         throw new Error(`Could not get all shifts (status: ${res.status})`);
     }
 
-    const response = await res.json();
-    return response; // optional but usually useful
+    return await res.json();
 }

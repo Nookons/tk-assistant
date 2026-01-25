@@ -7,7 +7,6 @@ import {useStockStore} from "@/store/stock";
 import {getAllParts} from "@/futures/stock/getAllParts";
 
 const MainProvider = () => {
-
     const setRobots = useRobotsStore(state => state.setRobots)
     const setStockTemplates = useStockStore(state => state.set_items_templates)
 

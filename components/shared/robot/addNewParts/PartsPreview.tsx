@@ -7,9 +7,13 @@ import dayjs from "dayjs";
 import {Badge} from "@/components/ui/badge";
 import {Separator} from "@/components/ui/separator";
 import {ScrollArea} from "@/components/ui/scroll-area";
-import {TriangleAlert} from "lucide-react";
+import {HandCoins, MapPin, TriangleAlert} from "lucide-react";
+import {IStockAmountItem} from "@/types/stock/StockAmounts";
+import {Checkbox} from "@/components/ui/checkbox";
 
-const PartsPreview = ({parts_data}: { parts_data: string[] }) => {
+const PartsPreview = (
+    {parts_data, selected_amounts, setPicked_location, picked_location}:
+    { parts_data: string[], selected_amounts: IStockAmountItem[], setPicked_location: (item: IStockAmountItem) => void, picked_location: IStockAmountItem | null}) => {
 
     const [preview_data, setPreview_data] = useState<IStockItemTemplate[]>([])
 
@@ -28,6 +32,7 @@ const PartsPreview = ({parts_data}: { parts_data: string[] }) => {
             console.error("Ошибка при получении превью деталей:", error);
         }
     }
+
 
     useEffect(() => {
         getPartsPreview(parts_data)
@@ -56,8 +61,32 @@ const PartsPreview = ({parts_data}: { parts_data: string[] }) => {
                 {preview_data.map((item, index) => {
 
                     return (
-                        <Item variant={`muted`}>
+                        <Item variant={`muted`} className={`flex flex-col justify-start items-start gap-2`} key={`${item.material_number}-${index}`}>
                             <Badge>{item.material_number}</Badge>
+                            <div className={`flex flex-wrap items-center gap-2 w-full`}>
+                                {selected_amounts.filter(i => i.material_number === item.material_number).map(j => (
+                                    <div className={`border p-2 rounded-xl flex items-center gap-2`}>
+                                        <Checkbox
+                                            checked={picked_location?.location === j.location}
+                                            onCheckedChange={() => setPicked_location(j)}
+                                            id="terms-checkbox-invalid"
+                                            name="terms-checkbox-invalid"
+                                            aria-invalid
+                                        />
+                                        <div className={`flex  gap-2`}>
+                                            <div className={`flex items-center gap-2`}>
+                                                <MapPin className={`text-muted-foreground`} size={16} />
+                                                <span className={`font-bold text-base`}>{j.location.split("").join("-")}</span>
+                                            </div>
+                                            <Separator orientation={'vertical'} className={`my-2 w-full`} />
+                                            <div className={`flex items-center gap-2`}>
+                                                <HandCoins className={`text-muted-foreground`} size={16} />
+                                                <span className={`font-bold text-base`}>{j.quantity.toLocaleString()}</span>
+                                            </div>
+                                        </div>
+                                    </div>
+                                ))}
+                            </div>
                             <div className={`w-full`}>
                                 <article>{item.description_orginall}</article>
                                 <article>{item.description_eng}</article>

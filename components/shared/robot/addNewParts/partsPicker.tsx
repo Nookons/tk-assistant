@@ -20,6 +20,8 @@ import {addChangeParts} from "@/futures/robots/addChangeParts";
 import {useRobotsStore} from "@/store/robotsStore";
 import {toast} from "sonner";
 import PartsPreview from "@/components/shared/robot/addNewParts/PartsPreview";
+import {getPartsAmounts} from "@/futures/stock/getPartsAmounts";
+import {IStockAmountItem} from "@/types/stock/StockAmounts";
 
 const PartsPicker = ({robot}: {robot: IRobot}) => {
     const [options_Data, setOptions_Data] = useState<IStockItemTemplate[]>([])
@@ -30,14 +32,43 @@ const PartsPicker = ({robot}: {robot: IRobot}) => {
     const [selected, setSelected] = useState<string[]>([])
     const [isLoading, setIsLoading] = useState<boolean>(false)
 
+    const [picked_location, setPicked_location] = useState<IStockAmountItem | null>(null)
+
     const user_store = useUserStore(state => state.current_user)
     const update_parts = useRobotsStore(state => state.addPartsHistory)
+
+    const [selected_amounts, setSelected_amounts] = useState<IStockAmountItem[]>([])
 
     const toggleValue = (value: string) => {
         setSelected((prev) =>
             prev.includes(value) ? prev.filter((v) => v !== value) : [...prev, value]
         )
     }
+
+    const getPartAmount = async () => {
+        try {
+            if (selected.length === 0) return;
+
+            const responses = await Promise.all(
+                selected.map(item => {
+                    const warehouse = robot.warehouse;
+                    const part_number = item;
+
+                    return getPartsAmounts({warehouse, part_number})
+                })
+            );
+
+            setSelected_amounts(responses.flat() as IStockAmountItem[]);
+        } catch (error) {
+            toast.error("Error getting part amount.");
+            console.error(error);
+        }
+    }
+
+    //////////////////////////////////////////////////////////// Pick parts from stock
+    useEffect(() => {
+        getPartAmount()
+    }, [selected]);
 
     const getOptions = async () => {
         try {
@@ -69,19 +100,37 @@ const PartsPicker = ({robot}: {robot: IRobot}) => {
 
             setIsLoading(true);
 
-            const parts_res = await addChangeParts({
-                parts: selected,
-                card_id: user_store.card_id,
-                robot_id: robot.id,
-            })
+            if (picked_location) {
+                await fetch(`/api/stock/use-part`, {
+                    method: "POST",
+                    headers: {
+                        "Content-Type": "application/json"
+                    },
+                    body: JSON.stringify({
+                        warehouse: picked_location.warehouse,
+                        location: picked_location.location,
+                        material_number: picked_location.material_number,
+                        card_id: user_store.card_id,
+                        value: 1,
+                    })
+                })
+            }
 
-            if (parts_res) {
+            console.log(picked_location);
+
+            /* const parts_res = await addChangeParts({
+                 parts: selected,
+                 card_id: user_store.card_id,
+                 robot_id: robot.id,
+             })*/
+
+            /*if (parts_res) {
                 toast.success(`部件添加成功。 | Part(s) added successfully.`)
                 setSelected([])
                 update_parts(parts_res.robot_id, {...parts_res, user: user_store})
                 setSheetOpen(false)
             }
-
+*/
         } catch (error) {
             console.log(error);
         } finally {
@@ -197,7 +246,12 @@ const PartsPicker = ({robot}: {robot: IRobot}) => {
                             </PopoverContent>
                         </Popover>
 
-                        <PartsPreview parts_data={selected} />
+                        <PartsPreview
+                            picked_location={picked_location}
+                            setPicked_location={setPicked_location}
+                            selected_amounts={selected_amounts}
+                            parts_data={selected}
+                        />
 
                     </div>
                 </div>
