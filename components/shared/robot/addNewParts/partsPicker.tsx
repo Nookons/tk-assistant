@@ -118,19 +118,18 @@ const PartsPicker = ({robot}: {robot: IRobot}) => {
 
             console.log(picked_location);
 
-            /* const parts_res = await addChangeParts({
+             const parts_res = await addChangeParts({
                  parts: selected,
                  card_id: user_store.card_id,
                  robot_id: robot.id,
-             })*/
+             })
 
-            /*if (parts_res) {
+            if (parts_res) {
                 toast.success(`部件添加成功。 | Part(s) added successfully.`)
                 setSelected([])
                 update_parts(parts_res.robot_id, {...parts_res, user: user_store})
                 setSheetOpen(false)
             }
-*/
         } catch (error) {
             console.log(error);
         } finally {
