@@ -1,26 +1,36 @@
 'use client'
-import React, { useState } from 'react';
+import React, {useEffect, useState} from 'react';
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { getAllStockHistory } from "@/futures/stock/getAllStockHistory";
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { timeToString } from "@/utils/timeToString";
-import dayjs from "dayjs";
-import { Button } from "@/components/ui/button";
 import { IHistoryStockItem } from "@/types/stock/HistoryStock";
-import SummaryScreen from "@/components/shared/Stock/SummaryScreen";
 import { toast } from "sonner";
-import { ButtonGroup } from "@/components/ui/button-group";
-import { Pencil, Trash2 } from "lucide-react";
 import { useUserStore } from "@/store/user";
+import {getLocationsSummary} from "@/futures/stock/getLocationsSummary";
+import {Item} from "@/components/ui/item";
+import {Separator} from "@/components/ui/separator";
+import {Input} from "@/components/ui/input";
+import {StockByLocationResponse} from "@/types/stock/SummaryItem";
+import {Badge} from "@/components/ui/badge";
+import SummaryScreen from "@/components/shared/Stock/SummaryScreen";
 
 const Page = () => {
     const user_store = useUserStore(state => state.current_user);
     const queryClient = useQueryClient();
     const [isLoadingR, setIsLoadingR] = useState<boolean>(false);
 
-    const { data: IStockHistory, isLoading, isError } = useQuery({
+
+    const [search_value, setSearch_value] = useState<string>('')
+    const [filtered_data, setFiltered_data] = useState<StockByLocationResponse>([])
+
+    const { data: IStockHistory } = useQuery({
         queryKey: ['stockHistory-full'],
         queryFn: async () => getAllStockHistory(),
+        retry: 3
+    });
+
+    const { data: LocationsSummary, isLoading, isError } = useQuery({
+        queryKey: ['stockHistory-locations-full'],
+        queryFn: async () => getLocationsSummary(),
         retry: 3
     });
 
@@ -72,6 +82,21 @@ const Page = () => {
         }
     };
 
+    useEffect(() => {
+        if (LocationsSummary) {
+            if (search_value.length > 0) {
+                const filtered = LocationsSummary.filter(el => el.location.includes(search_value))
+                setFiltered_data(filtered)
+            } else {
+                setFiltered_data(LocationsSummary)
+            }
+        }
+    }, [search_value, LocationsSummary]);
+
+    useEffect(() => {
+        console.log(LocationsSummary);
+    }, [LocationsSummary]);
+
     if (isLoading) return <div>Loading...</div>;
     if (isError) return <div>Error loading stock history</div>;
     if (!IStockHistory) return <div>No data available</div>;
@@ -81,7 +106,36 @@ const Page = () => {
             <div>
                 <SummaryScreen />
             </div>
-            <Table>
+            <div className={`mt-4`}>
+                <Input
+                    value={search_value}
+                    onChange={(e) => setSearch_value(e.target.value)}
+                    placeholder={`A123`}
+                />
+            </div>
+            <div className={`flex flex-wrap flex-col gap-2 mt-4`}>
+                <p className={`text-muted-foreground text-xs`}>Recent locations: ({filtered_data.slice(0, 20).length})</p>
+                {LocationsSummary && filtered_data.slice(0, 20).map((el) => (
+                    <div className={`border p-2 rounded-2xl flex flex-col gap-2`}>
+                        <div className={`flex items-center justify-between gap-2`}>
+                            <article className={`text-xl font-bold`}>{el.location}</article>
+                            <Badge className={`text-xs font-bold`}>{el.items[0].warehouse}</Badge>
+                        </div>
+                        <div className={`flex flex-wrap gap-2`}>
+                            {el.items.map(part => (
+                                <Item variant={`muted`}>
+                                    <p>{part.material_number}</p>
+                                    <Separator orientation={'vertical'}/>
+                                    <p>{part.description_eng}</p>
+                                    <Separator orientation={'vertical'}/>
+                                    <p className={`font-bold`}>{part.total_quantity}</p>
+                                </Item>
+                            ))}
+                        </div>
+                    </div>
+                ))}
+            </div>
+            {/*<Table>
                 <TableHeader>
                     <TableRow>
                         <TableHead>Warehouse</TableHead>
@@ -120,7 +174,7 @@ const Page = () => {
                             </TableRow>
                         ))}
                 </TableBody>
-            </Table>
+            </Table>*/}
         </div>
     );
 };

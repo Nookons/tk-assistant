@@ -13,3 +13,20 @@ export interface ISummaryItemStock {
     user_updated: IUser;
     part_info: IStockItemTemplate;
 }
+
+// Один айтем в локации
+export interface LocationItem {
+    material_number: string;
+    description_eng: string;       // описание вместо description_eng
+    total_quantity: number;
+    warehouse: string;
+}
+
+// Локация со всеми айтемами
+export interface LocationStock {
+    location: string;
+    items: LocationItem[];
+}
+
+// Тип для всего ответа
+export type StockByLocationResponse = LocationStock[];
