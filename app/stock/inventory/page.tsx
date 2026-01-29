@@ -26,7 +26,7 @@ import {Loader2, Package} from "lucide-react";
 const Page = () => {
     const [selected, setSelected] = useState<string>("")
     const [location, setLocation] = useState<string>("")
-    const [warehouse, setWarehouse] = useState<string>("SMALL_P3")
+    const [warehouse, setWarehouse] = useState<string>("GLPC")
     const [quantity, setQuantity] = useState<string>("")
     const [isSubmitting, setIsSubmitting] = useState(false)
     const [isLoadingTemplate, setIsLoadingTemplate] = useState(false)

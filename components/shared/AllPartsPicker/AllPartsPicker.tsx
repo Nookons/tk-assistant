@@ -18,6 +18,7 @@ import {
 } from "@/components/ui/command"
 import {useStockStore} from "@/store/stock"
 import {IStockItemTemplate} from "@/types/stock/StockItem"
+import CreateNewStockTemplate from "../Stock/CreateNewStockTemplate"
 
 interface IProps {
     selected: string
@@ -30,6 +31,7 @@ const normalize = (v?: string) =>
 const AllPartsPicker: React.FC<IProps> = ({selected, setSelected}) => {
     const [open, setOpen] = useState(false)
     const [search, setSearch] = useState("")
+
     const items = useStockStore(state => state.items_templates)
 
     const filtered = useMemo(() => {
@@ -90,7 +92,11 @@ const AllPartsPicker: React.FC<IProps> = ({selected, setSelected}) => {
                         />
 
                         <CommandList className="max-h-[35vh] overflow-y-auto overscroll-contain">
-                            <CommandEmpty>No results found</CommandEmpty>
+                            <CommandEmpty>
+                                <div className={`flex justify-center items-center`}>
+                                    <CreateNewStockTemplate />
+                                </div>
+                            </CommandEmpty>
 
                             <CommandGroup>
                                 {filtered.map(item => (

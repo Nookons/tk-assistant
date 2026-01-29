@@ -1,7 +1,6 @@
 import { create } from 'zustand'
-import {IUser, IUserApiResponse} from '@/types/user/user'
-import {IStockItemTemplate} from "@/types/stock/StockItem";
-import {IStockAmountItem} from "@/types/stock/StockAmounts";
+import { IStockItemTemplate } from "@/types/stock/StockItem"
+import { IStockAmountItem } from "@/types/stock/StockAmounts"
 
 type UserState = {
     items_templates: IStockItemTemplate[] | null
@@ -9,6 +8,8 @@ type UserState = {
 
     stock_summary: IStockAmountItem[] | null
     set_stock_summary: (data: IStockAmountItem[]) => void
+
+    add_item_template: (item: IStockItemTemplate) => void
 }
 
 export const useStockStore = create<UserState>((set) => ({
@@ -17,4 +18,9 @@ export const useStockStore = create<UserState>((set) => ({
 
     set_items_templates: (data) => set({ items_templates: data }),
     set_stock_summary: (data) => set({ stock_summary: data }),
+
+    add_item_template: (item) =>
+        set((state) => ({
+            items_templates: [...(state.items_templates ?? []), item],
+        })),
 }))

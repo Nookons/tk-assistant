@@ -1,29 +1,28 @@
 'use client'
-import React, {useEffect, useState} from 'react';
-import {Textarea} from "@/components/ui/textarea";
-import {Button} from "@/components/ui/button";
-import {Table, TableBody, TableCell, TableHead, TableHeader, TableRow} from "@/components/ui/table";
-import {Copy, Check, FileText} from "lucide-react";
+
+import React, { useEffect, useState, useRef, useCallback } from 'react';
+import { Textarea } from "@/components/ui/textarea";
+import { Button } from "@/components/ui/button";
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
+import { Copy, Check, FileText, Trash2 } from "lucide-react";
 import dayjs from "dayjs";
 import duration from "dayjs/plugin/duration";
 import utc from "dayjs/plugin/utc";
-import {toast} from "sonner";
+import { toast } from "sonner";
 import errors_data_raw from '../../utils/ErrorsPatterns/ErrorsPatterns.json';
 import Image from "next/image";
 import TemplateInfo from "@/components/shared/ErrorParse/TemplateInfo";
-import {ButtonGroup} from "@/components/ui/button-group"
-import {useRobotsStore} from "@/store/robotsStore";
-import {getEmployeesList} from "@/futures/user/getEmployees";
-import {IUser} from "@/types/user/user";
-import {addNewException} from "@/futures/exception/addNewException";
-import {getInitialShift, getInitialShiftByTime} from "@/futures/Date/getInitialShift";
-import {getWorkDate} from "@/futures/Date/getWorkDate";
-import {updateUserScoreByName} from "@/futures/user/updateUserScoreByName";
-import {setInterval} from "node:timers";
+import { ButtonGroup } from "@/components/ui/button-group"
+import { useRobotsStore } from "@/store/robotsStore";
+import { getEmployeesList } from "@/futures/user/getEmployees";
+import { IUser } from "@/types/user/user";
+import { addNewException } from "@/futures/exception/addNewException";
+import { getInitialShiftByTime } from "@/futures/Date/getInitialShift";
 
 dayjs.extend(duration);
 dayjs.extend(utc);
 
+// ==================== TYPES ====================
 interface JsonError {
     id: number;
     employee_title: string;
@@ -33,11 +32,8 @@ interface JsonError {
     recovery_title: string;
     device_type: string;
     issue_type: string;
-    solving_time: number; // В JSON именно это имя
+    solving_time: number;
 }
-
-// Приведение типов для данных из JSON
-const errors_data = errors_data_raw as JsonError[];
 
 export interface ILocalIssue {
     employee: string;
@@ -56,283 +52,460 @@ export interface ILocalIssue {
     shift_type?: string;
 }
 
+interface ParsedResult {
+    issues: ILocalIssue[];
+    errors: string[];
+}
+
+type WarehouseType = 'GLPC' | 'P3';
+
+// ==================== CONSTANTS ====================
+const errors_data = errors_data_raw as JsonError[];
+const REQUEST_DELAY = 150; // ms between requests
+
+// ==================== UTILITY FUNCTIONS ====================
+
+/**
+ * Определяет корректную дату/время ошибки с учетом смены дня
+ */
+const parseErrorTime = (errorTime: string, currentTime: dayjs.Dayjs): dayjs.Dayjs => {
+    const [errorHour, errorMinute] = errorTime.split(':').map(Number);
+    const currentHour = currentTime.hour();
+
+    // Если сейчас ночная смена (00:00-06:00) и ошибка была вечером (18:00-00:00)
+    // значит ошибка была вчера
+    if (currentHour >= 0 && currentHour < 6 && errorHour >= 18 && errorHour < 24) {
+        return currentTime.subtract(1, 'day').hour(errorHour).minute(errorMinute).second(0);
+    }
+
+    return currentTime.hour(errorHour).minute(errorMinute).second(0);
+};
+
+/**
+ * Валидация формата строки ошибки
+ */
+const validateErrorLine = (line: string): { valid: boolean; error?: string } => {
+    const parts = line.split(".");
+
+    if (parts.length < 3) {
+        return { valid: false, error: "Invalid format (expected: Error.Robot.Time)" };
+    }
+
+    const [, , errorTime] = parts;
+
+    if (!errorTime || !errorTime.includes(':')) {
+        return { valid: false, error: "Invalid time format" };
+    }
+
+    const timeParts = errorTime.split(':');
+    if (timeParts.length !== 2) {
+        return { valid: false, error: "Time must be in HH:mm format" };
+    }
+
+    const [hour, minute] = timeParts.map(Number);
+    if (isNaN(hour) || isNaN(minute) || hour < 0 || hour > 23 || minute < 0 || minute > 59) {
+        return { valid: false, error: "Invalid time values" };
+    }
+
+    return { valid: true };
+};
+
+/**
+ * Генерация уникального ключа для issue
+ */
+const generateIssueKey = (issue: ILocalIssue): string => {
+    return `${issue.employee}.${issue.error_robot}.${dayjs(issue.error_start_time).format('YYYYMMDDHHmm')}`;
+};
+
+/**
+ * Форматирование данных для копирования в буфер обмена
+ */
+const formatForClipboard = (issues: ILocalIssue[], type: WarehouseType): string => {
+    const rows = issues.map(error => {
+        const diffMinutes = dayjs(error.error_end_time).diff(dayjs(error.error_start_time), 'minute');
+        const date = dayjs().format('MM/DD/YYYY');
+        const startTime = dayjs(error.error_start_time).format("HH:mm");
+        const endTime = dayjs(error.error_end_time).format("HH:mm");
+
+        if (type === 'GLPC') {
+            return [
+                date,
+                "Inventory Warehouse",
+                error.device_type,
+                error.error_robot,
+                error.issue_type,
+                error.first_column,
+                error.second_column,
+                "",
+                error.first_column,
+                error.recovery_title,
+                error.employee,
+                startTime,
+                endTime,
+                diffMinutes,
+                error.employee,
+                "已处理Processed"
+            ];
+        } else {
+            return [
+                date,
+                "None",
+                "",
+                error.error_robot,
+                error.issue_type,
+                error.first_column,
+                error.second_column,
+                error.first_column,
+                error.recovery_title,
+                "已处理Processed",
+                `@${error.employee}`,
+                startTime,
+                endTime,
+                `00:${diffMinutes}`,
+            ];
+        }
+    });
+
+    return rows.map(row => row.join('\t')).join('\n');
+};
+
+// ==================== MAIN COMPONENT ====================
+
 const Page = () => {
-    const [value, setValue] = useState<string>("");
-    const [copied, setCopied] = useState(false);
-    const [wrong_parse, setWrong_parse] = useState<string[]>([]);
-    const [parsed, setParsed] = useState<ILocalIssue[]>([]);
+    // ==================== STATE ====================
+    const [inputValue, setInputValue] = useState("");
+    const [parsedIssues, setParsedIssues] = useState<ILocalIssue[]>([]);
+    const [parseErrors, setParseErrors] = useState<string[]>([]);
+    const [isCopied, setIsCopied] = useState(false);
+    const [isSaving, setIsSaving] = useState(false);
 
-    const robots = useRobotsStore(state => state.robots)
+    // ==================== REFS ====================
+    const isSendingRef = useRef(false);
+    const sentKeysRef = useRef(new Set<string>());
+    const abortControllerRef = useRef<AbortController | null>(null);
 
-    const parse = async () => {
+    // ==================== STORE ====================
+    const robots = useRobotsStore(state => state.robots);
+
+    // ==================== PARSE LOGIC ====================
+    const parseInput = useCallback(async () => {
         try {
-            setWrong_parse([]);
-            setParsed([]);
+            setParseErrors([]);
+            setParsedIssues([]);
 
-            const lines = value.split('\n').filter(item => item.trim().length > 0);
-            let current_employee = "";
-            const temp_parsed: ILocalIssue[] = [];
-            const temp_wrong: string[] = [];
+            const lines = inputValue
+                .split('\n')
+                .map(line => line.trim())
+                .filter(line => line.length > 0);
+
+            if (lines.length === 0) {
+                toast.error("No data to parse");
+                return;
+            }
 
             const users = await getEmployeesList();
-
             if (!users) {
-                throw new Error("Can't get employees list");
+                throw new Error("Failed to fetch employees list");
             }
 
             const now = dayjs();
-            const currentHour = now.hour();
+            let currentEmployee = "";
+            const tempParsed: ILocalIssue[] = [];
+            const tempErrors: string[] = [];
 
-            lines.forEach(line => {
-                const trimmedLine = line.trim();
-
-                const isUser = users.find((user: IUser) => user.user_name === trimmedLine);
-
+            lines.forEach((line, index) => {
+                // Проверяем, является ли строка именем сотрудника
+                const isUser = users.find((user: IUser) => user.user_name === line);
                 if (isUser) {
-                    current_employee = trimmedLine;
+                    currentEmployee = line;
                     return;
                 }
 
-                const parts = trimmedLine.split(".");
-
-                // ✅ ADD VALIDATION HERE
-                if (parts.length < 3) {
-                    temp_wrong.push(`${current_employee || "No Employee"} - Invalid format: ${trimmedLine}`);
+                // Валидация формата строки
+                const validation = validateErrorLine(line);
+                if (!validation.valid) {
+                    tempErrors.push(`Line ${index + 1}: ${validation.error} - "${line}"`);
                     return;
                 }
 
-                const error_string = parts[0];
-                const error_robot = parts[1];
-                const error_time = parts[2];
+                const parts = line.split(".");
+                const [errorString, errorRobot, errorTime] = parts;
 
-                if (error_string === "Translate") return;
+                // Пропускаем служебные строки
+                if (errorString === "Translate") return;
 
-                const error_pattern = errors_data.find(error =>
-                    error.employee_title.toLowerCase().includes(error_string.toLowerCase())
+                // Проверяем наличие сотрудника
+                if (!currentEmployee) {
+                    tempErrors.push(`Line ${index + 1}: No employee specified - "${line}"`);
+                    return;
+                }
+
+                // Ищем паттерн ошибки
+                const errorPattern = errors_data.find(error =>
+                    error.employee_title.toLowerCase().includes(errorString.toLowerCase())
                 );
 
-                if (!error_pattern) {
-                    toast.error(`Error not found: ${error_string}`);
-                    temp_wrong.push(`${error_time} | ${current_employee || "No Employee"} - ${error_string} - ${error_robot}`);
+                if (!errorPattern) {
+                    tempErrors.push(`Line ${index + 1}: Unknown error type "${errorString}" - ${line}`);
                     return;
                 }
 
-                // ✅ ADD ADDITIONAL VALIDATION FOR TIME FORMAT
-                if (!error_time || !error_time.includes(':')) {
-                    temp_wrong.push(`${current_employee || "No Employee"} - Invalid time format: ${trimmedLine}`);
-                    return;
-                }
+                // Парсим время
+                const startTime = parseErrorTime(errorTime, now);
+                const endTime = startTime.add(errorPattern.solving_time, 'minute');
 
-                // Парсим время ошибки
-                const [errorHour, errorMinute] = error_time.split(':').map(Number);
+                // Определяем тип робота
+                const robotState = robots.find(robot =>
+                    Number(robot.robot_number) === Number(errorRobot)
+                );
 
-                let startTime: dayjs.Dayjs;
-
-                // Если сейчас с 00:00 до 06:00 И время ошибки с 18:00 до 00:00
-                if (currentHour >= 0 && currentHour < 6 && errorHour >= 18 && errorHour < 24) {
-                    // Время ошибки было вчера
-                    startTime = now.subtract(1, 'day').hour(errorHour).minute(errorMinute).second(0);
-                } else {
-                    // Обычная ситуация - сегодня
-                    startTime = now.hour(errorHour).minute(errorMinute).second(0);
-                }
-
-                const robot_state = robots.find(robot => Number(robot.robot_number) === Number(error_robot));
-
-                const obj = {
-                    employee: current_employee || "Unknown",
-                    first_column: error_pattern.first_column,
-                    second_column: error_pattern.second_column,
-                    error_robot: error_robot,
+                const issue: ILocalIssue = {
+                    employee: currentEmployee,
+                    first_column: errorPattern.first_column,
+                    second_column: errorPattern.second_column,
+                    error_robot: errorRobot,
                     error_start_time: startTime.toDate(),
-                    error_end_time: startTime.add(error_pattern.solving_time, 'minute').toDate(),
-                    recovery_title: error_pattern.recovery_title,
-                    solving_time: error_pattern.solving_time,
-                    device_type: robot_state?.robot_type || "Unknown",
-                    issue_type: error_pattern.issue_type,
-                    issue_description: error_pattern.issue_description,
+                    error_end_time: endTime.toDate(),
+                    recovery_title: errorPattern.recovery_title,
+                    solving_time: errorPattern.solving_time,
+                    device_type: robotState?.robot_type || "Unknown",
+                    issue_type: errorPattern.issue_type,
+                    issue_description: errorPattern.issue_description,
                 };
 
-                temp_parsed.push(obj);
+                tempParsed.push(issue);
             });
 
-            setParsed(temp_parsed);
-            setWrong_parse(temp_wrong);
+            setParsedIssues(tempParsed);
+            setParseErrors(tempErrors);
+
+            if (tempParsed.length > 0) {
+                toast.success(`Parsed ${tempParsed.length} issue${tempParsed.length > 1 ? 's' : ''}`);
+            }
+            if (tempErrors.length > 0) {
+                toast.warning(`${tempErrors.length} error${tempErrors.length > 1 ? 's' : ''} during parsing`);
+            }
+
         } catch (error) {
-            error && toast.error(error.toString() || "Unknown error");
-            console.error(error);
+            console.error("Parse error:", error);
+            toast.error(error instanceof Error ? error.message : "Unknown parsing error");
         }
-    };
+    }, [inputValue, robots]);
 
-    /*useEffect(() => {
-        if (!parsed || !Array.isArray(parsed)) return;
-
-        const counts = parsed.reduce<Record<string, number>>((acc, item) => {
-            const key = item.employee;
-            if (!key) return acc;
-
-            acc[key] = (acc[key] ?? 0) + 1;
-            return acc;
-        }, {});
-
-        for (const [employee, count] of Object.entries(counts)) {
-            const score = count * 0.1;
-            updateUserScoreByName(employee, score)
-        }
-    }, [parsed]);
-*/
-
+    // ==================== SAVE TO SERVER ====================
     useEffect(() => {
-        const send = async () => {
+        // Защита от повторного запуска
+        if (!parsedIssues || parsedIssues.length === 0 || isSendingRef.current) {
+            return;
+        }
+
+        const saveToServer = async () => {
             try {
+                isSendingRef.current = true;
+                setIsSaving(true);
+
+                // Создаем AbortController для возможности отмены
+                abortControllerRef.current = new AbortController();
+
                 const users = await getEmployeesList();
+                if (!users) {
+                    throw new Error("Failed to fetch employees list");
+                }
 
-                await Promise.all(
-                    parsed.map(async (issue) => {
-                        setInterval(() => {
-                            const date = issue.error_start_time;
-                            const user = users.find((u: IUser) => u.user_name === issue.employee)!;
-                            const shift = getInitialShiftByTime(date);
+                // Фильтруем только новые issues
+                const newIssues = parsedIssues.filter(issue => {
+                    const key = generateIssueKey(issue);
+                    if (sentKeysRef.current.has(key)) {
+                        return false;
+                    }
+                    sentKeysRef.current.add(key);
+                    return true;
+                });
 
-                            addNewException({
-                                data: {
-                                    ...issue,
-                                    add_by: user.card_id.toString(),
-                                    shift_type: shift,
-                                    uniq_key: `${issue.employee}.${issue.error_robot}.${dayjs(issue.error_start_time).format('YYYYMMDDHHmm')}`
-                                }
-                            });
-                        }, 150)
-                    })
-                );
-                toast.success('All exceptions saved');
-            } catch (e) {
-                toast.error('Save failed');
+                if (newIssues.length === 0) {
+                    return;
+                }
+
+                // Последовательная отправка с задержкой
+                let successCount = 0;
+                let errorCount = 0;
+
+                for (let i = 0; i < newIssues.length; i++) {
+                    // Проверяем, не отменена ли операция
+                    if (abortControllerRef.current?.signal.aborted) {
+                        break;
+                    }
+
+                    const issue = newIssues[i];
+
+                    // Задержка между запросами (кроме первого)
+                    if (i > 0) {
+                        await new Promise(resolve => setTimeout(resolve, REQUEST_DELAY));
+                    }
+
+                    try {
+                        const user = users.find((u: IUser) => u.user_name === issue.employee);
+                        if (!user) {
+                            console.warn(`User not found: ${issue.employee}`);
+                            errorCount++;
+                            continue;
+                        }
+
+                        const shift = getInitialShiftByTime(issue.error_start_time);
+
+                        await addNewException({
+                            data: {
+                                ...issue,
+                                add_by: user.card_id.toString(),
+                                shift_type: shift,
+                                uniq_key: generateIssueKey(issue)
+                            }
+                        });
+
+                        successCount++;
+                    } catch (error) {
+                        console.error(`Failed to save issue ${i + 1}:`, error);
+                        errorCount++;
+                    }
+                }
+
+                // Отображаем результат
+                if (successCount > 0) {
+                    toast.success(`Successfully saved ${successCount} exception${successCount > 1 ? 's' : ''}`);
+                }
+                if (errorCount > 0) {
+                    toast.error(`Failed to save ${errorCount} exception${errorCount > 1 ? 's' : ''}`);
+                }
+
+            } catch (error) {
+                console.error("Save error:", error);
+                toast.error(error instanceof Error ? error.message : "Failed to save exceptions");
+            } finally {
+                isSendingRef.current = false;
+                setIsSaving(false);
+                abortControllerRef.current = null;
             }
         };
 
-        send();
-    }, [parsed]);
+        saveToServer();
 
-    const copyToClipboard = (type: 'GLPC' | "P3") => {
-        const headers = [
-            "Date", "Warehouse", "Robot Type", "Robot Number", "Type",
-            "Error", "Error Deeply", "", "Employee Text", "Recovery options",
-            "Employee", "Start Time", "End Time", "Time Gap (min)", "Employee", "Status"
-        ];
+        // Cleanup function
+        return () => {
+            if (abortControllerRef.current) {
+                abortControllerRef.current.abort();
+            }
+        };
+    }, [parsedIssues]);
 
-        switch (type) {
-            case "GLPC":
-                const rows = parsed.map(error => {
-                    const diffMinutes = dayjs(error.error_end_time).diff(dayjs(error.error_start_time), 'minute');
-                    return [
-                        dayjs().format('MM/DD/YYYY'),
-                        "Inventory Warehouse",
-                        error.device_type,
-                        error.error_robot,
-                        error.issue_type,
-                        error.first_column,
-                        error.second_column,
-                        "",
-                        error.first_column,
-                        error.recovery_title,
-                        error.employee,
-                        dayjs(error.error_start_time).format("HH:mm"),
-                        dayjs(error.error_end_time).format("HH:mm"),
-                        diffMinutes,
-                        error.employee,
-                        "已处理Processed"
-                    ];
-                });
-
-                const tsvContent = [...rows.map(row => row.join('\t'))].join('\n');
-
-                navigator.clipboard.writeText(tsvContent).then(() => {
-                    setCopied(true);
-                    setTimeout(() => setCopied(false), 2000);
-                });
-                break;
-            case "P3":
-                const rowsP3 = parsed.map(error => {
-                    const diffMinutes = dayjs(error.error_end_time).diff(dayjs(error.error_start_time), 'minute');
-                    return [
-                        dayjs().format('MM/DD/YYYY'),
-                        "None",
-                        "",
-                        error.error_robot,
-                        error.issue_type,
-                        error.first_column,
-                        error.second_column,
-                        error.first_column,
-                        error.recovery_title,
-                        "已处理Processed",
-                        `@${error.employee}`,
-                        dayjs(error.error_start_time).format("HH:mm"),
-                        dayjs(error.error_end_time).format("HH:mm"),
-                        dayjs().format(`00:${diffMinutes}`),
-                    ];
-                });
-
-                const tsvContentP3 = [...rowsP3.map(row => row.join('\t'))].join('\n');
-
-                navigator.clipboard.writeText(tsvContentP3).then(() => {
-                    setCopied(true);
-                    setTimeout(() => setCopied(false), 2000);
-                });
-                break;
+    // ==================== CLIPBOARD OPERATIONS ====================
+    const copyToClipboard = useCallback((type: WarehouseType) => {
+        if (parsedIssues.length === 0) {
+            toast.error("No data to copy");
+            return;
         }
 
-    };
+        const content = formatForClipboard(parsedIssues, type);
 
-    useEffect(() => {
-        console.log(wrong_parse);
-    }, [wrong_parse]);
+        navigator.clipboard.writeText(content)
+            .then(() => {
+                setIsCopied(true);
+                toast.success(`Copied ${type} format to clipboard`);
+                setTimeout(() => setIsCopied(false), 2000);
+            })
+            .catch((error) => {
+                console.error("Copy failed:", error);
+                toast.error("Failed to copy to clipboard");
+            });
+    }, [parsedIssues]);
 
+    // ==================== CLEAR FUNCTION ====================
+    const handleClear = useCallback(() => {
+        setInputValue("");
+        setParsedIssues([]);
+        setParseErrors([]);
+        setIsCopied(false);
+        sentKeysRef.current.clear();
+        isSendingRef.current = false;
+
+        if (abortControllerRef.current) {
+            abortControllerRef.current.abort();
+        }
+    }, []);
+
+    // ==================== RENDER ====================
     return (
-        <div className="container mx-auto p-6 max-w-[1600px]">
-            <div className="flex flex-col gap-4 mb-8">
-                <div>
-                    <div className={`my-2`}>
-                        <TemplateInfo/>
-                    </div>
+        <div className="container mx-auto p-6 space-y-6">
+            <div className="space-y-4">
+                <div className="space-y-2">
+                    <label className="text-sm font-medium">
+                        Input Data (format: ErrorType.RobotNumber.Time)
+                    </label>
                     <Textarea
-                        className="max-h-[200px] font-mono"
-                        placeholder="Dmytro Kolomiiets&#10;Speed error. 124. 14:20"
-                        value={value}
-                        onChange={(e) => setValue(e.target.value)}
+                        placeholder="Employee Name&#10;ErrorType.123.14:30&#10;ErrorType.124.14:35"
+                        rows={15}
+                        value={inputValue}
+                        onChange={(e) => setInputValue(e.target.value)}
+                        className="font-mono text-sm"
                     />
                 </div>
+
                 <div className="flex gap-3">
-                    <Button onClick={parse}><FileText className="w-4 h-4 mr-2"/> Parse Data</Button>
-                    <Button onClick={() => {
-                        setValue("");
-                        setParsed([]);
-                        setWrong_parse([]);
-                    }} variant="outline">Clear</Button>
+                    <Button onClick={parseInput} disabled={!inputValue.trim() || isSaving}>
+                        <FileText className="w-4 h-4 mr-2" />
+                        Parse Data
+                    </Button>
+                    <Button
+                        onClick={handleClear}
+                        variant="outline"
+                        disabled={isSaving}
+                    >
+                        <Trash2 className="w-4 h-4 mr-2" />
+                        Clear
+                    </Button>
                 </div>
             </div>
 
-            {wrong_parse.length > 0 && (
-                <div className="mb-8 p-4 border border-destructive/50 rounded-lg bg-destructive/5">
-                    <h3 className="text-destructive font-bold mb-2">Unsuccessful Parse ({wrong_parse.length})</h3>
-                    <ul className="list-disc list-inside text-sm text-muted-foreground">
-                        {wrong_parse.map((item, index) => <li key={index}>{item}</li>)}
+            {/* Parse Errors Section */}
+            {parseErrors.length > 0 && (
+                <div className="p-4 border border-destructive/50 rounded-lg bg-destructive/5">
+                    <h3 className="text-destructive font-bold mb-2">
+                        Parse Errors ({parseErrors.length})
+                    </h3>
+                    <ul className="list-disc list-inside text-sm text-muted-foreground space-y-1">
+                        {parseErrors.map((error, index) => (
+                            <li key={index} className="break-all">{error}</li>
+                        ))}
                     </ul>
                 </div>
             )}
 
-            {parsed.length > 0 && (
+            {/* Results Section */}
+            {parsedIssues.length > 0 && (
                 <div className="space-y-4">
                     <div className="flex justify-between items-center">
-                        <h2 className="text-xl font-semibold">Results: {parsed.length}</h2>
+                        <div className="space-y-1">
+                            <h2 className="text-xl font-semibold">
+                                Results: {parsedIssues.length} issue{parsedIssues.length > 1 ? 's' : ''}
+                            </h2>
+                            {isSaving && (
+                                <p className="text-sm text-muted-foreground">
+                                    Saving to server...
+                                </p>
+                            )}
+                        </div>
+
                         <ButtonGroup>
-                            <Button onClick={() => copyToClipboard("GLPC")} variant={copied ? "secondary" : "default"}>
-                                {copied ? <Check className="w-4 h-4 mr-2"/> : <Copy className="w-4 h-4 mr-2"/>}
-                                {copied ? "Copied!" : "Copy GLPC"}
-                            </Button>
-                            <Button onClick={() => copyToClipboard("P3")} variant={copied ? "secondary" : "default"}>
-                                {copied ? <Check className="w-4 h-4 mr-2"/> : <Copy className="w-4 h-4 mr-2"/>}
-                                {copied ? "Copied!" : "Copy P3"}
+                            <Button
+                                onClick={() => copyToClipboard("GLPC")}
+                                variant={isCopied ? "secondary" : "default"}
+                                disabled={isSaving}
+                            >
+                                {isCopied ? (
+                                    <Check className="w-4 h-4 mr-2" />
+                                ) : (
+                                    <Copy className="w-4 h-4 mr-2" />
+                                )}
+                                {isCopied ? "Copied!" : "Copy"}
                             </Button>
                         </ButtonGroup>
                     </div>
@@ -346,47 +519,72 @@ const Page = () => {
                                     <TableHead>Recovery</TableHead>
                                     <TableHead>Start</TableHead>
                                     <TableHead>End</TableHead>
-                                    <TableHead>Gap</TableHead>
+                                    <TableHead>Gap (min)</TableHead>
                                     <TableHead>Operator</TableHead>
                                 </TableRow>
                             </TableHeader>
                             <TableBody>
-                                {parsed.map((error, i) => (
-                                    <TableRow key={i}>
-                                        <TableCell className="font-bold">
-                                            <div className={`flex items-center gap-2`}>
-                                                <div>
-                                                    {Number(error.error_robot) > 150
-                                                        ? <Image src={`/img/K50H_red.svg`} alt={`robot_img`} width={30}
-                                                                 height={30}/>
-                                                        : <Image src={`/img/A42T_red.svg`} alt={`robot_img`} width={30}
-                                                                 height={30}/>
-                                                    }
+                                {parsedIssues.map((error, i) => {
+                                    const isHighRobot = Number(error.error_robot) > 150;
+                                    const timeDiff = dayjs(error.error_end_time).diff(
+                                        error.error_start_time,
+                                        'minute'
+                                    );
+
+                                    return (
+                                        <TableRow key={i}>
+                                            <TableCell className="font-bold">
+                                                <div className="flex items-center gap-2">
+                                                    <div>
+                                                        <Image
+                                                            src={isHighRobot ? `/img/K50H_red.svg` : `/img/A42T_red.svg`}
+                                                            alt="robot"
+                                                            width={30}
+                                                            height={30}
+                                                        />
+                                                    </div>
+                                                    <article>
+                                                        {error.error_robot} - {error.device_type}
+                                                    </article>
                                                 </div>
-                                                <article>{error.error_robot} - {error.device_type}</article>
-                                            </div>
-                                        </TableCell>
-                                        <TableCell>
-                                            <div className="text-sm font-medium">{error.first_column}</div>
-                                            <div className="text-xs text-muted-foreground">{error.second_column}</div>
-                                        </TableCell>
-                                        <TableCell>
-                                            <div className="text-sm font-medium">{error.issue_description}</div>
-                                            <div className="text-xs text-muted-foreground">{error.recovery_title}</div>
-                                        </TableCell>
-                                        <TableCell>{dayjs(error.error_start_time).format("HH:mm")}</TableCell>
-                                        <TableCell>{dayjs(error.error_end_time).format("HH:mm")}</TableCell>
-                                        <TableCell className="font-bold">
-                                            {dayjs(error.error_end_time).diff(error.error_start_time, 'minute')}
-                                        </TableCell>
-                                        <TableCell>{error.employee}</TableCell>
-                                    </TableRow>
-                                ))}
+                                            </TableCell>
+                                            <TableCell>
+                                                <div className="text-sm font-medium">
+                                                    {error.first_column}
+                                                </div>
+                                                <div className="text-xs text-muted-foreground">
+                                                    {error.second_column}
+                                                </div>
+                                            </TableCell>
+                                            <TableCell>
+                                                <div className="text-sm font-medium">
+                                                    {error.issue_description}
+                                                </div>
+                                                <div className="text-xs text-muted-foreground">
+                                                    {error.recovery_title}
+                                                </div>
+                                            </TableCell>
+                                            <TableCell>
+                                                {dayjs(error.error_start_time).format("HH:mm")}
+                                            </TableCell>
+                                            <TableCell>
+                                                {dayjs(error.error_end_time).format("HH:mm")}
+                                            </TableCell>
+                                            <TableCell className="font-bold">
+                                                {timeDiff}
+                                            </TableCell>
+                                            <TableCell>{error.employee}</TableCell>
+                                        </TableRow>
+                                    );
+                                })}
                             </TableBody>
                         </Table>
                     </div>
                 </div>
             )}
+
+            {/* Template Info Component (если есть) */}
+            <TemplateInfo />
         </div>
     );
 };

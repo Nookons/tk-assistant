@@ -33,7 +33,7 @@ export const addNewException = async ({data}: {data: ILocalIssue}) => {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
             card_id: data.add_by,
-            value: 0.1,
+            value: 0.01,
         })
     })
 
