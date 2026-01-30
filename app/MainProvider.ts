@@ -5,10 +5,12 @@ import {useQuery} from "@tanstack/react-query";
 import {useRobotsStore} from "@/store/robotsStore";
 import {useStockStore} from "@/store/stock";
 import {getAllParts} from "@/futures/stock/getAllParts";
+import {getLocationsSummary} from "@/futures/stock/getLocationsSummary";
 
 const MainProvider = () => {
     const setRobots = useRobotsStore(state => state.setRobots)
     const setStockTemplates = useStockStore(state => state.set_items_templates)
+    const setStockSummary = useStockStore(state => state.set_stock_summary)
 
     const { data, error, isLoading } = useQuery({
         queryKey: ['robots-list'], // better name than 'todos'
@@ -20,6 +22,11 @@ const MainProvider = () => {
         queryFn: () => getAllParts(),
     });
 
+    const { data: StockSummary } = useQuery({
+        queryKey: ['stock_cells_summary'], // better name than 'todos'
+        queryFn: () => getLocationsSummary(),
+    });
+
     useEffect(() => {
         setRobots(data);
     }, [data]);
@@ -29,6 +36,12 @@ const MainProvider = () => {
             setStockTemplates(StockTemplates);
         }
     }, [StockTemplates]);
+
+    useEffect(() => {
+        if (StockSummary !== undefined) {
+            setStockSummary(StockSummary);
+        }
+    }, [StockSummary]);
 
     return null
 };

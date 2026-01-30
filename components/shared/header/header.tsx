@@ -71,7 +71,7 @@ const navigation: NavigationSection[] = [
             {
                 name: "Stock Screen",
                 href: "/stock/stock-screen",
-                description: "",
+                description: "Main view on stock",
                 icon: Warehouse
             },
             {
@@ -110,6 +110,7 @@ export function Header() {
     // Function to close menu on navigation click
     const handleNavigationClick = React.useCallback(() => {
         setMobileMenuOpen(false);
+        setActiveDropdown(null);
     }, []);
 
 
@@ -144,7 +145,7 @@ export function Header() {
                         >
                             <Button
                                 variant="ghost"
-                                className="gap-1"
+                                className="gap-1 rounded-none"
                                 // Add aria-expanded for accessibility
                                 aria-expanded={activeDropdown === section.name}
                                 aria-controls={`dropdown-${section.name}`}
@@ -167,8 +168,7 @@ export function Header() {
                                             <Link
                                                 key={item.href}
                                                 href={item.href}
-                                                // Close dropdown on click to navigate
-                                                onClick={() => setActiveDropdown(null)}
+                                                onClick={() => handleNavigationClick()}
                                                 className={cn(
                                                     "block backdrop-blur-2xl bg-muted/50 p-3 transition-colors hover:bg-accent",
                                                     item.featured && "bg-muted "
@@ -224,14 +224,11 @@ export function Header() {
             {mobileMenuOpen && (
                 <div className="lg:hidden absolute w-full mb-4 animate-in slide-in-from-top-2">
                     <div className="container py-4 px-2 bg-muted/90 backdrop-blur-2xl  space-y-4">
-                        {/* Mobile User Controls - Only shown on smallest screens */}
                         <div className="flex sm:hidden items-center justify-end gap-2 pb-4 border-b">
-                            {/* 🔥 FIX: Pass the required prop here as well */}
                             <UserButton setMobileMenuOpen={setMobileMenuOpen}/>
                             <ThemeToggle/>
                         </div>
 
-                        {/* Navigation Sections */}
                         {navigation.map((section) => (
                             <div key={section.name} className="space-y-2">
                                 <div className="text-sm font-semibold text-muted-foreground px-2">

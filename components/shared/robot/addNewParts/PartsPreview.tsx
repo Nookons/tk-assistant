@@ -56,50 +56,65 @@ const PartsPreview = (
     }
 
     return (
-        <ScrollArea className="max-h-[550px] md:max-h-[750px] overflow-y-auto">
-            <div className={`flex flex-col gap-2`}>
-                {preview_data.map((item, index) => {
+        <ScrollArea className="max-h-[550px] md:max-h-[750px]">
+            <div className="flex flex-col gap-3">
+                {preview_data.map((item, index) => (
+                    <Item
+                        key={`${item.material_number}-${index}`}
+                        variant="muted"
+                        className="rounded-xl p-3 flex flex-col items-start w-full"
+                    >
+                        {/* Header */}
+                        <div className="mb-2 w-full flex items-center justify-between">
+                            <Badge variant="secondary" className="text-xs">
+                                {item.material_number}
+                            </Badge>
 
-                    return (
-                        <Item variant={`muted`} className={`flex flex-col justify-start items-start gap-2`} key={`${item.material_number}-${index}`}>
-                            <Badge>{item.material_number}</Badge>
-                            <div className={`flex flex-wrap items-center gap-2 w-full`}>
-                                {selected_amounts.filter(i => i.material_number === item.material_number).map(j => (
-                                    <div className={`border p-2 rounded-xl flex items-center gap-2`}>
+                            <span className="text-xs text-muted-foreground">
+                                {item.user?.user_name}
+                            </span>
+                        </div>
+
+                        {/* Locations */}
+                        <div className="mb-3 flex flex-wrap gap-2">
+                            {selected_amounts
+                                .filter(i => i.material_number === item.material_number)
+                                .map(j => (
+                                    <label
+                                        key={j.location}
+                                        className="flex cursor-pointer items-center gap-2 rounded-lg border px-2 py-1 text-xs"
+                                    >
                                         <Checkbox
                                             checked={picked_location?.location === j.location}
                                             onCheckedChange={() => setPicked_location(j)}
-                                            id="terms-checkbox-invalid"
-                                            name="terms-checkbox-invalid"
-                                            aria-invalid
                                         />
-                                        <div className={`flex  gap-2`}>
-                                            <div className={`flex items-center gap-2`}>
-                                                <MapPin className={`text-muted-foreground`} size={16} />
-                                                <span className={`font-bold text-base`}>{j.location.split("").join("-")}</span>
-                                            </div>
-                                            <Separator orientation={'vertical'} className={`my-2 w-full`} />
-                                            <div className={`flex items-center gap-2`}>
-                                                <HandCoins className={`text-muted-foreground`} size={16} />
-                                                <span className={`font-bold text-base`}>{j.quantity.toLocaleString()}</span>
-                                            </div>
-                                        </div>
-                                    </div>
+
+                                        <span className="flex items-center gap-1 text-muted-foreground">
+                                            <MapPin size={14} />
+                                            {j.location}
+                                        </span>
+
+                                        <span className="text-foreground font-medium">
+                                          {j.quantity.toLocaleString()}
+                                        </span>
+                                    </label>
                                 ))}
-                            </div>
-                            <div className={`w-full`}>
-                                <article>{item.description_orginall}</article>
-                                <article>{item.description_eng}</article>
-                                <Separator className={`my-2 w-full`}/>
-                                <div className={`flex gap-2 justify-between w-full`}>
-                                    <h1 className={`text-xs text-muted-foreground`}>Last
-                                        Update: {dayjs(item.updated_at).format(`HH:mm · MMM D, YYYY`)}</h1>
-                                    <article>{item.user?.user_name}</article>
-                                </div>
-                            </div>
-                        </Item>
-                    )
-                })}
+                        </div>
+
+                        {/* Description */}
+                        <div className="space-y-1 text-sm">
+                            <p>{item.description_orginall}</p>
+                            <p className="text-muted-foreground">
+                                {item.description_eng}
+                            </p>
+                        </div>
+
+                        {/* Footer */}
+                        <div className="mt-3 text-xs text-muted-foreground">
+                            Last update · {dayjs(item.updated_at).format("HH:mm · MMM D, YYYY")}
+                        </div>
+                    </Item>
+                ))}
             </div>
         </ScrollArea>
     );

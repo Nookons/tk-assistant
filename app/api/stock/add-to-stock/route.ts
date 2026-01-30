@@ -3,12 +3,8 @@ import { supabase } from '@/lib/supabaseClient';
 
 export async function POST(request: Request) {
     const body = await request.json();
-
     const {card_id, material_number, selected, warehouse, location, quantity} = body;
 
-    console.log(body)
-
-    // Сначала ищем существующую запись
     const { data: existingData, error: searchError } = await supabase
         .from('stock')
         .select('*')
@@ -18,14 +14,12 @@ export async function POST(request: Request) {
         .single();
 
     if (searchError && searchError.code !== 'PGRST116') {
-        // PGRST116 - код ошибки "не найдено", остальные ошибки возвращаем
         return NextResponse.json({ error: searchError.message }, { status: 500 });
     }
 
     let result;
 
     if (existingData) {
-        // Если запись существует - обновляем quantity
         const newQuantity = (Number(existingData.quantity) || 0) + Number(quantity);
 
         const { data: updateData, error: updateError } = await supabase
@@ -43,7 +37,6 @@ export async function POST(request: Request) {
 
         result = updateData?.[0];
     } else {
-        // Если записи нет - создаем новую
         const { data: insertData, error: insertError } = await supabase
             .from('stock')
             .insert({

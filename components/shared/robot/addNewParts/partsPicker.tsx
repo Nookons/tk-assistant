@@ -116,8 +116,6 @@ const PartsPicker = ({robot}: {robot: IRobot}) => {
                 })
             }
 
-            console.log(picked_location);
-
              const parts_res = await addChangeParts({
                  parts: selected,
                  card_id: user_store.card_id,

@@ -11,6 +11,7 @@ import Important from "@/components/shared/dashboard/Important/Important";
 import ImportantScreen from "@/components/shared/dashboard/Important/ImportantScreen";
 import WaitingRepair from "@/components/shared/Robots/WaitingRepair";
 import {Separator} from "@/components/ui/separator";
+import Link from "next/link";
 
 const Page = () => {
     const params = useParams();
@@ -25,7 +26,7 @@ const Page = () => {
             <div className={`flex flex-col gap-4`}>
                 <div className={`flex items-center justify-between`}>
                     <div className={`flex items-center gap-2`}>
-                        <Label className={`text-base`}>{user_store.user_name}</Label>
+                        <Link href={`/users/profile`} className={`text-base text-primary font-bold hover:underline`}>{user_store.user_name}</Link>
                     </div>
                     <div className={`flex items-center gap-4`}>
                         <UserStar size={24}/>

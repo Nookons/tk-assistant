@@ -1,10 +1,10 @@
 'use client'
 import React, {useEffect, useState} from 'react';
-import { useQuery, useQueryClient } from "@tanstack/react-query";
-import { getAllStockHistory } from "@/futures/stock/getAllStockHistory";
-import { IHistoryStockItem } from "@/types/stock/HistoryStock";
-import { toast } from "sonner";
-import { useUserStore } from "@/store/user";
+import {useQuery, useQueryClient} from "@tanstack/react-query";
+import {getAllStockHistory} from "@/futures/stock/getAllStockHistory";
+import {IHistoryStockItem} from "@/types/stock/HistoryStock";
+import {toast} from "sonner";
+import {useUserStore} from "@/store/user";
 import {getLocationsSummary} from "@/futures/stock/getLocationsSummary";
 import {Item} from "@/components/ui/item";
 import {Separator} from "@/components/ui/separator";
@@ -12,6 +12,13 @@ import {Input} from "@/components/ui/input";
 import {StockByLocationResponse} from "@/types/stock/SummaryItem";
 import {Badge} from "@/components/ui/badge";
 import SummaryScreen from "@/components/shared/Stock/SummaryScreen";
+import Link from "next/link";
+import {Table, TableBody, TableCell, TableHead, TableHeader, TableRow} from "@/components/ui/table";
+import dayjs from "dayjs";
+import {timeToString} from "@/utils/timeToString";
+import {ButtonGroup} from "@/components/ui/button-group";
+import {Button} from "@/components/ui/button";
+import {Pencil, Trash2} from "lucide-react";
 
 const Page = () => {
     const user_store = useUserStore(state => state.current_user);
@@ -22,13 +29,13 @@ const Page = () => {
     const [search_value, setSearch_value] = useState<string>('')
     const [filtered_data, setFiltered_data] = useState<StockByLocationResponse>([])
 
-    const { data: IStockHistory } = useQuery({
+    const {data: IStockHistory} = useQuery({
         queryKey: ['stockHistory-full'],
         queryFn: async () => getAllStockHistory(),
         retry: 3
     });
 
-    const { data: LocationsSummary, isLoading, isError } = useQuery({
+    const {data: LocationsSummary, isLoading, isError} = useQuery({
         queryKey: ['stockHistory-locations-full'],
         queryFn: async () => getLocationsSummary(),
         retry: 3
@@ -46,7 +53,7 @@ const Page = () => {
             const [removeResponse, usePartResponse] = await Promise.all([
                 fetch(`/api/stock/remove-item`, {
                     method: 'DELETE',
-                    headers: { 'Content-Type': 'application/json' },
+                    headers: {'Content-Type': 'application/json'},
                     body: JSON.stringify({
                         id: el.id,
                         value: el.value,
@@ -57,7 +64,7 @@ const Page = () => {
                 }),
                 fetch(`/api/stock/use-part`, {
                     method: "POST",
-                    headers: { "Content-Type": "application/json" },
+                    headers: {"Content-Type": "application/json"},
                     body: JSON.stringify({
                         warehouse: el.warehouse,
                         location: el.location,
@@ -73,7 +80,7 @@ const Page = () => {
             }
 
             toast.success('Record removed successfully');
-            await queryClient.invalidateQueries({ queryKey: ['stockHistory-full'] });
+            await queryClient.invalidateQueries({queryKey: ['stockHistory-full']});
         } catch (error) {
             console.error('Failed to remove record:', error);
             toast.error('Failed to remove record');
@@ -104,7 +111,7 @@ const Page = () => {
     return (
         <div className="max-w-[1200px] m-auto p-4">
             <div>
-                <SummaryScreen />
+                <SummaryScreen/>
             </div>
             <div className={`mt-4`}>
                 <Input
@@ -113,37 +120,60 @@ const Page = () => {
                     placeholder={`A123`}
                 />
             </div>
-            <div className={`flex flex-wrap flex-col gap-2 mt-4`}>
-                <p className={`text-muted-foreground text-xs`}>Recent locations: ({filtered_data.slice(0, 20).length})</p>
-                {LocationsSummary && filtered_data.slice(0, 20).map((el) => (
-                    <div className={`border p-2 rounded-2xl flex flex-col gap-2`}>
-                        <div className={`flex items-center justify-between gap-2`}>
-                            <article className={`text-xl font-bold`}>{el.location}</article>
-                            <Badge className={`text-xs font-bold`}>{el.items[0].warehouse}</Badge>
-                        </div>
-                        <div className={`flex flex-wrap gap-2`}>
-                            {el.items.map(part => (
-                                <Item variant={`muted`}>
-                                    <p>{part.material_number}</p>
-                                    <Separator orientation={'vertical'}/>
-                                    <p>{part.description_eng}</p>
-                                    <Separator orientation={'vertical'}/>
-                                    <p className={`font-bold`}>{part.total_quantity}</p>
-                                </Item>
-                            ))}
-                        </div>
-                    </div>
-                ))}
+            <p className="text-xs my-2  text-muted-foreground">
+                Recent locations ({filtered_data.slice(0, 20).length})
+            </p>
+            <div className="flex flex-wrap items-start gap-2">
+                {LocationsSummary &&
+                    filtered_data.slice(0, 20).map((el) => (
+                        <Link
+                            href={`/stock/cell?location=${el.location}&warehouse=${el.items[0].warehouse}`}
+                            key={el.location}
+                            className="rounded-xl border bg-background p-3 hover:bg-muted"
+                        >
+                            {/* Header */}
+                            <div className="mb-2 flex items-center justify-between">
+                                  <span className="text-sm font-semibold">
+                                    {el.location}
+                                  </span>
+                                <span className="text-xs text-muted-foreground">
+                                    {el.items[0].warehouse}
+                                  </span>
+                            </div>
+
+                            {/* Items */}
+                            <div className="flex flex-col gap-1">
+                                {el.items.map((part) => (
+                                    <div
+                                        key={part.material_number}
+                                        className="flex items-center justify-between text-xs"
+                                    >
+                                      <span className="text-muted-foreground">
+                                        {part.material_number}
+                                      </span>
+                                        <span className="line-clamp-1 flex-1 px-2">
+                                        {part.description_eng}
+                                      </span>
+                                        <span className="font-medium">
+                                            {part.total_quantity}
+                                          </span>
+                                    </div>
+                                ))}
+                            </div>
+                        </Link>
+                    ))}
             </div>
-            {/*<Table>
+
+            <Table>
                 <TableHeader>
                     <TableRow>
+                        <TableHead>Employee</TableHead>
                         <TableHead>Warehouse</TableHead>
+                        <TableHead>Location</TableHead>
+                        <TableHead>Value</TableHead>
                         <TableHead>Material Number</TableHead>
                         <TableHead>Created</TableHead>
-                        <TableHead>Value</TableHead>
-                        <TableHead>Employee</TableHead>
-                        <TableHead className="text-right">Actions</TableHead>
+                        {/*<TableHead className="text-right">Actions</TableHead>*/}
                     </TableRow>
                 </TableHeader>
                 <TableBody>
@@ -156,12 +186,13 @@ const Page = () => {
                         .slice(0, 25)
                         .map((el) => (
                             <TableRow key={el.id}>
+                                <TableCell className="font-medium">{el.user.user_name}</TableCell>
                                 <TableCell className="font-medium">{el.warehouse}</TableCell>
+                                <TableCell className="font-medium">{el.location}</TableCell>
+                                <TableCell className="font-medium">{el.value}</TableCell>
                                 <TableCell className="font-medium">{el.material_number}</TableCell>
                                 <TableCell className="font-medium">{timeToString(dayjs(el.created_at).valueOf())}</TableCell>
-                                <TableCell className="font-medium">{el.value}</TableCell>
-                                <TableCell className="font-medium">{el.user.user_name}</TableCell>
-                                <TableCell className="flex justify-end">
+                                {/*<TableCell className="flex justify-end">
                                     <ButtonGroup>
                                         <Button variant="secondary" onClick={() => toast.warning("Doesn't work right now")}>
                                             <Pencil />
@@ -170,11 +201,11 @@ const Page = () => {
                                             <Trash2 />
                                         </Button>
                                     </ButtonGroup>
-                                </TableCell>
+                                </TableCell>*/}
                             </TableRow>
                         ))}
                 </TableBody>
-            </Table>*/}
+            </Table>
         </div>
     );
 };

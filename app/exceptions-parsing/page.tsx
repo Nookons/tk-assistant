@@ -436,17 +436,15 @@ const Page = () => {
     return (
         <div className="container mx-auto p-6 space-y-6">
             <div className="space-y-4">
-                <div className="space-y-2">
-                    <label className="text-sm font-medium">
-                        Input Data (format: ErrorType.RobotNumber.Time)
-                    </label>
-                    <Textarea
-                        placeholder="Employee Name&#10;ErrorType.123.14:30&#10;ErrorType.124.14:35"
-                        rows={15}
-                        value={inputValue}
-                        onChange={(e) => setInputValue(e.target.value)}
-                        className="font-mono text-sm"
-                    />
+                <div className="">
+                    <div>
+                        <Textarea
+                            placeholder="取放箱位置错误 Wrong pick and place box position. **** . 07:43"
+                            value={inputValue}
+                            onChange={(e) => setInputValue(e.target.value)}
+                            className={`font-mono text-sm max-h-[150px]`}
+                        />
+                    </div>
                 </div>
 
                 <div className="flex gap-3">
@@ -454,14 +452,17 @@ const Page = () => {
                         <FileText className="w-4 h-4 mr-2" />
                         Parse Data
                     </Button>
-                    <Button
-                        onClick={handleClear}
-                        variant="outline"
-                        disabled={isSaving}
-                    >
-                        <Trash2 className="w-4 h-4 mr-2" />
-                        Clear
-                    </Button>
+                    <ButtonGroup>
+                        <Button
+                            onClick={handleClear}
+                            variant="outline"
+                            disabled={isSaving}
+                        >
+                            <Trash2 className="w-4 h-4 mr-2" />
+                            Clear
+                        </Button>
+                        <TemplateInfo />
+                    </ButtonGroup>
                 </div>
             </div>
 
@@ -582,9 +583,6 @@ const Page = () => {
                     </div>
                 </div>
             )}
-
-            {/* Template Info Component (если есть) */}
-            <TemplateInfo />
         </div>
     );
 };

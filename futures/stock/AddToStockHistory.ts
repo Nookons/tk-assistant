@@ -4,10 +4,10 @@ interface IProps {
     material_number: string;
     warehouse: string;
     location: string;
-    value: string;
+    quantity: string;
 }
 
-export const AddToStockHistory = async ({card_id, material_number, location, warehouse, value}: IProps) => {
+export const AddToStockHistory = async ({card_id, material_number, location, warehouse, quantity}: IProps) => {
     const res = await fetch(`/api/stock/add-to-stock-history`, {
         method: 'POST',
         headers: {
@@ -16,7 +16,7 @@ export const AddToStockHistory = async ({card_id, material_number, location, war
         body: JSON.stringify({
             add_by: card_id,
             material_number,
-            value,
+            value: quantity,
             warehouse,
             location
         })

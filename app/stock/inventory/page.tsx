@@ -117,7 +117,7 @@ const Page = () => {
                 material_number: picked_template!.material_number,
                 warehouse,
                 location,
-                value: quantity
+                quantity
             })
 
             toast.success("Successfully added to stock", {

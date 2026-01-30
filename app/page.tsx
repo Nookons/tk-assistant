@@ -5,6 +5,8 @@ import { useQuery } from "@tanstack/react-query";
 import { getAllExceptions } from "@/futures/exception/getAllExceptions";
 import { getAllChangedParts } from "@/futures/Parts/getAllChangedParts";
 import PieKeyValue from "@/components/charts/Pie/PieKeyValue";
+import RadarKeyValue from "@/components/charts/Radar/RadarKeyValue";
+import {Skeleton} from "@/components/ui/skeleton";
 
 
 
@@ -41,7 +43,7 @@ export default function Home() {
                 key,
                 value: stats.value
             }))
-            .sort((a, b) => b.value - a.value);
+            /*.sort((a, b) => b.value - a.value);*/
     }, [partsData]);
 
     const SolvingTimeData = useMemo(() => {
@@ -64,7 +66,7 @@ export default function Home() {
                 key,
                 value: stats.value
             }))
-            .sort((a, b) => b.value - a.value);
+            /*.sort((a, b) => b.value - a.value);*/
     }, [exceptions]);
 
     const ExceptionsCounter = useMemo(() => {
@@ -87,7 +89,7 @@ export default function Home() {
                 key,
                 value: stats.value
             }))
-            .sort((a, b) => b.value - a.value);
+            /*.sort((a, b) => b.value - a.value);*/
     }, [exceptions]);
 
 
@@ -104,9 +106,14 @@ export default function Home() {
                  }}
             />
 
-            {partsChangedData.length > 0 && <PieKeyValue title={`Parts changed (pcs)`} data={partsChangedData} />}
-            {SolvingTimeData.length > 0 && <PieKeyValue title={`Exceptions time (m)`} data={SolvingTimeData} />}
-            {ExceptionsCounter.length > 0 && <PieKeyValue title={`Exceptions Count (pcs)`} data={ExceptionsCounter} />}
+            {partsChangedData.length < 1 &&
+                <Skeleton className={`w-full h-screen`} />
+            }
+
+
+            {partsChangedData.length > 0 && <RadarKeyValue title={`Exceptions time (m)`} data={SolvingTimeData}  />}
+            {partsChangedData.length > 0 && <RadarKeyValue title={`Exceptions Count (pcs)`} data={ExceptionsCounter}  />}
+            {partsChangedData.length > 0 && <RadarKeyValue title={`Parts changed (pcs)`} data={partsChangedData}  />}
         </div>
     );
 }

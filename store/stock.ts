@@ -1,13 +1,14 @@
 import { create } from 'zustand'
 import { IStockItemTemplate } from "@/types/stock/StockItem"
 import { IStockAmountItem } from "@/types/stock/StockAmounts"
+import {StockByLocationResponse} from "@/types/stock/SummaryItem";
 
 type UserState = {
     items_templates: IStockItemTemplate[] | null
     set_items_templates: (data: IStockItemTemplate[]) => void
 
-    stock_summary: IStockAmountItem[] | null
-    set_stock_summary: (data: IStockAmountItem[]) => void
+    stock_summary: StockByLocationResponse | null
+    set_stock_summary: (data: StockByLocationResponse) => void
 
     add_item_template: (item: IStockItemTemplate) => void
 }
