@@ -10,19 +10,20 @@ import {
 import {Button} from "@/components/ui/button";
 import {Label} from "@/components/ui/label";
 import {Input} from "@/components/ui/input";
-import {
-    Select,
-    SelectContent,
-    SelectGroup,
-    SelectItem,
-    SelectLabel,
-    SelectTrigger,
-    SelectValue
-} from "@/components/ui/select";
 import {CreateNewTemplate} from "@/futures/stock/createNewTemplate";
 import {useUserStore} from "@/store/user";
 import {useStockStore} from "@/store/stock";
 import dayjs from "dayjs";
+import {
+    DropdownMenu,
+    DropdownMenuCheckboxItem,
+    DropdownMenuContent,
+    DropdownMenuTrigger
+} from "@/components/ui/dropdown-menu";
+import {robots_types} from "@/utils/RobotsConsts";
+import utc from "dayjs/plugin/utc";
+
+dayjs.extend(utc);
 
 const CreateNewStockTemplate = () => {
     const add_item_template = useStockStore(state => state.add_item_template)
@@ -32,11 +33,13 @@ const CreateNewStockTemplate = () => {
         material_number: "",
         description_chinese: "",
         description_english: "",
+        robot_match: [] as string[],
         robot_type: ""
     })
 
     const [isOpen, setIsOpen] = useState(false)
     const [isLoading, setIsLoading] = useState(false)
+
 
     const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
         const {name, value} = e.target
@@ -46,46 +49,47 @@ const CreateNewStockTemplate = () => {
         }))
     }
 
-    const handleSelectChange = (value: string) => {
-        setData(prev => ({
-            ...prev,
-            robot_type: value
-        }))
+    const setRobotMatch = (robot: string) => {
+        if (data.robot_match.includes(robot)) {
+            const newData = data.robot_match.filter(el => el !== robot)
+            setData((prev) => ({...prev, robot_match: newData}))
+        } else {
+            setData((prev) => ({
+                ...prev,
+                robot_match: [...prev.robot_match, robot]
+            }))
+        }
     }
 
     const handleSubmit = async () => {
-        // Ваш код для отправки данных
         setIsLoading(true)
+
         try {
             if (!user_store) throw new Error('User not found')
 
             const obj = {
-                card_id: user_store.card_id.toString(),
+                id: dayjs().valueOf(),
+                created_at: dayjs().add(1, 'h').utc().toISOString(),
+                updated_at: dayjs().add(1, 'h').utc().toISOString(),
+                add_by: user_store.card_id,
                 material_number: data.material_number,
                 description_orginall: data.description_chinese,
                 description_eng: data.description_english,
                 part_type: data.robot_type,
-                robot_match: [data.robot_type],
-            }
-
-            await CreateNewTemplate(obj)
-
-            const obj_extend = {
-                id: dayjs().valueOf(),
-                created_at: dayjs().valueOf(),
-                updated_at: dayjs().valueOf(),
-                add_by: Number(obj.card_id),
-                user: user_store,
+                robot_match: data.robot_match,
                 avatar_url: '',
-                ...obj,
             }
 
-            add_item_template(obj_extend)
+            await CreateNewTemplate({data: obj})
+
+            add_item_template(obj)
+
             setIsOpen(false)
             setData({
                 material_number: "",
                 description_chinese: "",
                 description_english: "",
+                robot_match: [] as string[],
                 robot_type: ""
             })
         } catch (error) {
@@ -138,19 +142,27 @@ const CreateNewStockTemplate = () => {
                         </div>
                         <div className={`flex flex-col gap-2`}>
                             <Label>Robot Type</Label>
-                            <Select value={data.robot_type} onValueChange={handleSelectChange}>
-                                <SelectTrigger className="w-full">
-                                    <SelectValue placeholder="Select a type"/>
-                                </SelectTrigger>
-                                <SelectContent>
-                                    <SelectGroup>
-                                        <SelectLabel>Types</SelectLabel>
-                                        <SelectItem value="K50H">K50H</SelectItem>
-                                        <SelectItem value="A42T">A42T</SelectItem>
-                                        <SelectItem value="P1200">P1200</SelectItem>
-                                    </SelectGroup>
-                                </SelectContent>
-                            </Select>
+                            <DropdownMenu>
+                                <DropdownMenuTrigger asChild>
+                                    <Button variant="outline" className="w-full text-left">
+                                        {data.robot_match.length
+                                            ? data.robot_match.join(", ")
+                                            : "Select robot types"}
+                                    </Button>
+                                </DropdownMenuTrigger>
+
+                                <DropdownMenuContent className="w-full">
+                                    {robots_types.map(robot => (
+                                        <DropdownMenuCheckboxItem
+                                            key={robot}
+                                            checked={data.robot_match.includes(robot)}
+                                            onCheckedChange={() => setRobotMatch(robot)}
+                                        >
+                                            {robot}
+                                        </DropdownMenuCheckboxItem>
+                                    ))}
+                                </DropdownMenuContent>
+                            </DropdownMenu>
                         </div>
                     </div>
                     <DialogFooter className="sm:justify-start">

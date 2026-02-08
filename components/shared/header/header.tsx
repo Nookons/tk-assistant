@@ -140,7 +140,6 @@ export function Header() {
                             <Button
                                 variant="ghost"
                                 className="gap-1 rounded-none"
-                                // Add aria-expanded for accessibility
                                 aria-expanded={activeDropdown === section.name}
                                 aria-controls={`dropdown-${section.name}`}
                             >
@@ -193,7 +192,7 @@ export function Header() {
                 <div className="flex items-end gap-2">
                     <div className="hidden sm:flex items-center gap-2">
                         <UserButton setMobileMenuOpen={setMobileMenuOpen}/>
-                        <ThemeToggle/>
+                        <ThemeToggle setMobileMenuOpen={setMobileMenuOpen}/>
                     </div>
 
                     {/* Mobile Menu Button */}
@@ -220,7 +219,7 @@ export function Header() {
                     <div className="container py-4 px-2 bg-muted/90 backdrop-blur-2xl  space-y-4">
                         <div className="flex sm:hidden items-center justify-end gap-2 pb-4 border-b">
                             <UserButton setMobileMenuOpen={setMobileMenuOpen}/>
-                            <ThemeToggle/>
+                            <ThemeToggle setMobileMenuOpen={setMobileMenuOpen}/>
                         </div>
 
                         {navigation.map((section) => (

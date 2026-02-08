@@ -36,7 +36,7 @@ const UserButton: FC<UserButtonProps> = ({ setMobileMenuOpen }) => {
 
     return isSession ? (
         <div className="flex items-center gap-2">
-            <Link href={`/dashboard/${current_user.auth_id}`}>
+            <Link onClick={() => setMobileMenuOpen(false)} href={`/dashboard/${current_user.auth_id}`}>
                 <Button variant="ghost" title="Dashboard">
                     <LayoutDashboard size={24} />
                 </Button>

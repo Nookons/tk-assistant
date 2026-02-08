@@ -26,13 +26,11 @@ export default function RootLayout({children,}: Readonly<{ children: React.React
             disableTransitionOnChange
         >
             <QueryProvider>
-                <Toaster richColors position="bottom-right"/>
                 <div className="">
                     <Header/>
                     <MainProvider/>
                     {children}
                     <div className={`flex justify-center items-center w-full h-full bg-background-foreground`}>
-                        <Snow />
                         <p className={`py-8 text-muted-foreground`}>TK Service by Kolomiiets Dmytro</p>
                     </div>
                 </div>

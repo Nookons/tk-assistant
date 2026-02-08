@@ -20,12 +20,12 @@ import {useMutation} from "@tanstack/react-query";
 import {TemplateService} from "@/services/templateService";
 import {toast} from "sonner";
 import {useStockStore} from "@/store/stock";
+import {robots_types} from "@/utils/RobotsConsts";
 
 interface props {
     part: IStockItemTemplate;
 }
 
-const robots = ["A42T", "A42T E2", "K50H"]
 
 const TemplateEditDialog: React.FC<props> = ({part}) => {
     const update_store = useStockStore(state => state.update_item_template)
@@ -115,7 +115,7 @@ const TemplateEditDialog: React.FC<props> = ({part}) => {
                         </DropdownMenuTrigger>
 
                         <DropdownMenuContent className="w-full">
-                            {robots.map(robot => (
+                            {robots_types.map(robot => (
                                 <DropdownMenuCheckboxItem
                                     key={robot}
                                     checked={data.robot_match.includes(robot)}

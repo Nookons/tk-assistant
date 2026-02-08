@@ -3,8 +3,8 @@ import {IUser} from "@/types/user/user";
 
 export interface IStockItemTemplate {
     id: number;
-    created_at: Timestamp;
-    updated_at: Timestamp;
+    created_at: Timestamp | string;
+    updated_at: Timestamp | string;
     add_by: number;
     material_number: string;
     description_orginall: string;

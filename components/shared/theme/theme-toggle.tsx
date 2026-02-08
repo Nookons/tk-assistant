@@ -5,11 +5,16 @@ import { Moon, Sun } from "lucide-react"
 import { useTheme } from "next-themes"
 import { Button } from "@/components/ui/button"
 
-export function ThemeToggle() {
+interface props {
+    setMobileMenuOpen: (isOpen: boolean) => void;
+}
+
+export const ThemeToggle: React.FC<props> = ({setMobileMenuOpen})=> {
     const { theme, setTheme } = useTheme()
 
     const toggleTheme = () => {
         setTheme(theme === "light" ? "dark" : "light")
+        setMobileMenuOpen(false)
     }
 
     return (
