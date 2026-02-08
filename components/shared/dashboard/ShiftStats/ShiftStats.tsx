@@ -189,7 +189,7 @@ const ShiftStats = () => {
             </div>
 
             {/* Список роботов */}
-            <div className="grid grid-cols-1 gap-4 py-2">
+            <div className="grid grid-cols-1 gap-4 py-2 backdrop-blur-xl p-2">
                 <ChangedParts robots={dataExtend} />
             </div>
         </div>

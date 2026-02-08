@@ -95,16 +95,6 @@ export default function Home() {
 
     return (
         <div className="relative w-full  flex flex-col md:grid md:grid-cols-3 gap-4 p-2 md:p-8">
-            {/* Параллакс фон */}
-            <div className="fixed top-0 left-0 w-full h-screen pointer-events-none"
-                 style={{
-                     backgroundImage: 'url(/img/welcome.png)',
-                     backgroundSize: 'cover',
-                     backgroundPosition: 'center',
-                     backgroundRepeat: 'no-repeat',
-                     zIndex: -1
-                 }}
-            />
 
             {partsChangedData.length < 1 &&
                 <Skeleton className={`w-full h-screen`} />

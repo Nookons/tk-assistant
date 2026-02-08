@@ -110,7 +110,7 @@ const ChangedParts = ({robots}: { robots: IRobotExtend[] }) => {
 
 
     return (
-        <div className="shadow-sm">
+        <div className="">
             <div className="pb-3">
                 <div className="flex items-center gap-3">
                     <div className="flex gap-2">
@@ -136,7 +136,7 @@ const ChangedParts = ({robots}: { robots: IRobotExtend[] }) => {
             <Separator/>
             <div className="p-0">
                 <ScrollArea className="">
-                    <div className="grid grid-cols-2 md:grid-cols-1 gap-4 my-2">
+                    <div className="grid grid-cols-4 gap-4 my-2">
                         {robots.map((robot) => {
                             if (!robot) return null;
 
@@ -144,7 +144,7 @@ const ChangedParts = ({robots}: { robots: IRobotExtend[] }) => {
 
                             return (
                                 <Link href={`/robot/${robot.id}`} key={robot.id}
-                                      className="group w-full relative overflow-hidden rounded-lg sm:rounded-xl border bg-background p-3 sm:p-4 transition-all hover:shadow-md">
+                                      className="group w-full relative overflow-hidden rounded-lg sm:rounded-xl border hover:bg-muted p-3 sm:p-4 transition-all">
                                     {/* Заголовок робота */}
                                     <div className="grid grid-cols-[35px_1fr] w-full">
                                         <div className="p-1.5 sm:p-2">

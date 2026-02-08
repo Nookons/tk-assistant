@@ -22,13 +22,11 @@ import {
 import {CreateNewTemplate} from "@/futures/stock/createNewTemplate";
 import {useUserStore} from "@/store/user";
 import {useStockStore} from "@/store/stock";
-import {Timestamp} from "next/dist/server/lib/cache-handlers/types";
-import {IUser} from "@/types/user/user";
 import dayjs from "dayjs";
 
 const CreateNewStockTemplate = () => {
     const add_item_template = useStockStore(state => state.add_item_template)
-    const user_store = useUserStore(state => state.current_user)
+    const user_store = useUserStore(state => state.currentUser)
 
     const [data, setData] = useState({
         material_number: "",
@@ -66,20 +64,23 @@ const CreateNewStockTemplate = () => {
                 material_number: data.material_number,
                 description_orginall: data.description_chinese,
                 description_eng: data.description_english,
-                part_type: data.robot_type
+                part_type: data.robot_type,
+                robot_match: [data.robot_type],
             }
 
             await CreateNewTemplate(obj)
 
-            // После успешного создания
-            add_item_template({
+            const obj_extend = {
                 id: dayjs().valueOf(),
                 created_at: dayjs().valueOf(),
                 updated_at: dayjs().valueOf(),
                 add_by: Number(obj.card_id),
                 user: user_store,
+                avatar_url: '',
                 ...obj,
-            })
+            }
+
+            add_item_template(obj_extend)
             setIsOpen(false)
             setData({
                 material_number: "",

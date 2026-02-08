@@ -73,7 +73,7 @@ const RobotHistory = ({robot}: { robot: IRobot }) => {
     const [isLoading, setIsLoading] = useState<boolean>(false);
     const [expandedNotes, setExpandedNotes] = useState<Record<number, boolean>>({});
 
-    const user = useUserStore(state => state.current_user);
+    const user = useUserStore(state => state.currentUser);
     const removeFromStock = useRobotsStore(state => state.deletePartsHistory);
 
     const getHistory = async () => {
@@ -161,11 +161,11 @@ const RobotHistory = ({robot}: { robot: IRobot }) => {
                     return (
                         <div key={`${event.type}-${event.id}`} className={`mb-2 ml-6`}>
                             <span
-                                className="absolute -left-3 flex h-6 w-6 items-center justify-center rounded-full bg-secondary shadow">
+                                className="absolute -left-3 flex h-6 w-6 items-center justify-center rounded-full">
                                 {event.type === 'parts' ? (
-                                    <Combine className="h-4 w-4"/>
+                                    <Combine className="h-8 w-8 bg-background p-1"/>
                                 ) : (
-                                    <Activity className="h-4 w-4"/>
+                                    <Activity className="h-8 w-8 bg-background p-1"/>
                                 )}
                             </span>
 
@@ -224,7 +224,7 @@ const RobotHistory = ({robot}: { robot: IRobot }) => {
                                                 {event.parts.map((part) => (
                                                     <Link href={`/stock/${part.material_number}`} className={`flex group cursor-pointer items-center gap-2`}>
                                                         <div key={part.id}
-                                                             className="flex items-center gap-2 bg-secondary px-2 py-1 rounded-md"
+                                                             className="flex items-center gap-2 px-2 py-1 rounded-md"
                                                         >
                                                             <PackageMinus size={18}/>
                                                             <p className="text-xs transition group-hover:text-primary">{part.material_number}</p>
@@ -254,7 +254,7 @@ const RobotHistory = ({robot}: { robot: IRobot }) => {
                                                     {event.problem_note && (
                                                         <div className="space-y-2">
                                                             <Label
-                                                                className="text-base  whitespace-pre-wrap overflow-hidden transition-all duration-200"
+                                                                className="text-xs  whitespace-pre-wrap overflow-hidden transition-all duration-200"
                                                                 style={{
                                                                     maxHeight: isExpanded ? '1000px' : '4.5em',
                                                                     display: '-webkit-box',

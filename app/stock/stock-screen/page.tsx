@@ -21,7 +21,7 @@ import {Button} from "@/components/ui/button";
 import {Pencil, Trash2} from "lucide-react";
 
 const Page = () => {
-    const user_store = useUserStore(state => state.current_user);
+    const user_store = useUserStore(state => state.currentUser);
     const queryClient = useQueryClient();
     const [isLoadingR, setIsLoadingR] = useState<boolean>(false);
 

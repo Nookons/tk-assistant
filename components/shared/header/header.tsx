@@ -15,11 +15,12 @@ import {
 import {ThemeToggle} from "@/components/shared/theme/theme-toggle"
 import {Button} from "@/components/ui/button"
 import UserButton from "@/components/shared/header/userButton"
-import Image from "next/image"
 import {cn} from "@/lib/utils"
 import {useTheme} from "next-themes";
 import {useEffect} from "react";
 import {Label} from "@/components/ui/label";
+import Snow from "@/app/snow";
+
 
 // Removed unused import: Home
 
@@ -58,9 +59,9 @@ const navigation: NavigationSection[] = [
                 icon: FileText
             },
             {
-                name: "Weekly Report",
-                href: "/reports/weekly",
-                description: "Weekly report for HAI",
+                name: "Month Report",
+                href: "/reports/month",
+                description: "Month report for HAI",
                 icon: CalendarArrowDown
             },
         ]
@@ -94,7 +95,7 @@ export function Header() {
     const [mobileMenuOpen, setMobileMenuOpen] = React.useState<boolean>(false)
     const [activeDropdown, setActiveDropdown] = React.useState<string | null>(null)
 
-    const {theme} = useTheme()
+    const { theme } = useTheme()
     const [mounted, setMounted] = React.useState(false)
 
     useEffect(() => {
@@ -113,23 +114,16 @@ export function Header() {
         setActiveDropdown(null);
     }, []);
 
+    if (!mounted) return null;
 
     return (
-        <header className="sticky bg-muted-foreground/5 backdrop-blur-2xl mb-2 top-0 z-50 w-full">
+        <header className="sticky bg-muted-foreground/5 backdrop-blur-xl mb-2 top-0 z-50 w-full">
             <div className="flex items-center justify-between px-2 py-2">
                 {/* Logo */}
                 <Link href="/" className="flex items-center gap-4" aria-label="Go to Homepage">
                     <div className="rounded-lg flex items-center">
-                        <div className="rounded-lg flex gap-2 items-center">
-                            <Image
-                                alt="Tk Service Logo"
-                                className={`rounded-2xl my-2`}
-                                src={"/img/favicon.png"}
-                                width={35}
-                                height={35}
-                                priority
-                            />
-                            <Label className={`font-bold text-base text-primary`}>TK Service</Label>
+                        <div className="rounded-lg flex gap-0 ml-2 items-center">
+                            <Label className={`font-bold text-base ${theme === 'dark' ? 'text-white' : 'text-black'}`}>TK Service</Label>
                         </div>
                     </div>
                 </Link>

@@ -1,4 +1,4 @@
-import React, {useEffect, useState} from 'react';
+import React, {useEffect, useState, useMemo} from 'react';
 import {
     Sheet,
     SheetClose,
@@ -10,7 +10,7 @@ import {
     SheetTrigger
 } from "@/components/ui/sheet";
 import {Button} from "@/components/ui/button";
-import {Check, ChevronDown, Frown, Laugh, Loader, Settings, Wrench} from "lucide-react";
+import {Check, ChevronDown, Loader, Settings, Wrench, Package} from "lucide-react";
 import {Popover, PopoverContent, PopoverTrigger} from "@/components/ui/popover";
 import {Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList} from "@/components/ui/command";
 import {IStockItemTemplate} from "@/types/stock/StockItem";
@@ -26,15 +26,13 @@ import {IStockAmountItem} from "@/types/stock/StockAmounts";
 const PartsPicker = ({robot}: {robot: IRobot}) => {
     const [options_Data, setOptions_Data] = useState<IStockItemTemplate[]>([])
     const [open, setOpen] = useState(false)
-
     const [sheetOpen, setSheetOpen] = useState<boolean>(false)
-
     const [selected, setSelected] = useState<string[]>([])
     const [isLoading, setIsLoading] = useState<boolean>(false)
-
     const [picked_location, setPicked_location] = useState<IStockAmountItem | null>(null)
+    const [searchQuery, setSearchQuery] = useState<string>("")
 
-    const user_store = useUserStore(state => state.current_user)
+    const user_store = useUserStore(state => state.currentUser)
     const update_parts = useRobotsStore(state => state.addPartsHistory)
 
     const [selected_amounts, setSelected_amounts] = useState<IStockAmountItem[]>([])
@@ -44,6 +42,31 @@ const PartsPicker = ({robot}: {robot: IRobot}) => {
             prev.includes(value) ? prev.filter((v) => v !== value) : [...prev, value]
         )
     }
+
+    // Улучшенная функция поиска с поддержкой множественных критериев
+    const filteredParts = useMemo(() => {
+        if (!searchQuery.trim()) {
+            return options_Data;
+        }
+
+        const query = searchQuery.toLowerCase().trim();
+
+        // Разбиваем запрос на отдельные слова для более гибкого поиска
+        const searchTerms = query.split(/\s+/).filter(term => term.length > 0);
+
+        return options_Data.filter(item => {
+            // Создаем строку из всех полей для поиска
+            const searchableText = [
+                item.description_orginall || '',
+                item.description_eng || '',
+                item.material_number || ''
+            ].join(' ').toLowerCase();
+
+            // Проверяем, содержатся ли все поисковые термины в тексте
+            // Это позволяет искать по частям слов в любом порядке
+            return searchTerms.every(term => searchableText.includes(term));
+        });
+    }, [options_Data, searchQuery]);
 
     const getPartAmount = async () => {
         try {
@@ -65,7 +88,6 @@ const PartsPicker = ({robot}: {robot: IRobot}) => {
         }
     }
 
-    //////////////////////////////////////////////////////////// Pick parts from stock
     useEffect(() => {
         getPartAmount()
     }, [selected]);
@@ -94,7 +116,7 @@ const PartsPicker = ({robot}: {robot: IRobot}) => {
             if (!user_store) return;
 
             if (selected.length === 0) {
-                toast.error("请至少选择一个部件。 | Please select at least one part.");
+                toast.error("Please select at least one part.");
                 return;
             }
 
@@ -116,14 +138,14 @@ const PartsPicker = ({robot}: {robot: IRobot}) => {
                 })
             }
 
-             const parts_res = await addChangeParts({
-                 parts: selected,
-                 card_id: user_store.card_id,
-                 robot_id: robot.id,
-             })
+            const parts_res = await addChangeParts({
+                parts: selected,
+                card_id: user_store.card_id,
+                robot_id: robot.id,
+            })
 
             if (parts_res) {
-                toast.success(`部件添加成功。 | Part(s) added successfully.`)
+                toast.success(`Part(s) added successfully.`)
                 setSelected([])
                 update_parts(parts_res.robot_id, {...parts_res, user: user_store})
                 setSheetOpen(false)
@@ -146,6 +168,13 @@ const PartsPicker = ({robot}: {robot: IRobot}) => {
         }
     }, [robot]);
 
+    // Сброс поиска при закрытии попапа
+    useEffect(() => {
+        if (!open) {
+            setSearchQuery("");
+        }
+    }, [open]);
+
     return (
         <Sheet onOpenChange={() => setSheetOpen(!sheetOpen)} open={sheetOpen}>
             <SheetTrigger onClick={handleSheetOpen} asChild>
@@ -153,9 +182,7 @@ const PartsPicker = ({robot}: {robot: IRobot}) => {
                     variant="outline"
                     className="group w-full relative flex items-center gap-2"
                 >
-                    {/* Блок с иконками */}
                     <div className="relative w-5 h-5">
-                        {/* Иконка №1 */}
                         <Settings
                             className="
                                 absolute inset-0
@@ -163,8 +190,6 @@ const PartsPicker = ({robot}: {robot: IRobot}) => {
                                 group-hover:opacity-0 group-hover:scale-75
                               "
                         />
-
-                        {/* Иконка №2 */}
                         <Wrench
                             className="
                                 absolute inset-0 opacity-0 scale-75
@@ -173,9 +198,6 @@ const PartsPicker = ({robot}: {robot: IRobot}) => {
                               "
                         />
                     </div>
-
-                    {/* Нормально видимый текст */}
-                    <span>Add New Part</span>
                 </Button>
             </SheetTrigger>
             <SheetContent onClick={(e) => e.preventDefault()} className={`w-full md:min-w-[550px]`}>
@@ -206,35 +228,79 @@ const PartsPicker = ({robot}: {robot: IRobot}) => {
                                 sideOffset={5}
                                 onOpenAutoFocus={(e) => e.preventDefault()}
                             >
-                                <Command className="rounded-lg border shadow-md">
+                                <Command className="rounded-lg border shadow-md" shouldFilter={false}>
                                     <CommandInput
-                                        placeholder="Type a problem or select..."
+                                        value={searchQuery}
+                                        onValueChange={setSearchQuery}
+                                        placeholder="Search by name or number..."
                                         className="h-9 text-base"
                                     />
                                     <CommandList
-                                        className="max-h-[200px] overflow-y-auto"
+                                        className="max-h-[300px] overflow-y-auto"
                                         onWheel={(e) => {
                                             e.stopPropagation();
                                         }}
                                     >
-                                        <CommandEmpty>No results found.</CommandEmpty>
-                                        <CommandGroup heading="Hai Box Modules">
-                                            {options_Data.map((item) => (
+                                        <CommandEmpty>
+                                            {searchQuery ? "No parts found matching your search." : "No parts available."}
+                                        </CommandEmpty>
+                                        <CommandGroup heading={`Hai Box Modules (${filteredParts.length})`}>
+                                            {filteredParts.map((item) => (
                                                 <CommandItem
                                                     key={item.id}
+                                                    value={item.material_number}
                                                     onSelect={() => toggleValue(item.material_number)}
-                                                    className="flex items-center justify-between gap-2 cursor-pointer"
+                                                    className="flex items-center gap-3 cursor-pointer py-3"
                                                 >
-                                                    <span className="flex-1 truncate min-w-0">
-                                                        {item.description_orginall} - {item.description_eng} - {item.material_number}
-                                                    </span>
-                                                    <Check
-                                                        className={`h-4 w-4 shrink-0 transition-opacity ${
-                                                            selected.includes(item.material_number)
-                                                                ? "opacity-100"
-                                                                : "opacity-0"
-                                                        }`}
-                                                    />
+                                                    {/* Изображение детали */}
+                                                    <div className="w-10 h-10 rounded-md overflow-hidden flex-shrink-0 bg-muted flex items-center justify-center">
+                                                        {item.avatar_url ? (
+                                                            <img
+                                                                src={item.avatar_url}
+                                                                alt={item.description_eng || 'Part image'}
+                                                                className="w-full h-full object-cover"
+                                                                onError={(e) => {
+                                                                    // Fallback на иконку при ошибке загрузки
+                                                                    e.currentTarget.style.display = 'none';
+                                                                    const parent = e.currentTarget.parentElement;
+                                                                    if (parent) {
+                                                                        parent.innerHTML = '<svg class="w-5 h-5 text-muted-foreground" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4"></path></svg>';
+                                                                    }
+                                                                }}
+                                                            />
+                                                        ) : (
+                                                            <Package className="w-5 h-5 text-muted-foreground" />
+                                                        )}
+                                                    </div>
+
+                                                    {/* Информация о детали */}
+                                                    <div className="flex-1 min-w-0">
+                                                        <div className="flex items-start justify-between gap-2">
+                                                            <div className="flex-1 min-w-0">
+                                                                <p className="text-sm font-medium truncate">
+                                                                    {item.description_eng || item.description_orginall}
+                                                                </p>
+                                                                <p className="text-xs text-muted-foreground truncate">
+                                                                    {item.description_orginall && item.description_eng !== item.description_orginall
+                                                                        ? item.description_orginall
+                                                                        : item.material_number
+                                                                    }
+                                                                </p>
+                                                                <p className="text-xs text-muted-foreground font-mono mt-0.5">
+                                                                    {item.material_number}
+                                                                </p>
+                                                            </div>
+
+                                                            {/* Чекбокс */}
+                                                            <Check
+                                                                className={`h-4 w-4 shrink-0 transition-all ${
+                                                                    selected.includes(item.material_number)
+                                                                        ? "opacity-100 scale-100"
+                                                                        : "opacity-0 scale-75"
+                                                                }`}
+                                                            />
+                                                        </div>
+                                                    </div>
                                                 </CommandItem>
                                             ))}
                                         </CommandGroup>
@@ -253,7 +319,10 @@ const PartsPicker = ({robot}: {robot: IRobot}) => {
                     </div>
                 </div>
                 <SheetFooter>
-                    <Button disabled={isLoading} onClick={handleSubmit} type="submit">{isLoading && <Loader className={`animate-spin`} />} Save changes</Button>
+                    <Button disabled={isLoading} onClick={handleSubmit} type="submit">
+                        {isLoading && <Loader className={`animate-spin mr-2`} />}
+                        Save changes
+                    </Button>
                     <SheetClose asChild>
                         <Button onClick={() => setSheetOpen(false)} variant="outline">Close</Button>
                     </SheetClose>

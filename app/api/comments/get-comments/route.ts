@@ -30,6 +30,7 @@ export async function GET(request: NextRequest) {
                 parent_id,
                 employees:add_by (
                     user_name,
+                    avatar_url,
                     card_id
                 )
             `)

@@ -14,6 +14,7 @@ export async function GET(request: Request) {
                 user:employees!add_by(user_name, card_id, email, phone, warehouse, position)
             ),
             
+            
             parts_history:changed_parts!robot_id(
                 *,
                 user:employees!card_id(user_name, card_id, email, phone, warehouse, position),

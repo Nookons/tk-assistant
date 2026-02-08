@@ -5,13 +5,11 @@ export async function GET(request: NextRequest) {
     try {
         const robot_type = request.nextUrl.searchParams.get('robot_type');
 
-        let query = supabase
+        const { data, error } = await supabase
             .from('stock_items_template')
-            .select(`*`)
-            .eq('part_type', robot_type);
+            .select('*')
+            .contains('robot_match', [robot_type]);
 
-
-        const { data, error } = await query;
 
         if (error) {
             console.error('Supabase error:', error);

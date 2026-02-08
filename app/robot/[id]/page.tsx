@@ -17,6 +17,7 @@ import PartCopy from "@/components/shared/dashboard/PartCopy/PartCopy";
 import RobotGraph from "@/components/shared/robot/robotGraph/RobotGraph";
 import RobotStatusDialog from "@/components/shared/robot/EditStatus/RobotEditStatus";
 import {Separator} from "@/components/ui/separator";
+import {ButtonGroup} from "@/components/ui/button-group";
 
 
 const Page = () => {
@@ -70,39 +71,32 @@ const Page = () => {
                     </div>
                 </div>
 
-                <div className={`flex flex-wrap gap-2`}>
-
-                    <div>
-                        {current_Robot.status === "在线 | Online"
-                            ?
-                            <RobotStatusDialog
-                                currentRobot={current_Robot}
-                                actionType="sendToMaintenance"
-                            />
-                            :
-                            <RobotStatusDialog
-                                currentRobot={current_Robot}
-                                actionType="sendToMap"
-                            />
-                        }
-                    </div>
-
-                    <div>
-                        <PartsPicker
-                            robot={current_Robot}
+                <ButtonGroup className={`w-full grid grid-cols-2 ${current_Robot.parts_history.length > 0 && "grid-cols-3"}`}>
+                    {current_Robot.status === "在线 | Online"
+                        ?
+                        <RobotStatusDialog
+                            currentRobot={current_Robot}
+                            actionType="sendToMaintenance"
                         />
-                    </div>
+                        :
+                        <RobotStatusDialog
+                            currentRobot={current_Robot}
+                            actionType="sendToMap"
+                        />
+                    }
+
+                    <PartsPicker
+                        robot={current_Robot}
+                    />
 
                     {current_Robot.parts_history.length > 0 &&
-                        <div>
-                            <PartCopy robot={current_Robot}/>
-                        </div>
+                        <PartCopy robot={current_Robot}/>
                     }
-                </div>
+                </ButtonGroup>
 
                 <hr className={`my-4`}/>
 
-                <div className="">
+                <div className="backdrop-blur-xl p-2 rounded-sm">
                     <div className={`flex flex-col md:grid md:grid-cols-1  items-start gap-4`}>
                         <div className={`flex flex-col gap-2 flex-wrap w-full mb-8`}>
                             {current_Robot.type_problem.length > 0
@@ -125,7 +119,7 @@ const Page = () => {
                                     </div>
                                 </div>
                                 :
-                                <Empty className="from-muted/50 to-background h-full bg-gradient-to-b from-30%">
+                                <Empty className="backdrop-blur-xl">
                                     <EmptyHeader>
                                         <EmptyMedia variant="icon">
                                             <Bubbles/>
@@ -139,7 +133,7 @@ const Page = () => {
                             }
                         </div>
 
-                        <Separator className={`my-4`} />
+                        <Separator className={`my-4`}/>
 
                         <div className={`w-full`}>
                             <div className={`rounded mb-4 w-full`}>
@@ -153,14 +147,12 @@ const Page = () => {
                                 />
                             </div>
                         </div>
-
-                        <Separator />
                     </div>
                 </div>
             </div>
 
 
-            <div className={`flex flex-col items-start gap-4 w-full mt-4`}>
+            <div className={`flex flex-col items-start gap-4 w-full`}>
                 <RobotGraph current_Robot={current_Robot}/>
                 <div className={`w-full`}>
                     <RobotHistory

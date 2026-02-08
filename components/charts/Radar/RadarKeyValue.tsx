@@ -31,7 +31,7 @@ const chartConfig = {
 const RadarKeyValue = ({ title, description, data }: PropsData) => {
     console.log(data);
     return (
-        <Card className={`bg-muted/50 backdrop-blur-2xl`}>
+        <Card className={`bg-muted/50 backdrop-blur-sm`}>
             <CardHeader className="items-center">
                 <CardTitle>{title}</CardTitle>
                 <CardDescription>

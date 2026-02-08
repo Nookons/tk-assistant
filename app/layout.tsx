@@ -5,6 +5,8 @@ import {Header} from "@/components/shared/header/header";
 import {Toaster} from "@/components/ui/sonner";
 import {QueryProvider} from "@/components/providers/query-provider";
 import MainProvider from "@/app/MainProvider";
+import Snow from "@/app/snow";
+import * as React from "react";
 
 export const metadata: Metadata = {
     title: "TK Assist",
@@ -30,6 +32,7 @@ export default function RootLayout({children,}: Readonly<{ children: React.React
                     <MainProvider/>
                     {children}
                     <div className={`flex justify-center items-center w-full h-full bg-background-foreground`}>
+                        <Snow />
                         <p className={`py-8 text-muted-foreground`}>TK Service by Kolomiiets Dmytro</p>
                     </div>
                 </div>

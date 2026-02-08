@@ -10,5 +10,7 @@ export interface IStockItemTemplate {
     description_orginall: string;
     description_eng: string;
     part_type: string;
+    avatar_url: string;
+    robot_match: string[];
     user?: IUser;
 }

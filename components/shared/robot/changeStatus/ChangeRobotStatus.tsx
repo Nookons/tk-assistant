@@ -32,7 +32,7 @@ const ChangeRobotStatus = ({robot}: { robot: IRobot}) => {
 
     const [selectedKey, setSelectedKey] = useState<string>('');
 
-    const card_id = useUserStore(state => state.current_user?.card_id);
+    const card_id = useUserStore(state => state.currentUser?.card_id);
     const [isLoading, setIsLoading] = useState<boolean>(false);
 
     const selectedLabel = STATUS_OPTIONS.find(opt => opt.key === selectedKey)?.label || '';

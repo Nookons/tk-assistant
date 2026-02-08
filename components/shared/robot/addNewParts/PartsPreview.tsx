@@ -1,13 +1,12 @@
-import React, {use, useEffect, useState} from 'react';
+import React, {useEffect, useState} from 'react';
 import {Empty, EmptyDescription, EmptyHeader, EmptyMedia, EmptyTitle} from "@/components/ui/empty";
 import {getPartByNumber} from "@/futures/stock/getPartByNumber";
 import {IStockItemTemplate} from "@/types/stock/StockItem";
 import {Item} from "@/components/ui/item";
 import dayjs from "dayjs";
 import {Badge} from "@/components/ui/badge";
-import {Separator} from "@/components/ui/separator";
 import {ScrollArea} from "@/components/ui/scroll-area";
-import {HandCoins, MapPin, TriangleAlert} from "lucide-react";
+import {MapPin, TriangleAlert} from "lucide-react";
 import {IStockAmountItem} from "@/types/stock/StockAmounts";
 import {Checkbox} from "@/components/ui/checkbox";
 
@@ -22,33 +21,27 @@ const PartsPreview = (
             const promises = parts_data.map((part: string) => getPartByNumber(part));
             const results = await Promise.all(promises);
 
-            console.log("Все данные получены:", results);
-
             const flatResults = results.flat().filter(Boolean);
             setPreview_data(flatResults)
-
         } catch (error) {
-            // Если ХОТЯ БЫ ОДИН запрос упадет, сработает этот блок
-            console.error("Ошибка при получении превью деталей:", error);
+            console.error("Error getting parts preview:", error);
         }
     }
-
 
     useEffect(() => {
         getPartsPreview(parts_data)
     }, [parts_data]);
 
-
     if (parts_data.length < 1) {
         return (
-            <Empty className="from-muted/50 to-background h-full bg-gradient-to-b from-30%">
+            <Empty className="h-full">
                 <EmptyHeader>
                     <EmptyMedia variant="icon">
                         <TriangleAlert />
                     </EmptyMedia>
-                    <EmptyTitle>No Parts</EmptyTitle>
+                    <EmptyTitle>No Parts Selected</EmptyTitle>
                     <EmptyDescription>
-                        You&apos;re all caught up. New notifications will appear here.
+                        Select parts from the list above to see their details here.
                     </EmptyDescription>
                 </EmptyHeader>
             </Empty>
@@ -82,7 +75,7 @@ const PartsPreview = (
                                 .map(j => (
                                     <label
                                         key={j.location}
-                                        className="flex cursor-pointer items-center gap-2 rounded-lg border px-2 py-1 text-xs"
+                                        className="flex cursor-pointer items-center gap-2 rounded-lg border px-2 py-1 text-xs hover:bg-muted/50 transition-colors"
                                     >
                                         <Checkbox
                                             checked={picked_location?.location === j.location}
@@ -103,15 +96,17 @@ const PartsPreview = (
 
                         {/* Description */}
                         <div className="space-y-1 text-sm">
-                            <p>{item.description_orginall}</p>
-                            <p className="text-muted-foreground">
-                                {item.description_eng}
-                            </p>
+                            <p className="font-medium">{item.description_eng || item.description_orginall}</p>
+                            {item.description_eng && item.description_orginall && item.description_eng !== item.description_orginall && (
+                                <p className="text-muted-foreground">
+                                    {item.description_orginall}
+                                </p>
+                            )}
                         </div>
 
                         {/* Footer */}
                         <div className="mt-3 text-xs text-muted-foreground">
-                            Last update · {dayjs(item.updated_at).format("HH:mm · MMM D, YYYY")}
+                            Last updated · {dayjs(item.updated_at).format("HH:mm · MMM D, YYYY")}
                         </div>
                     </Item>
                 ))}

@@ -97,7 +97,7 @@ const ACTION_CONFIGS: Record<ActionType, ActionConfig> = {
         icon: Pencil,
         title: 'Edit status',
         description: 'Here you can edit the status of the robot.',
-        buttonText: 'Save changes',
+        buttonText: 'Save',
         buttonVariant: 'ghost',
         buttonFullWidth: false,
         successMessage: 'Robot successfully sent to maintenance',
@@ -113,7 +113,7 @@ const ACTION_CONFIGS: Record<ActionType, ActionConfig> = {
         icon: Construction,
         title: 'Send to Maintenance',
         description: 'Please select the issue type and provide any additional notes about the problem.',
-        buttonText: 'Send to Maintenance',
+        buttonText: '',
         buttonVariant: 'outline',
         buttonFullWidth: true,
         successMessage: 'Robot successfully sent to maintenance',
@@ -129,7 +129,7 @@ const ACTION_CONFIGS: Record<ActionType, ActionConfig> = {
         icon: SmilePlus,
         title: 'Send to Map',
         description: 'Please select the issue type and provide any additional notes about the problem.',
-        buttonText: 'Send to Map',
+        buttonText: '',
         buttonVariant: 'default',
         buttonFullWidth: true,
         successMessage: 'Robot successfully sent to map',
@@ -154,14 +154,16 @@ const RobotStatusDialog: React.FC<RobotStatusDialogProps> = ({currentRobot, acti
 
     const [isLoading, setIsLoading] = useState(false);
     const [isOpen, setIsOpen] = useState(false);
+
     const [issueType, setIssueType] = useState(
         actionType === 'edit' ? (currentRobot.type_problem || '') : ''
     );
+
     const [issueNote, setIssueNote] = useState(
         actionType === 'edit' ? (currentRobot.problem_note || '') : ''
     );
 
-    const currentUser = useUserStore(state => state.current_user);
+    const currentUser = useUserStore(state => state.currentUser);
 
     const setNewStatus = useRobotsStore(state => state.updateRobotStatus);
     const updateRobot = useRobotsStore(state => state.updateRobot);

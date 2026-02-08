@@ -103,27 +103,13 @@ export default function Page() {
             return;
         }
 
-        console.log('=== Starting loadExceptions ===');
-        console.log('Date object:', date);
-        console.log('Date type:', typeof date);
-        console.log('Date toString:', date.toString());
-        console.log('Date ISO:', date.toISOString());
-        console.log('Shift:', shift);
-
         setLoading(true);
         try {
             const formattedDate = dayjs(date).format('YYYY-MM-DD');
-            console.log('Formatted date for API:', formattedDate);
-
             const list = await getShiftList({date: formattedDate, shift_type: shift});
-            console.log('API Response:', list);
-            console.log('Response length:', list?.length);
 
             const grp: Record<string, ErrorRecord[]> = {};
             list.forEach((e: any) => (grp[e.employee] = [...(grp[e.employee] || []), e]));
-
-            console.log('Grouped data:', grp);
-            console.log('Grouped keys:', Object.keys(grp));
 
             setData(grp);
         } catch (error) {
@@ -135,11 +121,6 @@ export default function Page() {
     };
 
     useEffect(() => {
-        console.log('=== useEffect triggered ===');
-        console.log('mounted:', mounted);
-        console.log('date:', date);
-        console.log('shift:', shift);
-
         if (mounted && date) {
             loadExceptions();
         }

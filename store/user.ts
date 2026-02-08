@@ -1,13 +1,35 @@
-import { create } from 'zustand'
-import {IUser, IUserApiResponse} from '@/types/user/user'
+// store/userStore.ts
+import { create } from 'zustand';
+import { persist } from 'zustand/middleware';
+import { IUser } from "@/types/user/user";
 
-type UserState = {
-    current_user: IUser | null
-    set_user: (user: IUser | null) => void
+interface UserStore {
+    currentUser: IUser | null;
+    setCurrentUser: (user: IUser | null) => void;
+    updateUser: (userData: Partial<IUser>) => void; // Новая функция
+    clearUser: () => void;
 }
 
-export const useUserStore = create<UserState>((set) => ({
-    current_user: null,
+export const useUserStore = create<UserStore>()(
+    persist(
+        (set, get) => ({
+            currentUser: null,
+            setCurrentUser: (user) => set({ currentUser: user }),
 
-    set_user: (user) => set({ current_user: user }),
-}))
+            // Обновляет частично данные текущего пользователя
+            updateUser: (userData) => {
+                const currentUser = get().currentUser;
+                if (currentUser) {
+                    set({
+                        currentUser: { ...currentUser, ...userData }
+                    });
+                }
+            },
+
+            clearUser: () => set({ currentUser: null }),
+        }),
+        {
+            name: 'user-storage',
+        }
+    )
+);

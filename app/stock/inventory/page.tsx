@@ -31,7 +31,7 @@ const Page = () => {
     const [isSubmitting, setIsSubmitting] = useState(false)
     const [isLoadingTemplate, setIsLoadingTemplate] = useState(false)
 
-    const user_store = useUserStore(state => state.current_user)
+    const user_store = useUserStore(state => state.currentUser)
     const items_templates = useStockStore(state => state.items_templates)
     const [picked_template, setPicked_template] = useState<IStockItemTemplate | null>(null)
 

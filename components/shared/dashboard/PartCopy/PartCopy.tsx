@@ -157,8 +157,6 @@ const PartCopy = ({ robot }: { robot: IRobot }) => {
                               "
                         />
                     </div>
-
-                    <span>Copy Parts</span>
                 </Button>
             </DialogTrigger>
             <DialogContent className="sm:max-w-[425px]">

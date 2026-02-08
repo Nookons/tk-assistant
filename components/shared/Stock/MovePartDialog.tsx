@@ -28,7 +28,7 @@ import {toast} from "sonner";
 import {AddToStockHistory} from "@/futures/stock/AddToStockHistory";
 
 const MovePartDialog = ({location, part}: { location: string | null, part: LocationItem }) => {
-    const user_store = useUserStore(state => state.current_user)
+    const user_store = useUserStore(state => state.currentUser)
     const [new_location_value, setNew_location_value] = useState<string>("")
 
     const [isDialog, setIsDialog] = useState<boolean>(false);

@@ -25,6 +25,7 @@ import {
     EmptyTitle
 } from "@/components/ui/empty";
 import {toast} from "sonner";
+import UserAvatar from "@/components/shared/User/UserAvatar";
 
 dayjs.extend(relativeTime);
 
@@ -74,14 +75,16 @@ const CommentItem: React.FC<CommentItemProps> = ({
                                                      depth = 0
                                                  }) => {
     const [showReplies, setShowReplies] = useState(false);
-    const user = useUserStore(state => state.current_user);
+    const user = useUserStore(state => state.currentUser);
+
     const isOwner = comment.add_by === user?.card_id;
+
     const hasReplies = comment.replies && comment.replies.length > 0;
+
     const isNested = depth > 0;
     const marginLeft = depth * 12; // 32px = 2rem per level
 
     const isRoot = depth === 0;
-    const borderColor = isRoot ? 'border-primary' : 'border-green-500';
 
     return (
         <div style={{marginLeft: `${marginLeft}px`}} className={`${isNested ? 'mt-2' : ''}`}>
@@ -90,6 +93,9 @@ const CommentItem: React.FC<CommentItemProps> = ({
 
                 <div className="flex justify-between items-start gap-2 mb-3">
                     <div className="flex items-center gap-2">
+                        <div>
+                            <UserAvatar user={comment.employees} />
+                        </div>
                         <div className="flex flex-col">
                             <Label className="text-sm font-semibold">
                                 {comment.employees?.user_name || "Unknown User"}
@@ -267,7 +273,7 @@ const CommentsList = ({robot_id}: { robot_id: number }) => {
     const [editText, setEditText] = useState<string>("");
     const [isSubmittingEdit, setIsSubmittingEdit] = useState<boolean>(false);
 
-    const user = useUserStore(state => state.current_user);
+    const user = useUserStore(state => state.currentUser);
     const updateRobotStore = useRobotsStore(state => state.updateRobot);
 
     const getCommentsList = async () => {

@@ -7,12 +7,13 @@ import {timeToString} from "@/utils/timeToString";
 import {Label} from "@/components/ui/label";
 import {Alert, AlertDescription, AlertTitle} from "@/components/ui/alert";
 import {Empty, EmptyDescription, EmptyHeader, EmptyMedia, EmptyTitle} from "@/components/ui/empty";
+import dayjs from "dayjs";
 
 const ImportantScreen = () => {
 
     const {data, isLoading, isError, error} = useQuery({
         queryKey: ['important_screen'],
-        queryFn: () => getNotesMonth(),
+        queryFn: () => getNotesMonth(dayjs().format("YYYY-MM")),
         refetchInterval: 10000
     })
 
@@ -46,6 +47,7 @@ const ImportantScreen = () => {
     return (
         <Alert variant="default">
             <ShieldAlert />
+
             <AlertTitle>
                 <div className={`flex justify-between text-xs w-full`}>
                     <Label>{lastItem.user.user_name}</Label>

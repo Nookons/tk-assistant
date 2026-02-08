@@ -1,34 +1,22 @@
 "use client"
-import { Button } from "@/components/ui/button";
-import {
-    Dialog, DialogClose,
-    DialogContent,
-    DialogDescription,
-    DialogFooter,
-    DialogHeader,
-    DialogTitle,
-    DialogTrigger
-} from "@/components/ui/dialog";
 import React, {useEffect, useState, useMemo} from 'react';
 import {Label} from "@/components/ui/label";
 import {Input} from "@/components/ui/input";
-import {Textarea} from "@/components/ui/textarea";
 import {useUserStore} from "@/store/user";
-import {BellPlus, Bot, Copy, FilePlusCorner, Loader} from "lucide-react";
+import {BellPlus, Bot, Copy} from "lucide-react";
 import {toast} from "sonner";
-import {Select, SelectContent, SelectGroup, SelectItem, SelectLabel, SelectTrigger, SelectValue} from "@/components/ui/select";
 import {getAllParts} from "@/futures/stock/getAllParts";
 import {IStockItemTemplate} from "@/types/stock/StockItem";
 import {Item} from "@/components/ui/item";
 import {Badge} from "@/components/ui/badge";
 import dayjs from "dayjs";
 import {Separator} from "@/components/ui/separator";
+import TemplatePhotoChange from "@/components/shared/Stock/TemplatePhotoChange";
+import {useStockStore} from "@/store/stock";
+import TemplateEditDialog from "@/components/shared/Stock/TemplateEditDialog";
 
 // ========== ТРИГРАММНЫЙ ПОИСК ==========
 
-/**
- * Генерирует триграммы из строки
- */
 function generateTrigrams(str: string): string[] {
     if (!str) return [];
 
@@ -43,9 +31,6 @@ function generateTrigrams(str: string): string[] {
     return trigrams;
 }
 
-/**
- * Вычисляет процент совпадения триграмм
- */
 function calculateTrigramSimilarity(trigrams1: string[], trigrams2: string[]): number {
     if (trigrams1.length === 0 || trigrams2.length === 0) {
         return 0;
@@ -65,9 +50,6 @@ function calculateTrigramSimilarity(trigrams1: string[], trigrams2: string[]): n
     return (matchCount / baseSize) * 100;
 }
 
-/**
- * Поиск с триграммами по нескольким полям
- */
 function trigramSearchMultiField<T>(
     searchQuery: string,
     item: T,
@@ -102,14 +84,14 @@ function trigramSearchMultiField<T>(
     };
 }
 
-// ========== КОМПОНЕНТ ==========
-
 const Page = () => {
-    const user = useUserStore(state => state.current_user)
+    // Все хуки должны быть на верхнем уровне, до любых условий
+    const user = useUserStore(state => state.currentUser);
+    const stock_store = useStockStore(state => state.items_templates);
 
-    const [value, setValue] = useState<string>("")
-    const [threshold, setThreshold] = useState<number>(50) // Порог совпадения
-    const [parts_data, setParts_data] = useState<IStockItemTemplate[]>([])
+    const [value, setValue] = useState<string>("");
+    const [threshold, setThreshold] = useState<number>(50);
+    const [parts_data, setParts_data] = useState<IStockItemTemplate[]>([]);
 
     const getAllPartsLocal = async () => {
         try {
@@ -118,7 +100,7 @@ const Page = () => {
         } catch (error) {
             error && toast.error(error.toString() || "Unknown error");
         }
-    }
+    };
 
     const copyToClipboard = (text: string) => {
         try {
@@ -127,19 +109,21 @@ const Page = () => {
         } catch (error) {
             error && toast.error(error.toString() || "Unknown error");
         }
-    }
+    };
 
     useEffect(() => {
-        getAllPartsLocal()
+        getAllPartsLocal();
     }, []);
 
     // Триграммный поиск с сортировкой по релевантности
     const filtered_data = useMemo(() => {
+        if (!stock_store) return [];
+
         if (!value.trim()) {
-            return parts_data;
+            return stock_store;
         }
 
-        return parts_data
+        return stock_store
             .map(item => {
                 const result = trigramSearchMultiField(
                     value,
@@ -152,7 +136,9 @@ const Page = () => {
             .filter(result => result.match)
             .sort((a, b) => b.similarity - a.similarity)
             .map(result => result.item);
-    }, [value, parts_data, threshold]);
+    }, [value, stock_store, threshold]);
+
+    if (!stock_store) return null;
 
     return (
         <div className={`px-4 max-w-[1600px] m-auto`}>
@@ -160,10 +146,9 @@ const Page = () => {
                 <Input
                     value={value}
                     onChange={(e) => setValue(e.target.value)}
-                    placeholder="Поиск по названию или номеру материала..."
+                    placeholder="Find part by description or material number"
                 />
 
-                {/* Показываем количество результатов */}
                 {value && (
                     <Label className="text-xs text-muted-foreground">
                         Find: {filtered_data.length} / {parts_data.length}
@@ -174,44 +159,45 @@ const Page = () => {
             <Separator className={`my-4`} />
 
             <div className={`w-full grid grid-cols-1 gap-2`}>
-                {filtered_data.length === 0 && value ? (
-                    <div className="text-center py-10 text-muted-foreground">
-                        <p>Ничего не найдено</p>
-                        <p className="text-xs mt-2">Попробуйте уменьшить точность поиска</p>
-                    </div>
-                ) : (
-                    filtered_data.map((part, index) => {
-                        return (
-                            <Item variant={`muted`} className={`flex items-center gap-2`} key={index}>
-                                <div className={`w-full flex items-center gap-2 justify-between mb-6`}>
-                                    <Label className={`text-xs`}>
-                                        <BellPlus size={18} /> {dayjs(part.updated_at).format('HH:mm · MMM D, YYYY')}
-                                    </Label>
-                                    <Label className={`text-xs`}>{part.user?.user_name}</Label>
+                {filtered_data.slice(0, 25).map((part, index) => {
+                    return (
+                        <Item variant={`muted`} className={`flex items-center gap-2`} key={index}>
+                            <div className={`w-full flex items-center gap-2 justify-between mb-6`}>
+                                <Label className={`text-xs`}>
+                                    <BellPlus size={18} />
+                                </Label>
+                                <div className={`flex items-center gap-4`}>
+                                    <Label className={`text-xs`}><Bot /> {part.robot_match?.join(' | ')}</Label>
+                                    <TemplateEditDialog part={part} />
                                 </div>
+                            </div>
+
+                            <div className={`grid md:grid-cols-[240px_1fr] gap-4 w-full`}>
+                                <TemplatePhotoChange
+                                    part={part}
+                                />
 
                                 <div className={`flex flex-col gap-2 w-full`}>
-                                    <Label className={`text-xs`}><Bot /> {part.part_type}</Label>
                                     <p>{part.description_eng}</p>
                                     <Separator />
                                     <p>{part.description_orginall}</p>
                                 </div>
+                            </div>
 
-                                <div className={`w-full flex items-center justify-between mt-2`}>
-                                    <Badge
-                                        onClick={() => copyToClipboard(part.material_number)}
-                                        className="cursor-pointer"
-                                    >
-                                        <Copy /> {part.material_number}
-                                    </Badge>
-                                    <Label className={`text-xs text-muted-foreground`}>
-                                        {dayjs(part.created_at).format('HH:mm · MMM D, YYYY')}
-                                    </Label>
-                                </div>
-                            </Item>
-                        )
-                    })
-                )}
+                            <div className={`w-full flex items-center justify-between mt-2`}>
+                                <Badge
+                                    onClick={() => copyToClipboard(part.material_number)}
+                                    className="cursor-pointer"
+                                >
+                                    <Copy /> {part.material_number}
+                                </Badge>
+                                <Label className={`text-xs text-muted-foreground`}>
+                                    {dayjs(part.updated_at).format('HH:mm · MMM D, YYYY')}
+                                </Label>
+                            </div>
+                        </Item>
+                    );
+                })}
             </div>
         </div>
     );

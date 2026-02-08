@@ -27,7 +27,7 @@ const Important = () => {
 
     const [note_value, setNote_value] = useState<string>('')
 
-    const user_store = useUserStore(state => state.current_user)
+    const user_store = useUserStore(state => state.currentUser)
 
     const addImportantNote = async () => {
         try {

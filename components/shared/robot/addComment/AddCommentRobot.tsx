@@ -18,7 +18,7 @@ const AddCommentRobot: React.FC<AddCommentRobotProps> = ({ robot_data, onComment
     const [isSubmitting, setIsSubmitting] = useState<boolean>(false);
     const [isFocused, setIsFocused] = useState<boolean>(false);
 
-    const user = useUserStore(state => state.current_user);
+    const user = useUserStore(state => state.currentUser);
     const updateRobot = useRobotsStore(state => state.updateRobot);
 
     const addComment = async () => {

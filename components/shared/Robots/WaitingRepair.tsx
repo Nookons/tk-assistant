@@ -12,10 +12,10 @@ const WaitingRepair = () => {
         <div>
             {robots &&
                 <>
-                    <Table>
-                        <TableCaption>
+                    <Table className={`backdrop-blur-2xl`}>
+                        {/*<TableCaption>
                             <p>Robots waiting for repair: ({robots.filter(item => item.status === "离线 | Offline").length})</p>
-                        </TableCaption>
+                        </TableCaption>*/}
                         <TableBody>
                             {robots.filter(item => item.status === "离线 | Offline").map((robot, index) => (
                                 <TableRow key={index}>
