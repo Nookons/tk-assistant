@@ -60,7 +60,7 @@ const Page = () => {
                                     part={item}
                                 />
 
-                                <AlertDialog>
+                                {/*<AlertDialog>
                                     <AlertDialogTrigger asChild>
                                         <Button className={``} variant={`outline`}><Trash2/></Button>
                                     </AlertDialogTrigger>
@@ -78,7 +78,7 @@ const Page = () => {
                                                 onClick={() => toast.warning(`Doesn't work right now, try again later`)}>Continue</AlertDialogAction>
                                         </AlertDialogFooter>
                                     </AlertDialogContent>
-                                </AlertDialog>
+                                </AlertDialog>*/}
                             </ButtonGroup>
                         </Item>
                     )

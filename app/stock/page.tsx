@@ -14,6 +14,7 @@ import {Separator} from "@/components/ui/separator";
 import TemplatePhotoChange from "@/components/shared/Stock/TemplatePhotoChange";
 import {useStockStore} from "@/store/stock";
 import TemplateEditDialog from "@/components/shared/Stock/TemplateEditDialog";
+import StockItemPreview from "@/components/shared/Stock/StockItemPreview";
 
 // ========== ТРИГРАММНЫЙ ПОИСК ==========
 
@@ -161,41 +162,7 @@ const Page = () => {
             <div className={`w-full grid grid-cols-1 gap-2`}>
                 {filtered_data.slice(0, 25).map((part, index) => {
                     return (
-                        <Item variant={`muted`} className={`flex items-center gap-2`} key={index}>
-                            <div className={`w-full flex items-center gap-2 justify-between mb-6`}>
-                                <Label className={`text-xs`}>
-                                    <BellPlus size={18} />
-                                </Label>
-                                <div className={`flex items-center gap-4`}>
-                                    <Label className={`text-xs`}><Bot /> {part.robot_match?.join(' | ')}</Label>
-                                    <TemplateEditDialog part={part} />
-                                </div>
-                            </div>
-
-                            <div className={`grid md:grid-cols-[240px_1fr] gap-4 w-full`}>
-                                <TemplatePhotoChange
-                                    part={part}
-                                />
-
-                                <div className={`flex flex-col gap-2 w-full`}>
-                                    <p>{part.description_eng}</p>
-                                    <Separator />
-                                    <p>{part.description_orginall}</p>
-                                </div>
-                            </div>
-
-                            <div className={`w-full flex items-center justify-between mt-2`}>
-                                <Badge
-                                    onClick={() => copyToClipboard(part.material_number)}
-                                    className="cursor-pointer"
-                                >
-                                    <Copy /> {part.material_number}
-                                </Badge>
-                                <Label className={`text-xs text-muted-foreground`}>
-                                    {dayjs(part.updated_at).format('HH:mm · MMM D, YYYY')}
-                                </Label>
-                            </div>
-                        </Item>
+                        <StockItemPreview data={part} />
                     );
                 })}
             </div>

@@ -10,6 +10,7 @@ import {AuthService} from "@/services/authService";
 import {useRouter} from "next/navigation";
 import {Toaster} from "@/components/ui/sonner";
 import Snow from "@/app/snow";
+import {getAllStockHistory} from "@/futures/stock/getAllStockHistory";
 
 const MainProvider = () => {
     const router = useRouter();
@@ -39,6 +40,7 @@ const MainProvider = () => {
     const setRobots = useRobotsStore(state => state.setRobots)
     const setStockTemplates = useStockStore(state => state.set_items_templates)
     const setStockSummary = useStockStore(state => state.set_stock_summary)
+    const setStockHistory = useStockStore(state => state.set_stock_history)
 
     const { data, error, isLoading } = useQuery({
         queryKey: ['robots-list'], // better name than 'todos'
@@ -53,6 +55,12 @@ const MainProvider = () => {
     const { data: StockSummary } = useQuery({
         queryKey: ['stock_cells_summary'], // better name than 'todos'
         queryFn: () => getLocationsSummary(),
+    });
+
+    const {data: IStockHistory} = useQuery({
+        queryKey: ['stockHistory-full'],
+        queryFn: async () => getAllStockHistory(),
+        retry: 3
     });
 
     useEffect(() => {
@@ -70,6 +78,12 @@ const MainProvider = () => {
             setStockSummary(StockSummary);
         }
     }, [StockSummary]);
+
+    useEffect(() => {
+        if (IStockHistory !== undefined) {
+            setStockHistory(IStockHistory);
+        }
+    }, [IStockHistory]);
 
     return (
         <div>

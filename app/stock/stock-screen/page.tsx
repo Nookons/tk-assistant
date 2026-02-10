@@ -25,15 +25,8 @@ const Page = () => {
     const queryClient = useQueryClient();
     const [isLoadingR, setIsLoadingR] = useState<boolean>(false);
 
-
     const [search_value, setSearch_value] = useState<string>('')
     const [filtered_data, setFiltered_data] = useState<StockByLocationResponse>([])
-
-    const {data: IStockHistory} = useQuery({
-        queryKey: ['stockHistory-full'],
-        queryFn: async () => getAllStockHistory(),
-        retry: 3
-    });
 
     const {data: LocationsSummary, isLoading, isError} = useQuery({
         queryKey: ['stockHistory-locations-full'],
@@ -106,7 +99,6 @@ const Page = () => {
 
     if (isLoading) return <div>Loading...</div>;
     if (isError) return <div>Error loading stock history</div>;
-    if (!IStockHistory) return <div>No data available</div>;
 
     return (
         <div className="max-w-[1200px] m-auto p-4">
@@ -164,48 +156,6 @@ const Page = () => {
                     ))}
             </div>
 
-            <Table>
-                <TableHeader>
-                    <TableRow>
-                        <TableHead>Employee</TableHead>
-                        <TableHead>Warehouse</TableHead>
-                        <TableHead>Location</TableHead>
-                        <TableHead>Value</TableHead>
-                        <TableHead>Material Number</TableHead>
-                        <TableHead>Created</TableHead>
-                        {/*<TableHead className="text-right">Actions</TableHead>*/}
-                    </TableRow>
-                </TableHeader>
-                <TableBody>
-                    {IStockHistory
-                        .sort((a, b) => {
-                            const dateA = dayjs(a.created_at).valueOf();
-                            const dateB = dayjs(b.created_at).valueOf();
-                            return dateB - dateA; // новые сверху
-                        })
-                        .slice(0, 25)
-                        .map((el) => (
-                            <TableRow key={el.id}>
-                                <TableCell className="font-medium">{el.user.user_name}</TableCell>
-                                <TableCell className="font-medium">{el.warehouse}</TableCell>
-                                <TableCell className="font-medium">{el.location}</TableCell>
-                                <TableCell className="font-medium">{el.value}</TableCell>
-                                <TableCell className="font-medium">{el.material_number}</TableCell>
-                                <TableCell className="font-medium">{timeToString(dayjs(el.created_at).valueOf())}</TableCell>
-                                {/*<TableCell className="flex justify-end">
-                                    <ButtonGroup>
-                                        <Button variant="secondary" onClick={() => toast.warning("Doesn't work right now")}>
-                                            <Pencil />
-                                        </Button>
-                                        <Button variant="secondary" disabled={isLoadingR} onClick={() => removeRecord(el)}>
-                                            <Trash2 />
-                                        </Button>
-                                    </ButtonGroup>
-                                </TableCell>*/}
-                            </TableRow>
-                        ))}
-                </TableBody>
-            </Table>
         </div>
     );
 };

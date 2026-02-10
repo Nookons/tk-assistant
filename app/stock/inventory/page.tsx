@@ -21,7 +21,16 @@ import {toast} from "sonner";
 import CreateNewStockTemplate from "@/components/shared/Stock/CreateNewStockTemplate";
 import {AddToStock} from "@/futures/stock/AddToStock";
 import {AddToStockHistory} from "@/futures/stock/AddToStockHistory";
-import {Loader2, Package} from "lucide-react";
+import {BellPlus, Bot, Copy, Loader2, Package} from "lucide-react";
+import StockHistoryList from "@/components/shared/Stock/StockHistoryList";
+import {Label} from "@/components/ui/label";
+import TemplateEditDialog from "@/components/shared/Stock/TemplateEditDialog";
+import TemplatePhotoChange from "@/components/shared/Stock/TemplatePhotoChange";
+import {Separator} from "@/components/ui/separator";
+import dayjs from "dayjs";
+import {Item} from "@/components/ui/item";
+import {Avatar, AvatarFallback, AvatarImage} from "@/components/ui/avatar";
+import StockItemPreview from "@/components/shared/Stock/StockItemPreview";
 
 const Page = () => {
     const [selected, setSelected] = useState<string>("")
@@ -34,6 +43,8 @@ const Page = () => {
     const user_store = useUserStore(state => state.currentUser)
     const items_templates = useStockStore(state => state.items_templates)
     const [picked_template, setPicked_template] = useState<IStockItemTemplate | null>(null)
+
+    const add_new = useStockStore(state => state.add_item_to_history);
 
     useEffect(() => {
         if (!selected) {
@@ -104,20 +115,28 @@ const Page = () => {
         setIsSubmitting(true)
 
         try {
-            await AddToStock({
-                card_id: user_store!.card_id.toString(),
-                material_number: picked_template!.material_number,
-                warehouse,
-                location,
-                quantity
-            })
+            if (!user_store) {
+                throw new Error("User not found")
+            }
 
-            await AddToStockHistory({
+            const data = {
+                id: dayjs().valueOf(),
                 card_id: user_store!.card_id.toString(),
                 material_number: picked_template!.material_number,
                 warehouse,
                 location,
                 quantity
+            }
+
+            await AddToStock(data)
+            await AddToStockHistory(data)
+
+            add_new({
+                ...data,
+                value: Number(quantity),
+                created_at: dayjs().toDate(),
+                add_by: user_store?.card_id || 0,
+                user: user_store
             })
 
             toast.success("Successfully added to stock", {
@@ -160,8 +179,8 @@ const Page = () => {
     const isFormValid = picked_template && warehouse && location.length === 4 && quantity && parseInt(quantity) > 0
 
     return (
-        <div className="min-h-screen bg-background">
-            <div className="container max-w-2xl mx-auto p-4 sm:p-6 space-y-6">
+        <div className="min-h-screen bg-background grid grid-cols-1 gap-4 p-4 md:grid-cols-[550px_1fr]">
+            <div className="container mx-auto space-y-6">
                 {/* Main Form */}
                 <div className="space-y-4">
                     <div className="space-y-2">
@@ -192,11 +211,6 @@ const Page = () => {
                         </p>
                     </div>
 
-                    {/* Material Picker */}
-
-                    {/* Create New Template */}
-                    {/*<CreateNewStockTemplate />*/}
-
                     {/* Loading State */}
                     {isLoadingTemplate && (
                         <div className="flex items-center gap-2 p-4 rounded-lg border bg-muted/50">
@@ -207,28 +221,7 @@ const Page = () => {
 
                     {/* Selected Template Info & Form */}
                     {location && (
-                        <div className="space-y-4 sm:p-6 rounded-lg">
-                            {/* Template Info */}
-                            {/*<div className="space-y-3">
-                                <div className="flex items-start gap-2">
-                                    <Package className="h-5 w-5 text-muted-foreground mt-0.5" />
-                                    <div className="space-y-1 flex-1 min-w-0">
-                                        <p className="text-sm font-medium">
-                                            {picked_template.material_number}
-                                        </p>
-                                        <p className="text-sm text-muted-foreground">
-                                            {picked_template.description_eng || picked_template.description_orginall}
-                                        </p>
-                                    </div>
-                                </div>
-
-                                <div className="flex gap-2 flex-wrap">
-                                    <Badge variant="outline">{picked_template.part_type || 'N/A'}</Badge>
-                                    {picked_template.description_orginall && picked_template.description_eng && (
-                                        <Badge variant="secondary">{picked_template.description_orginall}</Badge>
-                                    )}
-                                </div>
-                            </div>*/}
+                        <div className="space-y-4 rounded-lg">
 
                             {/* Form Fields */}
                             <div className="space-y-4">
@@ -239,6 +232,11 @@ const Page = () => {
                                             selected={selected}
                                         />
                                     </div>
+
+                                    {picked_template && (
+                                        <StockItemPreview data={picked_template} />
+                                    )}
+
                                    <div className={`grid w-full grid-cols-2 gap-4 ${isSubmitting ? 'opacity-50' : ''}`}>
                                        {/* Quantity */}
                                        <div className="space-y-2 w-full">
@@ -321,6 +319,9 @@ const Page = () => {
                         </div>
                     )}
                 </div>
+            </div>
+            <div className={`overflow-hidden`}>
+                <StockHistoryList />
             </div>
         </div>
     )

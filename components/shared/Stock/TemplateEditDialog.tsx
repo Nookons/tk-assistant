@@ -17,7 +17,7 @@ import {
     DropdownMenuTrigger
 } from "@/components/ui/dropdown-menu";
 import {useMutation} from "@tanstack/react-query";
-import {TemplateService} from "@/services/templateService";
+import {StockService} from "@/services/stockService";
 import {toast} from "sonner";
 import {useStockStore} from "@/store/stock";
 import {robots_types} from "@/utils/RobotsConsts";
@@ -57,7 +57,7 @@ const TemplateEditDialog: React.FC<props> = ({part}) => {
 
     const handleSubmit = useMutation({
         mutationFn: (data: Partial<IStockItemTemplate> & { id: number }) =>
-            TemplateService.updateItemTemplate(data),
+            StockService.updateItemTemplate(data),
         onSuccess: (data) => {
             console.log(data);
             update_store(data.id.toString(), data)
