@@ -3,32 +3,11 @@ import React, {useEffect, useMemo, useState} from 'react';
 import dayjs from "dayjs";
 import ChangedParts from "@/components/shared/dashboard/ShiftStats/ChangedParts";
 import {useRobotsStore} from "@/store/robotsStore";
-import {Popover, PopoverContent, PopoverTrigger} from "@/components/ui/popover";
-import {Button} from "@/components/ui/button";
-import {ChevronDownIcon} from "lucide-react";
-import {Calendar} from "@/components/ui/calendar";
-import {
-    Select,
-    SelectContent,
-    SelectGroup,
-    SelectItem,
-    SelectLabel,
-    SelectTrigger,
-    SelectValue
-} from "@/components/ui/select";
 import {getWorkDate} from "@/futures/Date/getWorkDate";
-import {getInitialShift} from "@/futures/Date/getInitialShift";
 import {IRobot} from "@/types/robot/robot";
+import { IUser } from "@/types/user/user";
 
-// Интерфейс пользователя
-interface IUser {
-    email: string | null;
-    phone: number | null;
-    card_id: number;
-    position: string;
-    user_name: string;
-    warehouse: string;
-}
+
 
 // Интерфейс робота (вложенный в parts_history)
 interface IRobotNested {

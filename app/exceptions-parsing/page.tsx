@@ -1,23 +1,23 @@
 'use client'
 
-import React, { useEffect, useState, useRef, useCallback } from 'react';
-import { Textarea } from "@/components/ui/textarea";
-import { Button } from "@/components/ui/button";
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { Copy, Check, FileText, Trash2 } from "lucide-react";
+import React, {useEffect, useState, useRef, useCallback} from 'react';
+import {Textarea} from "@/components/ui/textarea";
+import {Button} from "@/components/ui/button";
+import {Table, TableBody, TableCell, TableHead, TableHeader, TableRow} from "@/components/ui/table";
+import {Copy, Check, FileText, Trash2} from "lucide-react";
 import dayjs from "dayjs";
 import duration from "dayjs/plugin/duration";
 import utc from "dayjs/plugin/utc";
-import { toast } from "sonner";
+import {toast} from "sonner";
 import errors_data_raw from '../../utils/ErrorsPatterns/ErrorsPatterns.json';
 import Image from "next/image";
 import TemplateInfo from "@/components/shared/ErrorParse/TemplateInfo";
-import { ButtonGroup } from "@/components/ui/button-group"
-import { useRobotsStore } from "@/store/robotsStore";
-import { getEmployeesList } from "@/futures/user/getEmployees";
-import { IUser } from "@/types/user/user";
-import { addNewException } from "@/futures/exception/addNewException";
-import { getInitialShiftByTime } from "@/futures/Date/getInitialShift";
+import {ButtonGroup} from "@/components/ui/button-group"
+import {useRobotsStore} from "@/store/robotsStore";
+import {getEmployeesList} from "@/futures/user/getEmployees";
+import {IUser} from "@/types/user/user";
+import {addNewException} from "@/futures/exception/addNewException";
+import {getInitialShiftByTime} from "@/futures/Date/getInitialShift";
 
 dayjs.extend(duration);
 dayjs.extend(utc);
@@ -88,26 +88,26 @@ const validateErrorLine = (line: string): { valid: boolean; error?: string } => 
     const parts = line.split(".");
 
     if (parts.length < 3) {
-        return { valid: false, error: "Invalid format (expected: Error.Robot.Time)" };
+        return {valid: false, error: "Invalid format (expected: Error.Robot.Time)"};
     }
 
     const [, , errorTime] = parts;
 
     if (!errorTime || !errorTime.includes(':')) {
-        return { valid: false, error: "Invalid time format" };
+        return {valid: false, error: "Invalid time format"};
     }
 
     const timeParts = errorTime.split(':');
     if (timeParts.length !== 2) {
-        return { valid: false, error: "Time must be in HH:mm format" };
+        return {valid: false, error: "Time must be in HH:mm format"};
     }
 
     const [hour, minute] = timeParts.map(Number);
     if (isNaN(hour) || isNaN(minute) || hour < 0 || hour > 23 || minute < 0 || minute > 59) {
-        return { valid: false, error: "Invalid time values" };
+        return {valid: false, error: "Invalid time values"};
     }
 
-    return { valid: true };
+    return {valid: true};
 };
 
 /**
@@ -449,7 +449,7 @@ const Page = () => {
 
                 <div className="flex gap-3">
                     <Button onClick={parseInput} disabled={!inputValue.trim() || isSaving}>
-                        <FileText className="w-4 h-4 mr-2" />
+                        <FileText className="w-4 h-4 mr-2"/>
                         Parse Data
                     </Button>
                     <ButtonGroup>
@@ -458,10 +458,10 @@ const Page = () => {
                             variant="outline"
                             disabled={isSaving}
                         >
-                            <Trash2 className="w-4 h-4 mr-2" />
+                            <Trash2 className="w-4 h-4 mr-2"/>
                             Clear
                         </Button>
-                        <TemplateInfo />
+                        <TemplateInfo/>
                     </ButtonGroup>
                 </div>
             </div>
@@ -502,9 +502,9 @@ const Page = () => {
                                 disabled={isSaving}
                             >
                                 {isCopied ? (
-                                    <Check className="w-4 h-4 mr-2" />
+                                    <Check className="w-4 h-4 mr-2"/>
                                 ) : (
-                                    <Copy className="w-4 h-4 mr-2" />
+                                    <Copy className="w-4 h-4 mr-2"/>
                                 )}
                                 {isCopied ? "Copied!" : "Copy"}
                             </Button>
@@ -550,20 +550,12 @@ const Page = () => {
                                                 </div>
                                             </TableCell>
                                             <TableCell>
-                                                <div className="text-sm font-medium">
-                                                    {error.first_column}
-                                                </div>
-                                                <div className="text-xs text-muted-foreground">
-                                                    {error.second_column}
-                                                </div>
+                                                <p className={`line-clamp-1 text-xs`}>{error.first_column}</p>
+                                                <p className={`line-clamp-1 text-xs`}>{error.second_column}</p>
                                             </TableCell>
                                             <TableCell>
-                                                <div className="text-sm font-medium">
-                                                    {error.issue_description}
-                                                </div>
-                                                <div className="text-xs text-muted-foreground">
-                                                    {error.recovery_title}
-                                                </div>
+                                                <p className={`line-clamp-1 text-xs`}>{error.issue_description}</p>
+                                                <p className={`line-clamp-1 text-xs`}>{error.recovery_title}</p>
                                             </TableCell>
                                             <TableCell>
                                                 {dayjs(error.error_start_time).format("HH:mm")}

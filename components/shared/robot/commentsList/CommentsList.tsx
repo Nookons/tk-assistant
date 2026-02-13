@@ -75,27 +75,23 @@ const CommentItem: React.FC<CommentItemProps> = ({
                                                      depth = 0
                                                  }) => {
     const [showReplies, setShowReplies] = useState(false);
+    const [expanded, setExpanded] = useState(false);
+    const MAX_LENGTH = 120; // Максимальная длина до обрезки
+    const isLong = comment.body.length > MAX_LENGTH;
+
     const user = useUserStore(state => state.currentUser);
-
     const isOwner = comment.add_by === user?.card_id;
-
     const hasReplies = comment.replies && comment.replies.length > 0;
-
     const isNested = depth > 0;
-    const marginLeft = depth * 12; // 32px = 2rem per level
-
+    const marginLeft = depth * 12;
     const isRoot = depth === 0;
 
     return (
-        <div style={{marginLeft: `${marginLeft}px`}} className={`${isNested ? 'mt-2' : ''}`}>
-            <div
-                className={`p-4 border-l-2 relative ${isRoot ? 'border-primary' : 'border-green-500'}`}>
-
+        <div style={{ marginLeft: `${marginLeft}px` }} className={`${isNested ? 'mt-2' : ''}`}>
+            <div className={`p-4 border-l-2 relative ${isRoot ? 'border-primary' : 'border-green-500'}`}>
                 <div className="flex justify-between items-start gap-2 mb-3">
                     <div className="flex items-center gap-2">
-                        <div>
-                            <UserAvatar user={comment.employees} />
-                        </div>
+                        <UserAvatar user={comment.employees} />
                         <div className="flex flex-col">
                             <Label className="text-sm font-semibold">
                                 {comment.employees?.user_name || "Unknown User"}
@@ -107,9 +103,22 @@ const CommentItem: React.FC<CommentItemProps> = ({
                     </div>
                 </div>
 
-                <p className="text-sm text-foreground whitespace-pre-wrap break-words mb-3">
-                    {comment.body}
+                {/* Текст комментария с разворачиванием */}
+                <p className="text-sm text-foreground whitespace-pre-wrap break-words mb-1">
+                    {isLong && !expanded
+                        ? comment.body.slice(0, MAX_LENGTH) + "..."
+                        : comment.body}
                 </p>
+                {isLong && (
+                    <Button
+                        size="sm"
+                        variant="link"
+                        className="h-auto p-0 text-xs mb-3"
+                        onClick={() => setExpanded(prev => !prev)}
+                    >
+                        {expanded ? "Show less" : "Show more"}
+                    </Button>
+                )}
 
                 <div className="flex items-center justify-between">
                     <div className="flex items-center gap-1">
@@ -119,7 +128,7 @@ const CommentItem: React.FC<CommentItemProps> = ({
                             className={`h-8 px-2 gap-1 ${comment.liked_by_user ? 'text-red-500' : ''}`}
                             onClick={() => onLike(comment.id)}
                         >
-                            <Heart className={`h-4 w-4 ${comment.liked_by_user ? 'fill-current' : ''}`}/>
+                            <Heart className={`h-4 w-4 ${comment.liked_by_user ? 'fill-current' : ''}`} />
                             {comment.likes !== undefined && comment.likes > 0 && (
                                 <span className="text-xs">{comment.likes}</span>
                             )}
@@ -131,7 +140,7 @@ const CommentItem: React.FC<CommentItemProps> = ({
                             className="h-8 px-2 gap-1"
                             onClick={() => onReply(comment.id, comment.employees?.user_name || "User")}
                         >
-                            <MessageSquare className="h-4 w-4"/>
+                            <MessageSquare className="h-4 w-4" />
                             <span className="text-xs">Reply</span>
                         </Button>
                     </div>
@@ -145,7 +154,7 @@ const CommentItem: React.FC<CommentItemProps> = ({
                                     className="h-8 w-8 p-0"
                                     onClick={() => onEdit(comment)}
                                 >
-                                    <Pencil className="h-4 w-4"/>
+                                    <Pencil className="h-4 w-4" />
                                 </Button>
 
                                 <AlertDialog>
@@ -157,9 +166,9 @@ const CommentItem: React.FC<CommentItemProps> = ({
                                             disabled={deletingId === comment.id}
                                         >
                                             {deletingId === comment.id ? (
-                                                <Loader className="h-4 w-4 animate-spin"/>
+                                                <Loader className="h-4 w-4 animate-spin" />
                                             ) : (
-                                                <Trash2 className="h-4 w-4"/>
+                                                <Trash2 className="h-4 w-4" />
                                             )}
                                         </Button>
                                     </AlertDialogTrigger>
@@ -184,7 +193,7 @@ const CommentItem: React.FC<CommentItemProps> = ({
                 </div>
             </div>
 
-            {/* Reply form for this comment */}
+            {/* Reply form */}
             {replyingTo === comment.id && (
                 <div className="mt-2 p-1 rounded-lg">
                     <Label className="text-sm mb-2 block">Reply to {comment.employees?.user_name}</Label>
@@ -202,7 +211,7 @@ const CommentItem: React.FC<CommentItemProps> = ({
                             onClick={() => submitReply(comment.id)}
                             disabled={isSubmittingReply || !replyText.trim()}
                         >
-                            {isSubmittingReply && <Loader className="mr-2 h-4 w-4 animate-spin"/>}
+                            {isSubmittingReply && <Loader className="mr-2 h-4 w-4 animate-spin" />}
                             Reply
                         </Button>
                         <Button
@@ -226,11 +235,7 @@ const CommentItem: React.FC<CommentItemProps> = ({
                         className="h-7 px-2 text-xs gap-1"
                         onClick={() => setShowReplies(!showReplies)}
                     >
-                        {showReplies ? (
-                            <ChevronUp className="h-3 w-3"/>
-                        ) : (
-                            <ChevronDown className="h-3 w-3"/>
-                        )}
+                        {showReplies ? <ChevronUp className="h-3 w-3" /> : <ChevronDown className="h-3 w-3" />}
                         {showReplies ? 'Hide' : 'Show'} ({comment.replies!.length}) {comment.replies!.length === 1 ? 'reply' : 'replies'}
                     </Button>
 
@@ -261,6 +266,7 @@ const CommentItem: React.FC<CommentItemProps> = ({
         </div>
     );
 };
+
 
 const CommentsList = ({robot_id}: { robot_id: number }) => {
     const [comments, setComments] = useState<IComment[]>([]);

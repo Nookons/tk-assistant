@@ -1,364 +1,180 @@
-'use client';
-import {useEffect, useState, useMemo} from 'react';
-import {format} from 'date-fns';
-import {ChevronDown, Equal, MoveRight, Pencil, Trash2} from 'lucide-react';
-import {Button} from '@/components/ui/button';
-import {Calendar} from '@/components/ui/calendar';
-import {Popover, PopoverContent, PopoverTrigger} from '@/components/ui/popover';
-import {
-    Select,
-    SelectContent,
-    SelectGroup,
-    SelectItem,
-    SelectLabel,
-    SelectTrigger,
-    SelectValue
-} from '@/components/ui/select';
-import {Card, CardContent, CardHeader, CardTitle, CardDescription} from '@/components/ui/card';
-import {Badge} from '@/components/ui/badge';
-import {Separator} from '@/components/ui/separator';
-import {ScrollArea} from '@/components/ui/scroll-area';
-import {Accordion, AccordionContent, AccordionItem, AccordionTrigger} from '@/components/ui/accordion';
-import {getWorkDate} from '@/futures/Date/getWorkDate';
-import {getInitialShift} from '@/futures/Date/getInitialShift';
-import {getShiftList} from '@/futures/exception/getShiftList';
-import {ErrorRecord, generateShiftReport} from '@/futures/PDF/shiftReport';
-import {useRobotsStore} from '@/store/robotsStore';
-import {toast} from 'sonner';
-import dayjs from 'dayjs';
-import type {IHistoryParts, IHistoryStatus} from '@/types/robot/robot';
-import {Table, TableBody, TableCell, TableHead, TableHeader, TableRow} from "@/components/ui/table";
-import {timeToString} from "@/utils/timeToString";
-import StatusChanges from "@/components/shared/reports/DayReport/StatusChanges";
-import {useQuery} from "@tanstack/react-query";
-import {getStatusChanges} from "@/futures/reports/getStatusChanges";
-import {getPartByNumber} from "@/futures/stock/getPartByNumber";
-import {IStockItemTemplate} from "@/types/stock/StockItem";
+'use client'
+import { Button } from "@/components/ui/button";
+import { Calendar } from "@/components/ui/calendar";
+import {Popover, PopoverContent, PopoverTrigger} from "@/components/ui/popover";
+import { ChevronDownIcon } from "lucide-react";
+import React, {useEffect, useState} from 'react';
+import {format} from "date-fns";
+import {getWorkDate} from "@/futures/Date/getWorkDate";
+import dayjs from "dayjs";
+import {getInitialShift} from "@/futures/Date/getInitialShift";
+import {Select, SelectContent, SelectGroup, SelectItem, SelectTrigger, SelectValue} from "@/components/ui/select";
+import {useMutation} from "@tanstack/react-query";
+import {ReportService} from "@/services/reportService";
+import {IRobotException} from "@/types/Exception/Exception";
+import {IChangeRecord} from "@/types/Parts/ChangeRecord";
+import {toast} from "sonner";
+import ExceptionDashboard from "@/components/shared/StatsDisplay/ExceptionDashboard";
+import ChangedPartsList from "@/components/shared/Lists/ChangedParts";
+import ChangedStatus from "@/components/shared/Lists/ChangedStatus";
 import {ButtonGroup} from "@/components/ui/button-group";
+import {Skeleton} from "@/components/ui/skeleton";
+import {useExceptionStore} from "@/store/exception";
+import {generateShiftReport} from "@/futures/PDF/shiftReport";
+import {IStatusHistory} from "@/components/shared/dashboard/ShiftStats/MonthStats";
 
-export default function Page() {
-    const [date, setDate] = useState(() => {
-        const initialDate = getWorkDate(new Date());
-        console.log('Initial date from getWorkDate:', initialDate);
-        return initialDate || new Date();
-    });
+const Page = () => {
+    const [isLoading, setIsLoading] = useState<boolean>(false)
 
-    const [shift, setShift] = useState<'day' | 'night'>(() => {
-        const initialShift = getInitialShift();
-        console.log('Initial shift from getInitialShift:', initialShift);
-        return initialShift;
-    });
+    const set_exception_store = useExceptionStore(state => state.set_today_exception)
 
-    const [data, setData] = useState<Record<string, ErrorRecord[]>>({});
-    const [loading, setLoading] = useState(false);
-    const [mounted, setMounted] = useState(false);
-    const [parts_numbers, setParts_numbers] = useState<IStockItemTemplate[]>([])
+    const [shift_type, setShift_type] = useState<"day" | "night">(getInitialShift())
+    const [date, setDate] = React.useState<Date | undefined>(
+        getWorkDate(dayjs().toDate())
+    )
 
-    const robots = useRobotsStore((s) => s.robots);
+    const [exception, setException] = useState<IRobotException[]>([])
+    const [changed_parts, setChanged_parts] = useState<IChangeRecord[]>([])
+    const [changed_status, setChanged_status] = useState<IStatusHistory[]>([])
 
-    useEffect(() => {
-        setMounted(true);
-        console.log('Component mounted');
-    }, []);
+    const getData = useMutation({
+        mutationFn: async (params: { date: Date; shift_type: "day" | "night" }) =>
+            ReportService.getDayData(params.date, params.shift_type),
+        onSuccess: (data) => {
+            setException(data[0] as IRobotException[])
+            setChanged_parts(data[1] as IChangeRecord[])
+            setChanged_status(data[2] as IStatusHistory[])
 
-    const {data: status_history, isLoading, isError} = useQuery({
-        queryKey: ['status_changes', date.toString(), shift],
-        queryFn: () => getStatusChanges(dayjs(date).format('MM/DD/YYYY'), shift),
-        refetchInterval: 1000
+            set_exception_store(data[0] as IRobotException[])
+
+            setIsLoading(false)
+        },
+        onError: (error) => {
+            toast.error(error.message)
+            setIsLoading(false)
+        }
     })
 
-    const {historyStatus, historyParts} = useMemo(() => {
-        if (!date || !robots) return {historyStatus: [], historyParts: []};
-
-        const dayKey = dayjs(date).format('YYYY-MM-DD');
-
-        let shiftStart: dayjs.Dayjs;
-        let shiftEnd: dayjs.Dayjs;
-
-        if (shift === 'day') {
-            shiftStart = dayjs(date).hour(6).minute(0).second(0);
-            shiftEnd = dayjs(date).hour(18).minute(0).second(0);
-        } else {
-            shiftStart = dayjs(date).hour(18).minute(0).second(0);
-            shiftEnd = dayjs(date).add(1, 'day').hour(6).minute(0).second(0);
-        }
-
-        const hp: IHistoryParts[] = [];
-
-        robots.forEach((r) => {
-            r.parts_history
-                .filter((h) => {
-                    const createdAt = dayjs(h.created_at);
-                    return createdAt.isAfter(shiftStart) && createdAt.isBefore(shiftEnd);
-                })
-                .forEach((h) => hp.push(h));
-        });
-
-        return {historyParts: hp};
-    }, [robots, date, shift]);
-
-    const loadExceptions = async () => {
-        if (!date) {
-            console.log('loadExceptions: date is undefined, skipping');
-            return;
-        }
-
-        setLoading(true);
-        try {
-            const formattedDate = dayjs(date).format('YYYY-MM-DD');
-            const list = await getShiftList({date: formattedDate, shift_type: shift});
-
-            const grp: Record<string, ErrorRecord[]> = {};
-            list.forEach((e: any) => (grp[e.employee] = [...(grp[e.employee] || []), e]));
-
-            setData(grp);
-        } catch (error) {
-            console.error('Error loading exceptions:', error);
-            toast.error('Failed to load exceptions');
-        } finally {
-            setLoading(false);
-        }
-    };
-
     useEffect(() => {
-        if (mounted && date) {
-            loadExceptions();
-        }
-    }, [mounted, date, shift]);
-
-    const handlePdf = async () => {
         if (!date) return;
-        if (status_history == undefined) return;
+        setIsLoading(true)
+        getData.mutate({date, shift_type});
 
-        try {
-            setLoading(true);
-            await generateShiftReport({
-                report_data: data,
-                date,
-                shift,
-                history_status: status_history,
-                history_parts: historyParts,
-                parts_numbers: parts_numbers,
-            });
-            toast.success('PDF report generated successfully!');
-        } catch (error) {
-            console.error('PDF generation error:', error);
-            toast.error('Failed to generate PDF');
-        } finally {
-            setLoading(false);
-        }
-    };
+    }, [date, shift_type]);
 
-    const getPartsData = async () => {
-        setParts_numbers([])
-        const local_array: string[][] = [];
-
-        historyParts.forEach((el) => {
-            if (!el?.parts_numbers) return;
-            try {
-                const obj: string[] = JSON.parse(el.parts_numbers);
-                local_array.push(obj);
-            } catch (e) {
-                console.error("Ошибка парсинга parts_numbers:", e);
+    const handlePDF = async () => {
+        const employee_stats = exception.reduce((acc, curr) => {
+            if (!acc[curr.employee]) {
+                acc[curr.employee] = {
+                    total_solving_time: 0,
+                    task_count: 0
+                };
             }
-        });
 
-        const sorted = Array.from(new Set(local_array.flat()));
+            acc[curr.employee].total_solving_time += curr.solving_time;
+            acc[curr.employee].task_count += 1;
 
-        for (const item of sorted) {
-            const part = await getPartByNumber(item);
-            setParts_numbers((prevState) => ([...prevState, part[0]]));
-        }
+            return acc;
+        }, {} as Record<string, { total_solving_time: number; task_count: number }>);
+
+        const error_stats = exception.reduce((acc, curr) => {
+            if (!acc[curr.first_column]) {
+                acc[curr.first_column] = {
+                    error_count: 0
+                };
+            }
+
+            acc[curr.first_column].error_count += 1;
+
+            return acc;
+        }, {} as Record<string, { error_count: number; }>);
+
+        const ArrayEmployee = Object.keys(employee_stats).map(key => ({employee: key, ...employee_stats[key]}))
+        const ArrayError = Object.keys(error_stats).map(key => ({first_column: key, ...error_stats[key]}))
+
+        if (!date) return;
+        await generateShiftReport({exception, changed_parts, changed_status, ArrayEmployee, ArrayError, date})
     }
 
-    useEffect(() => {
-        getPartsData()
-    }, [historyParts]);
-
     return (
-        <div className="min-h-screen p-2 md:p-8">
-            <div className="mx-auto max-w-7xl shadow-xl">
-                <CardHeader className="space-y-1">
-                    <CardTitle className="text-2xl md:text-3xl font-bold">SHEIN REPORT PAGE</CardTitle>
-                    <CardDescription className="">
-                        Shift exceptions and robot history
-                    </CardDescription>
-                </CardHeader>
-
-                <CardContent className="space-y-6 p-4 md:p-6">
-                    {/* Filters - теперь адаптивные */}
-                    <div className="flex flex-col sm:flex-row gap-4">
-                        {/* DATE */}
+        <div className={`min-h-[80vh]`}>
+            <div className={`flex flex-col items-end gap-4 backdrop-blur-xl  p-2 h-full`}>
+                <div className={`flex justify-end gap-4`}>
+                    <div>
                         <Popover>
                             <PopoverTrigger asChild>
-                                <Button variant="outline" className="w-full sm:w-[240px] justify-start text-left font-normal">
-                                    <ChevronDown className="mr-2 h-4 w-4"/>
-                                    {date ? format(date, 'PPP') : 'Pick date'}
+                                <Button
+                                    variant="outline"
+                                    data-empty={!date}
+                                    className="data-[empty=true]:text-muted-foreground w-[212px] justify-between text-left font-normal"
+                                >
+                                    {date ? format(date, "PPP") : <span>Pick a date</span>}
+                                    <ChevronDownIcon />
                                 </Button>
                             </PopoverTrigger>
                             <PopoverContent className="w-auto p-0" align="start">
                                 <Calendar
                                     mode="single"
                                     selected={date}
-                                    onSelect={(d) => d && setDate(d)}
-                                    initialFocus
+                                    onSelect={setDate}
+                                    defaultMonth={date}
                                 />
                             </PopoverContent>
                         </Popover>
-
-                        {/* SHIFT */}
-                        <Select value={shift} onValueChange={(v) => setShift(v as 'day' | 'night')}>
-                            <SelectTrigger className="w-full sm:w-[200px]">
-                                <SelectValue placeholder="Select shift"/>
+                    </div>
+                    <div>
+                        <Select value={shift_type} onValueChange={(e) => setShift_type(e as "day" | "night")}>
+                            <SelectTrigger className="w-full max-w-48">
+                                <SelectValue placeholder="Select a shift" />
                             </SelectTrigger>
                             <SelectContent>
                                 <SelectGroup>
-                                    <SelectLabel>Shift</SelectLabel>
-                                    <SelectItem value="day">Day (06:00-18:00)</SelectItem>
-                                    <SelectItem value="night">Night (18:00-06:00)</SelectItem>
+                                    <SelectItem value="day">Day</SelectItem>
+                                    <SelectItem value="night">Night</SelectItem>
                                 </SelectGroup>
                             </SelectContent>
                         </Select>
-
+                    </div>
+                    <ButtonGroup>
                         <Button
-                            onClick={handlePdf}
-                            disabled={loading}
-                            className="w-full sm:w-auto"
+                            onClick={handlePDF}
+                            disabled={isLoading}
                         >
-                            {loading ? 'Generating…' : 'PDF'}
+                            PDF
                         </Button>
+                    </ButtonGroup>
+                </div>
+            </div>
+            <div className={`grid md:grid-cols-[1fr_700px] items-start gap-4 mt-4 px-2`}>
+                {isLoading && exception
+                    ? <Skeleton className={`w-full h-[80vh]`}/>
+                    :
+                    <div className={`overflow-hidden`}>
+                        <ExceptionDashboard />
                     </div>
+                }
 
-                    <Separator/>
-
-                    {/* CONTENT */}
-                    <div className="space-y-4">
-                        <StatusChanges date={date} shift={shift}/>
-
-                        {loading && (
-                            <div className="flex h-64 items-center justify-center">
-                                <p className="text-muted-foreground">Loading…</p>
-                            </div>
-                        )}
-
-                        {!loading && !Object.keys(data).length && (
-                            <Card className=" ">
-                                <CardContent className="p-6 text-center">
-                                    <p className="">
-                                        No errors for selected shift.
-                                        <br/>
-                                        <span className="text-sm ">
-                                          (Date: {date ? format(date, 'PPP') : 'none'}, Shift: {shift})
-                                        </span>
-                                    </p>
-                                </CardContent>
-                            </Card>
-                        )}
-
-                        {!loading && Object.keys(data).length > 0 && (
-                            <Accordion type="multiple" className="space-y-2 mt-4">
-                                {Object.entries(data).map(([emp, list], empIndex) => (
-                                    <AccordionItem
-                                        key={empIndex}
-                                        value={`emp-${empIndex}`}
-                                        className="overflow-hidden rounded-lg"
-                                    >
-                                        <AccordionTrigger className="px-4 ">
-                                            <div className="flex flex-col sm:flex-row sm:items-center gap-2 sm:gap-4 text-left">
-                                                <span className="font-semibold">{emp}</span>
-                                                <div className="flex items-center gap-2 text-sm">
-                                                    <Badge variant="destructive">
-                                                        {list.length} error{list.length > 1 ? 's' : ''}
-                                                    </Badge>
-                                                    <Badge variant="secondary">
-                                                        {list.reduce((s, e) => s + e.solving_time, 0)} min
-                                                    </Badge>
-                                                </div>
-                                            </div>
-                                        </AccordionTrigger>
-
-                                        <AccordionContent className="px-0 pb-0">
-                                            {/* Desktop table - скрыта на мобильных */}
-                                            <div className="hidden md:block overflow-x-auto">
-                                                <Table>
-                                                    <TableHeader>
-                                                        <TableRow>
-                                                            <TableHead>Robot</TableHead>
-                                                            <TableHead>Type</TableHead>
-                                                            <TableHead>Gap</TableHead>
-                                                            <TableHead>Start → End</TableHead>
-                                                            <TableHead className="text-right">Actions</TableHead>
-                                                        </TableRow>
-                                                    </TableHeader>
-                                                    <TableBody>
-                                                        {list.map((e, index) => (
-                                                            <TableRow key={index}>
-                                                                <TableCell className="font-medium">{e.error_robot}</TableCell>
-                                                                <TableCell>{e.device_type}</TableCell>
-                                                                <TableCell>
-                                                                    <Badge variant="outline">{e.solving_time} min</Badge>
-                                                                </TableCell>
-                                                                <TableCell className="text-sm text-muted-foreground">
-                                                                    {timeToString(e.error_start_time)} → {timeToString(e.error_end_time)}
-                                                                </TableCell>
-                                                                <TableCell className="text-right">
-                                                                    <div className="flex justify-end gap-2">
-                                                                        <Button variant="ghost" size="icon">
-                                                                            <Pencil className="h-4 w-4"/>
-                                                                        </Button>
-                                                                        <Button variant="ghost" size="icon">
-                                                                            <Trash2 className="h-4 w-4"/>
-                                                                        </Button>
-                                                                    </div>
-                                                                </TableCell>
-                                                            </TableRow>
-                                                        ))}
-                                                    </TableBody>
-                                                </Table>
-                                            </div>
-
-                                            {/* Mobile card view - показана только на мобильных */}
-                                            <div className="md:hidden space-y-3">
-                                                {list.map((e, index) => (
-                                                    <div key={index} className="">
-                                                        <CardContent className="p-4 space-y-3">
-                                                            <div className="flex justify-between items-center">
-                                                                <div className={`flex gap-2`}>
-                                                                    <p className="font-semibold ">{e.error_robot}</p>
-                                                                    <p className="text-sm">{e.device_type}</p>
-                                                                </div>
-                                                                <ButtonGroup>
-                                                                    <Button variant="outline" size="sm" className="flex-1">
-                                                                        <Trash2 className="h-3 w-3 mr-1"/>
-                                                                    </Button>
-                                                                </ButtonGroup>
-                                                            </div>
-
-                                                            <div className="text-sm flex items-center gap-2">
-                                                                <div className="flex justify-between">
-                                                                    <span className="font-medium">{dayjs(e.error_start_time).format("HH:mm")}</span>
-                                                                </div>
-                                                                <MoveRight size={16} />
-                                                                <div className="flex justify-between">
-                                                                    <span className="font-medium">{dayjs(e.error_end_time).format("HH:mm")}</span>
-                                                                </div>
-                                                                <Equal  size={16}/>
-                                                                <div className="flex justify-between">
-                                                                    <span className="font-medium">{e.solving_time} min</span>
-                                                                </div>
-                                                            </div>
-                                                        </CardContent>
-                                                    </div>
-                                                ))}
-                                            </div>
-                                        </AccordionContent>
-                                    </AccordionItem>
-                                ))}
-                            </Accordion>
-                        )}
-                    </div>
-                </CardContent>
+                <div className={`grid grid-cols-[1fr] gap-4`}>
+                    {isLoading && changed_parts
+                        ? <Skeleton className={`w-full h-[40vh]`}/>
+                        :
+                        <div className={`space-y-2 overflow-hidden`}>
+                            <article className={`font-bold text-xl`}>Maintance</article>
+                            <ChangedPartsList data={changed_parts} />
+                        </div>
+                    }
+                    {isLoading && changed_status
+                        ? <Skeleton className={`w-full h-[40vh]`}/>
+                        :
+                        <div className={`space-y-2 overflow-hidden`}>
+                            <hr className={`my-4`}/>
+                            <ChangedStatus data={changed_status} />
+                        </div>
+                    }
+                </div>
             </div>
         </div>
     );
-}
+};
+
+export default Page;

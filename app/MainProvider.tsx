@@ -11,6 +11,7 @@ import {useRouter} from "next/navigation";
 import {Toaster} from "@/components/ui/sonner";
 import Snow from "@/app/snow";
 import {getAllStockHistory} from "@/futures/stock/getAllStockHistory";
+import {toast} from "sonner";
 
 const MainProvider = () => {
     const router = useRouter();
@@ -84,6 +85,19 @@ const MainProvider = () => {
             setStockHistory(IStockHistory);
         }
     }, [IStockHistory]);
+
+    const handleOffline = () => {
+        toast.error(`It's seems what you lost you network connection. Please check it`)
+    }
+
+    useEffect(() => {
+        window.addEventListener('offline', handleOffline)
+
+        return () => {
+            window.removeEventListener('offline', handleOffline)
+        }
+    }, [])
+
 
     return (
         <div>

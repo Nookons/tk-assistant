@@ -1,7 +1,6 @@
 'use client'
 import React, {useEffect} from 'react';
 import RobotListProvider from "@/components/shared/dashboard/robotsList/robotListProvider";
-import ShiftStats from "@/components/shared/dashboard/ShiftStats/ShiftStats";
 import {useUserStore} from "@/store/user";
 import Important from "@/components/shared/dashboard/Important/Important";
 import ImportantScreen from "@/components/shared/dashboard/Important/ImportantScreen";
@@ -42,9 +41,6 @@ const Page = () => {
             <div className={`grid md:grid-cols-2 gap-4`}>
                 <div>
                     <WaitingRepair/>
-                    <div className={`hidden md:block`} >
-                        <ShiftStats/>
-                    </div>
                 </div>
                 <RobotListProvider card_id={current_user.card_id.toString()}/>
             </div>

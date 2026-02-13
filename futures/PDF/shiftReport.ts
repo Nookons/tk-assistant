@@ -1,268 +1,337 @@
-import {toast} from "sonner";
+import "@/utils/fonts/NotoSansSC-Regular-normal"; // global CSS (optional)
+import { IRobotException } from "@/types/Exception/Exception";
+import { IChangeRecord } from "@/types/Parts/ChangeRecord";
 import jsPDF from "jspdf";
 import dayjs from "dayjs";
 import autoTable from "jspdf-autotable";
-import {IHistoryParts, IHistoryStatus} from "@/types/robot/robot";
-import "@/utils/fonts/NotoSansSC-Regular-normal";
-import {IChangeStatusRobot} from "@/types/Status/Status";
-import {getPartByNumber} from "@/futures/stock/getPartByNumber";
-import {IStockItemTemplate} from "@/types/stock/StockItem";
+import {timeToString} from "@/utils/timeToString";
+import {IStatusHistory} from "@/components/shared/dashboard/ShiftStats/MonthStats";
 
-// Новый тип для данных об ошибках
-export interface ErrorRecord {
-    id: number;
-    error_robot: number;
-    device_type: string;
+// !!! CRITICAL: uncomment AFTER you generate the jsPDF font file
+// import "@/utils/fonts/jspdf/NotoSansSC-Regular.js";
+
+interface EmployeeStat {
     employee: string;
-    error_start_time: string;
-    error_end_time: string;
+    total_solving_time: number;
+    task_count: number;
+}
+interface ErrorStat {
     first_column: string;
-    second_column: string;
-    issue_type: string;
-    issue_description: string;
-    recovery_title: string;
-    solving_time: number;
-    shift_type: string;
+    error_count: number;
 }
 
-interface ErrorReportData {
-    [employeeName: string]: ErrorRecord[];
+interface IReportData {
+    exception: IRobotException[];
+    changed_parts: IChangeRecord[];
+    changed_status: IStatusHistory[];
+    ArrayEmployee: EmployeeStat[];
+    ArrayError: ErrorStat[];
+    date: Date;
 }
 
-export const generateShiftReport = async (
-    {report_data, date, shift, history_status, history_parts, parts_numbers}:
-    {report_data: ErrorReportData, date: Date | undefined, shift: string, history_status: IChangeStatusRobot[], history_parts: IHistoryParts[], parts_numbers: IStockItemTemplate[]}) =>
-{
-    if (!report_data || Object.keys(report_data).length === 0) {
-        toast.error("No report data available to generate PDF");
-        return;
-    }
+// ------------------------------------------------------------
+// MODERN CONSISTENT TABLE STYLES
+// ------------------------------------------------------------
+const TABLE_STYLES = {
+    theme: "grid" as const,
 
-    console.log(history_parts);
+    headStyles: {
+        fillColor: [58, 63, 75] as [number, number, number], // soft graphite
+        textColor: 255,
+        fontSize: 11,
+        fontStyle: "bold" as const,
+        halign: "center" as const,
+        valign: "middle" as const,
+        cellPadding: 3,
+        lineColor: [90, 95, 110] as [number, number, number],
+        lineWidth: 0.25,
+        font: "NotoSansSC-Regular",
+    },
 
-    const doc = new jsPDF();
-    doc.setFont('NotoSansSC-Regular', 'normal');
+    bodyStyles: {
+        fillColor: [245, 246, 248] as [number, number, number], // light neutral
+        textColor: [40, 40, 45] as [number, number, number],
+        fontSize: 10,
+        cellPadding: 3,
+        lineColor: [210, 214, 220] as [number, number, number],
+        lineWidth: 0.2,
+        font: "NotoSansSC-Regular",
+    },
 
-    const pageWidth = doc.internal.pageSize.getWidth();
-    const pageHeight = doc.internal.pageSize.getHeight();
+    alternateRowStyles: {
+        fillColor: [232, 235, 240] as [number, number, number], // soft zebra
+    },
 
-    // 🎨 Modern Light Theme Colors
-    const colors = {
-        lightBg: [255, 255, 255],        // #FFFFFF - White background
-        cardBg: [248, 250, 252],         // #F8FAFC - Light card background
-        accent: [59, 130, 246],          // #3B82F6 - Blue accent
-        accentLight: [96, 165, 250],     // #60A5FA - Light blue
-        text: [15, 23, 42],              // #0F172A - Dark text
-        textMuted: [100, 116, 139],      // #64748B - Muted text
-        success: [22, 163, 74],          // #16A34A - Green
-        warning: [234, 179, 8],          // #EAB308 - Yellow
-        danger: [220, 38, 38],           // #DC2626 - Red
-        border: [226, 232, 240],         // #E2E8F0 - Border color
-    };
+    columnStyles: {
+        0: { halign: "left" as const },
+    },
 
-    // 🌟 Header with light background
-    doc.setFillColor(colors.cardBg[0], colors.cardBg[1], colors.cardBg[2]);
-    doc.rect(0, 0, pageWidth, 50, 'F');
+    margin: { left: 14, right: 14 },
+};
 
-    // Title
-    doc.setFontSize(24);
-    doc.setTextColor(colors.text[0], colors.text[1], colors.text[2]);
-    doc.text('SHEIN SHIFT REPORT', 7, 22);
 
-    // Subtitle with modern styling
-    doc.setFontSize(11);
-    doc.setTextColor(colors.textMuted[0], colors.textMuted[1], colors.textMuted[2]);
-    doc.text(`${shift.toUpperCase()} SHIFT`, 7, 32);
+
+// ------------------------------------------------------------
+export const generateShiftReport = async ({
+                                              exception,
+                                              changed_parts,
+                                              changed_status,
+                                              ArrayEmployee,
+                                              ArrayError,
+                                              date,
+                                          }: IReportData) => {
+    const doc = new jsPDF({
+        orientation: "portrait",
+        unit: "mm",
+        format: "a4",
+    });
+
+    // ----- Set Chinese font (must be embedded) -----
+    doc.setFont("NotoSansSC-Regular", "normal");
+
+
+    // ----- Basic stats -----
+    const shiftType = exception.length ? exception[0].shift_type : "—";
+
+    const exceptionCount = exception.length;
+    const totalSolvingTime = exception.reduce(
+        (acc, e) => acc + (e.solving_time || 0),
+        0
+    );
+    const avgSolvingTime = exceptionCount
+        ? totalSolvingTime / exceptionCount
+        : 0;
+
+    // Group by issue type
+    const issueTypeCount: Record<string, number> = {};
+    exception.forEach((e) => {
+        const type = e.issue_type || "Unknown";
+        issueTypeCount[type] = (issueTypeCount[type] || 0) + 1;
+    });
+    const topIssues = Object.entries(issueTypeCount)
+        .sort((a, b) => b[1] - a[1])
+        .slice(0, 5);
+
+    // Top changed parts
+    const partNumberCount: Record<string, number> = {};
+    changed_parts.forEach((p) => {
+        const parts = p.parts_numbers || "—";
+        partNumberCount[parts] = (partNumberCount[parts] || 0) + 1;
+    });
+    const topParts = Object.entries(partNumberCount)
+        .sort((a, b) => b[1] - a[1])
+        .slice(0, 5);
+
+    // Top status changes
+    const statusNewCount: Record<string, number> = {};
+
+    changed_status.forEach((s) => {
+        const status = s.new_status || "Unknown";
+        statusNewCount[status] = (statusNewCount[status] || 0) + 1;
+    });
+
+    const topStatuses = Object.entries(statusNewCount)
+        .sort((a, b) => b[1] - a[1])
+        .slice(0, 5);
+
+    // ----- Layout constants -----
+    const pageWidth = doc.internal.pageSize.width;
+    const margin = TABLE_STYLES.margin.left;
+    let y = 15;
+
+    // ----- TITLE & HEADER -----
+    doc.setFontSize(20);
+    doc.setFont("NotoSansSC-Regular", "bold");
+    doc.text("GLPC SHIFT REPORT", margin, y);
+    y += 8;
 
     doc.setFontSize(10);
-    doc.setTextColor(colors.accent[0], colors.accent[1], colors.accent[2]);
-    doc.text(dayjs(date).format('DD/MM/YYYY'), 7, 40);
+    doc.setFont("NotoSansSC-Regular", "normal");
+    doc.text(`${timeToString(date.toDateString()).slice(8)}`, margin, y);
+    doc.text(
+        `Shift: ${shiftType.toUpperCase()}`,
+        pageWidth - margin,
+        y,
+        { align: "right" }
+    );
+    y += 12;
 
-    let yPosition = 55;
+    // ----- 3 MODERN METRIC CARDS -----
+    const cardWidth = (pageWidth - 2 * margin - 10) / 3;
+    const cardStartY = y;
 
-    // 📊 Statistics Summary Card - Подсчет из новых данных
-    const allErrors = Object.values(report_data).flat();
-    const totalStats: Record<string, number> = {};
+    const drawCard = (x: number, title: string, value: string | number, sub?: string) => {
+        doc.setFillColor(248, 250, 252); // very subtle background
+        doc.setDrawColor(220, 227, 235);
+        doc.roundedRect(x, cardStartY, cardWidth, 22, 2, 2, "FD");
+        doc.setFontSize(9);
+        doc.setFont("NotoSansSC-Regular", "bold");
+        doc.text(title, x + 3, cardStartY + 5);
+        doc.setFontSize(16);
+        doc.setFont("NotoSansSC-Regular", "normal");
+        doc.text(String(value), x + 3, cardStartY + 17);
+        if (sub) {
+            doc.setFontSize(7);
+            doc.setTextColor(100);
+            doc.text(sub, x + 3, cardStartY + 24);
+            doc.setTextColor(0);
+        }
+    };
 
-    Object.entries(report_data).forEach(([employee, errors]) => {
-        totalStats[employee] = errors.length;
-    });
+    drawCard(margin, "Exceptions", exceptionCount);
+    drawCard(margin + cardWidth + 5, "Parts changed", changed_parts.length);
+    drawCard(margin + 2 * (cardWidth + 5), "Status changes", changed_status.length);
+    y = cardStartY + 38; // enough space after cards
 
-    // 👥 Employee Details Section
+    // ----- EMPLOYEE PERFORMANCE TABLE (formatted) -----
+    if (ArrayEmployee.length) {
+        doc.setFontSize(12);
+        doc.setFont("NotoSansSC-Regular", "bold");
+        doc.text("Employee Performance", margin, y);
+        y += 6;
+
+        autoTable(doc, {
+            ...TABLE_STYLES,
+            startY: y,
+            head: [["Employee", "Exceptions", "Total solving time"]],
+            body: ArrayEmployee.map((e) => [
+                e.employee,
+                e.task_count,
+                e.total_solving_time,
+            ]),
+            columns: [
+                { header: "Employee", dataKey: "employee" },
+                { header: "Exceptions", dataKey: "count" },
+                { header: "Total solving time", dataKey: "time" },
+            ],
+            columnStyles: {
+                0: { halign: "left" },
+                1: { halign: "center" },
+                2: { halign: "center" },
+            },
+        });
+        y = (doc as any).lastAutoTable.finalY + 10;
+    }
+
+    // ----- ERROR TYPE TABLE -----
+    if (ArrayError.length) {
+        doc.setFontSize(12);
+        doc.setFont("NotoSansSC-Regular", "bold");
+        doc.text("Error Distribution", margin, y);
+        y += 6;
+
+        autoTable(doc, {
+            ...TABLE_STYLES,
+            startY: y,
+            head: [["Error type", "Occurrences"]],
+            body: ArrayError.map((e) => [e.first_column, e.error_count]),
+            columnStyles: {
+                0: { halign: "left", cellWidth: "auto" },
+                1: { halign: "center", cellWidth: 30 },
+            },
+        });
+        y = (doc as any).lastAutoTable.finalY + 10;
+    }
+
+    // ----- TWO‑COLUMN LAYOUT: ISSUE TYPES & TOP PARTS -----
+    const colWidth = (pageWidth - 3 * margin) / 2;
+    const leftX = margin;
+    const rightX = margin + colWidth + 5;
+
+    // Left column: Exceptions by issue type
     doc.setFontSize(12);
-    doc.setTextColor(colors.text[0], colors.text[1], colors.text[2]);
+    doc.setFont("NotoSansSC-Regular", "bold");
+    doc.text("Exceptions", leftX, y);
+    let leftY = y + 6;
 
-    const employeeData = Object.entries(report_data).map(([employee, errors]) => {
-        const equipmentErrors = errors.filter(e => e.issue_type === "设备Equipment").length;
-        const environmentErrors = errors.filter(e => e.issue_type === "环境Environment").length;
-        const totalTime = errors.reduce((sum, e) => sum + e.solving_time, 0);
-        const uniqueRobots = new Set(errors.map(e => e.error_robot)).size;
-
-        return [
-            employee,
-            errors.length.toString(),
-            uniqueRobots.toString(),
-            equipmentErrors.toString(),
-            environmentErrors.toString(),
-            `${totalTime} min`,
-        ];
-    });
-
-    autoTable(doc, {
-        startY: yPosition,
-        head: [['Employee', 'Total Errors', 'Robots', 'Equipment', 'Environment', 'Total Time']],
-        body: employeeData,
-        theme: 'plain',
-        styles: {
-            fontSize: 9,
-            font: 'NotoSansSC-Regular',
-            textColor: [15, 23, 42],
-            lineColor: [226, 232, 240],
-            lineWidth: 0.1,
-        },
-        headStyles: {
-            fillColor: [248, 250, 252],
-            textColor: [59, 130, 246],
-            fontStyle: 'bold',
-            fontSize: 9,
-            halign: 'left',
-        },
-        bodyStyles: {
-            fillColor: [255, 255, 255],
-        },
-        alternateRowStyles: {
-            fillColor: [249, 250, 251],
-        },
-        margin: { left: 10, right: 10 },
-    });
-
-    yPosition = (doc as any).lastAutoTable.finalY + 12;
-
-    // 🟢 Online Status Section
-    doc.setFillColor(colors.cardBg[0], colors.cardBg[1], colors.cardBg[2]);
-    doc.roundedRect(10, yPosition - 5, pageWidth - 20, 8, 2, 2, 'F');
-
-    doc.setFontSize(11);
-    doc.setTextColor(colors.success[0], colors.success[1], colors.success[2]);
-    doc.text('● Robots Status', 14, yPosition);
-
-    doc.setFontSize(8);
-    doc.setTextColor(colors.textMuted[0], colors.textMuted[1], colors.textMuted[2]);
-    doc.text(`${history_status.length} robots`, pageWidth - 30, yPosition);
-
-    yPosition += 6;
-
-    autoTable(doc, {
-        startY: yPosition,
-        head: [['Robot', "Status Change", "Type Problem", "Note"]],
-        body: history_status.map(item => [
-            item.robot_number,
-            `→ ${item.new_status}`,
-            `${item.type_problem}`,
-            `${item.problem_note}`,
-        ]),
-        theme: 'plain',
-        styles: {
-            fontSize: 9,
-            font: 'NotoSansSC-Regular',
-            textColor: [15, 23, 42],
-            lineColor: [226, 232, 240],
-            lineWidth: 0.1,
-        },
-        headStyles: {
-            fillColor: [248, 250, 252],
-            textColor: [22, 163, 74],
-            fontSize: 8,
-            halign: 'center',
-        },
-        bodyStyles: {
-            fillColor: [255, 255, 255],
-        },
-        alternateRowStyles: {
-            fillColor: [249, 250, 251],
-        },
-        margin: { left: 10, right: 10 },
-    });
-
-    yPosition = (doc as any).lastAutoTable.finalY + 12;
-
-
-    // 🔧 Parts Section
-    doc.setFillColor(colors.cardBg[0], colors.cardBg[1], colors.cardBg[2]);
-    doc.roundedRect(10, yPosition - 5, pageWidth - 20, 8, 2, 2, 'F');
-
-    doc.setFontSize(11);
-    doc.setTextColor(colors.warning[0], colors.warning[1], colors.warning[2]);
-    doc.text('🔧 Parts Replacement', 14, yPosition);
-
-    doc.setFontSize(8);
-    doc.setTextColor(colors.textMuted[0], colors.textMuted[1], colors.textMuted[2]);
-    doc.text(`${history_parts.length} records`, pageWidth - 30, yPosition);
-
-    yPosition += 6;
-
-    autoTable(doc, {
-        startY: yPosition,
-        head: [['Robot', "Current Status", "Employee", "Parts Number(s)"]],
-        body: history_parts.map(item => [
-            item.robot.robot_number,
-            item.robot.status,
-            item.user.user_name,
-            JSON.parse(item.parts_numbers).join(' • '),
-        ]),
-        theme: 'plain',
-        styles: {
-            fontSize: 9,
-            font: 'NotoSansSC-Regular',
-            textColor: [15, 23, 42],
-            lineColor: [226, 232, 240],
-            lineWidth: 0.1,
-        },
-        headStyles: {
-            fillColor: [248, 250, 252],
-            textColor: [234, 179, 8],
-            fontSize: 8,
-            halign: 'center',
-        },
-        bodyStyles: {
-            fillColor: [255, 255, 255],
-        },
-        alternateRowStyles: {
-            fillColor: [249, 250, 251],
-        },
-        margin: { left: 10, right: 10 },
-    });
-
-    yPosition = (doc as any).lastAutoTable.finalY + 12;
-
-
-    doc.setFontSize(11);
-    doc.setTextColor(colors.textMuted[0], colors.textMuted[1], colors.textMuted[2]);
-
-    for (const item of parts_numbers) {
-        doc.text(`${item.part_type} - ${item.material_number} (${item.description_orginall}) - ${item.description_eng}`, 7, yPosition);
-        yPosition += 6; // увеличиваем позицию для следующей строки
+    if (topIssues.length) {
+        autoTable(doc, {
+            ...TABLE_STYLES,
+            startY: leftY,
+            head: [["Issue type", "Count"]],
+            body: topIssues,
+            margin: { left: leftX, right: pageWidth - leftX - colWidth },
+            columnStyles: {
+                0: { halign: "left", cellWidth: "auto" },
+                1: { halign: "center", cellWidth: 25 },
+            },
+        });
+        leftY = (doc as any).lastAutoTable.finalY;
+    } else {
+        doc.setFont("NotoSansSC-Regular", "normal");
+        doc.setFontSize(10);
+        doc.text("No exceptions logged", leftX, leftY + 6);
+        leftY += 10;
     }
 
 
+    doc.setFontSize(12);
+    doc.setFont("NotoSansSC-Regular", "bold");
+    doc.text("Parts Changed", rightX, y);
+    let rightY = y + 6;
 
-    // 🎨 Footer with light accent
-    const finalY = (doc as any).lastAutoTable.finalY;
-    doc.setFillColor(colors.accent[0], colors.accent[1], colors.accent[2]);
-    doc.rect(0, pageHeight - 3, pageWidth, 3, 'F');
+    if (topParts.length) {
+        autoTable(doc, {
+            ...TABLE_STYLES,
+            startY: rightY,
+            head: [["Part number", "Count"]],
+            body: topParts,
+            margin: { left: rightX, right: margin },
+            columnStyles: {
+                0: { halign: "left", cellWidth: "auto" },
+                1: { halign: "center", cellWidth: 25 },
+            },
+        });
+        rightY = (doc as any).lastAutoTable.finalY;
+    } else {
+        doc.setFont("NotoSansSC-Regular", "normal");
+        doc.setFontSize(10);
+        doc.text("No parts changed", rightX, rightY + 6);
+        rightY += 10;
+    }
 
-    // Logo with modern styling
-    const logoImg = new Image();
-    logoImg.onload = function () {
-        // Logo background circle
-        doc.setFillColor(colors.cardBg[0], colors.cardBg[1], colors.cardBg[2]);
-        doc.circle(pageWidth - 20, 20, 8, 'F');
+    y = Math.max(leftY, rightY) + 10;
 
-        doc.addImage(logoImg, 'PNG', pageWidth - 25, 15, 10, 10);
+    // ----- STATUS CHANGES OVERVIEW -----
+    if (topStatuses.length) {
+        doc.setFontSize(12);
+        doc.setFont("NotoSansSC-Regular", "bold");
+        doc.text("Status Changes", margin, y);
+        y += 6;
 
-        const fileName = `SHEIN_Report_${shift.toUpperCase()}_${dayjs(date).format('YYYY-MM-DD_HH-mm')}.pdf`;
-        doc.save(fileName);
-    };
+        autoTable(doc, {
+            ...TABLE_STYLES,
+            startY: y,
+            head: [["New status", "Occurrences"]],
+            body: topStatuses,
+            columnStyles: {
+                0: { halign: "left", cellWidth: "auto" },
+                1: { halign: "center", cellWidth: 30 },
+            },
+        });
+        y = (doc as any).lastAutoTable.finalY + 5;
+    } else {
+        doc.setFont("NotoSansSC-Regular", "normal");
+        doc.setFontSize(10);
+        doc.text("No status changes recorded", margin, y + 6);
+        y += 12;
+    }
 
-    logoImg.src = shift === "day" ? '/ico/sun.png' : '/ico/moon.png';
+    // ----- FOOTER (page numbers) -----
+    const pageCount = doc.getNumberOfPages();
+    for (let i = 1; i <= pageCount; i++) {
+        doc.setPage(i);
+        doc.setFontSize(8);
+        doc.setTextColor(100);
+        doc.text(
+            `GLPC Shift Summary – Page ${i} of ${pageCount}`,
+            pageWidth / 2,
+            doc.internal.pageSize.height - 10,
+            { align: "center" }
+        );
+    }
+
+    // ----- SAVE -----
+    const fileName = `GLPC_Shift_Summary_${dayjs().format("YYYY-MM-DD_HH-mm")}.pdf`;
+    doc.save(fileName);
 };
