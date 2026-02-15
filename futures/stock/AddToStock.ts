@@ -5,9 +5,10 @@ interface IProps {
     warehouse: string;
     quantity: string;
     location: string;
+    location_key: string;
 }
 
-export const AddToStock = async ({card_id, material_number, location, warehouse, quantity}: IProps) => {
+export const AddToStock = async ({card_id, material_number, location, warehouse, quantity, location_key}: IProps) => {
     const res = await fetch(`/api/stock/add-to-stock`, {
         method: 'POST',
         headers: {
@@ -17,6 +18,7 @@ export const AddToStock = async ({card_id, material_number, location, warehouse,
             card_id,
             material_number,
             warehouse,
+            location_key,
             location,
             quantity
         })

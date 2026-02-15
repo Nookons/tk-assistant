@@ -76,12 +76,6 @@ const navigation: NavigationSection[] = [
                 icon: Warehouse
             },
             {
-                name: "Items Template",
-                href: "/stock",
-                description: "Stock items template",
-                icon: Package
-            },
-            {
                 name: "Inventory",
                 href: "/stock/inventory",
                 description: "Page for managing inventory",

@@ -123,6 +123,7 @@ const Page = () => {
                 id: dayjs().valueOf(),
                 card_id: user_store!.card_id.toString(),
                 material_number: picked_template!.material_number,
+                location_key: `${warehouse.toLowerCase()}-${location.toLowerCase()}`,
                 warehouse,
                 location,
                 quantity

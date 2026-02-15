@@ -52,6 +52,7 @@ const MovePartDialog = ({location, part}: { location: string | null, part: Locat
                 material_number: part.material_number,
                 location: new_location_value,
                 warehouse: part.warehouse,
+                location_key: `${part.warehouse.toLowerCase()}-${new_location_value.toLowerCase()}`,
                 quantity: part.total_quantity.toString()
             })
 

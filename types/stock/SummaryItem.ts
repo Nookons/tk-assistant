@@ -20,6 +20,7 @@ export interface LocationItem {
     description_eng: string;       // описание вместо description_eng
     total_quantity: number;
     warehouse: string;
+    location_key: string;
 }
 
 // Локация со всеми айтемами
@@ -29,4 +30,4 @@ export interface LocationStock {
 }
 
 // Тип для всего ответа
-export type StockByLocationResponse = LocationStock[];
+export type StockByLocationResponse = LocationStock[] ;

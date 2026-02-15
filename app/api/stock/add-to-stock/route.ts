@@ -3,13 +3,14 @@ import { supabase } from '@/lib/supabaseClient';
 
 export async function POST(request: Request) {
     const body = await request.json();
-    const {card_id, material_number, selected, warehouse, location, quantity} = body;
+    const {card_id, material_number, selected, warehouse, location, quantity, location_key} = body;
 
     const { data: existingData, error: searchError } = await supabase
         .from('stock')
         .select('*')
         .eq('warehouse', warehouse)
         .eq('material_number', material_number)
+        .eq('location_key', location_key)
         .eq('location', location)
         .single();
 
@@ -45,6 +46,7 @@ export async function POST(request: Request) {
                 selected,
                 warehouse,
                 location,
+                location_key,
                 quantity
             })
             .select();

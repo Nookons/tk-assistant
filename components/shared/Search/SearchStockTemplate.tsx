@@ -3,20 +3,12 @@ import React, {useEffect, useState, useMemo} from 'react';
 import {Label} from "@/components/ui/label";
 import {Input} from "@/components/ui/input";
 import {useUserStore} from "@/store/user";
-import {BellPlus, Bot, Copy} from "lucide-react";
 import {toast} from "sonner";
 import {getAllParts} from "@/futures/stock/getAllParts";
 import {IStockItemTemplate} from "@/types/stock/StockItem";
-import {Item} from "@/components/ui/item";
-import {Badge} from "@/components/ui/badge";
-import dayjs from "dayjs";
 import {Separator} from "@/components/ui/separator";
-import TemplatePhotoChange from "@/components/shared/Stock/TemplatePhotoChange";
 import {useStockStore} from "@/store/stock";
-import TemplateEditDialog from "@/components/shared/Stock/TemplateEditDialog";
 import StockItemPreview from "@/components/shared/Stock/StockItemPreview";
-
-// ========== ТРИГРАММНЫЙ ПОИСК ==========
 
 function generateTrigrams(str: string): string[] {
     if (!str) return [];
@@ -85,7 +77,7 @@ function trigramSearchMultiField<T>(
     };
 }
 
-const Page = () => {
+const SearchStockTemplate = () => {
     // Все хуки должны быть на верхнем уровне, до любых условий
     const user = useUserStore(state => state.currentUser);
     const stock_store = useStockStore(state => state.items_templates);
@@ -142,7 +134,7 @@ const Page = () => {
     if (!stock_store) return null;
 
     return (
-        <div className={`px-4 max-w-[1600px] m-auto`}>
+        <div className={`mt-4`}>
             <div className={`mb-4 space-y-2`}>
                 <Input
                     value={value}
@@ -170,4 +162,4 @@ const Page = () => {
     );
 };
 
-export default Page;
+export default SearchStockTemplate;
