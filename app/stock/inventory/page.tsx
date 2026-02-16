@@ -96,11 +96,6 @@ const Page = () => {
             return false
         }
 
-        if (!location || location.length !== 4) {
-            toast.error("Location must be exactly 4 characters")
-            return false
-        }
-
         if (!quantity || parseInt(quantity) <= 0) {
             toast.error("Please enter a valid quantity")
             return false
@@ -169,15 +164,6 @@ const Page = () => {
         setWarehouse(value)
     }
 
-    const handleLocationChange = (value: string) => {
-        if (value.length > 4) {
-            return
-        }
-
-        setLocation(value.replace("-", "").toUpperCase())
-    }
-
-    const isFormValid = picked_template && warehouse && location.length === 4 && quantity && parseInt(quantity) > 0
 
     return (
         <div className="min-h-screen bg-background grid grid-cols-1 gap-4 p-4 md:grid-cols-[550px_1fr]">
@@ -187,28 +173,17 @@ const Page = () => {
                     <div className="space-y-2">
                         <div>
                             <label className="text-sm font-medium">
-                                Location (4 characters) <span className="text-destructive">*</span>
+                                Location (GLPC, PNT, SMALL P3) <span className="text-destructive">*</span>
                             </label>
                         </div>
-                        <InputOTP
-                            maxLength={4}
+                        <Input
+                            type={`text`}
+                            placeholder={``}
                             value={location}
-                            onChange={handleLocationChange}
-                            disabled={isSubmitting}
-                            inputMode="text"                 // 🔑 ВАЖНО
-                            autoCapitalize="characters"
-                            autoCorrect="off"
-                            spellCheck={false}
-                        >
-                            <InputOTPGroup className="w-full justify-center">
-                                <InputOTPSlot index={0} className="w-full h-10 text-base" />
-                                <InputOTPSlot index={1} className="w-full h-10 text-base" />
-                                <InputOTPSlot index={2} className="w-full h-10 text-base" />
-                                <InputOTPSlot index={3} className="w-full h-10 text-base" />
-                            </InputOTPGroup>
-                        </InputOTP>
+                            onChange={(e) => setLocation(e.target.value.toUpperCase())}
+                        />
                         <p className="text-xs text-muted-foreground">
-                            Enter the 4-character storage location code
+                            Enter the characters storage location code for GLPC, PNT whatever
                         </p>
                     </div>
 
@@ -288,7 +263,7 @@ const Page = () => {
                                 {/* Submit Button */}
                                 <Button
                                     onClick={handleCreateNew}
-                                    disabled={!isFormValid || isSubmitting}
+                                    disabled={isSubmitting}
                                     className="w-full h-11 text-base"
                                     size="lg"
                                 >

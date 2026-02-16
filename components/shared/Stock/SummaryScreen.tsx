@@ -18,6 +18,10 @@ const chartConfig = {
         label: "SMALL P3",
         color: "var(--chart-3)",
     },
+    PNT: {
+        label: "PNT",
+        color: "var(--chart-4)",
+    },
 } satisfies ChartConfig
 
 interface LocalChartItem {
@@ -25,6 +29,7 @@ interface LocalChartItem {
     part_info: IStockItemTemplate;
     GLPC: number;
     SMALL_P3: number;
+    PNT: number;
 }
 
 const SummaryScreen = () => {
@@ -39,12 +44,12 @@ const SummaryScreen = () => {
     const WAREHOUSE_MAP = {
         "GLPC": "GLPC",
         "SMALL_P3": "SMALL_P3",
+        "PNT": "PNT",
     } as const
 
 
     useEffect(() => {
         if (!stockSummary) return
-
         const map = new Map<string, LocalChartItem>()
 
         stockSummary.forEach(item => {
@@ -54,6 +59,7 @@ const SummaryScreen = () => {
                     part_info: item.part_info,
                     GLPC: 0,
                     SMALL_P3: 0,
+                    PNT: 0,
                 })
             }
 
@@ -63,6 +69,7 @@ const SummaryScreen = () => {
             map.get(item.material_number)![warehouseKey] = item.quantity
         })
 
+        console.log(Array.from(map.values()));
         setChartData(Array.from(map.values()))
     }, [stockSummary])
 
@@ -72,15 +79,15 @@ const SummaryScreen = () => {
 
     return (
         <Card className="py-0">
-            <CardHeader className="flex flex-col items-stretch border-b !p-0 sm:flex-row">
-                <div className="flex flex-1 flex-col justify-center gap-1 px-6 pt-4 pb-3 sm:!py-0">
+            <CardHeader className="flex flex-col items-stretch border-b sm:flex-row">
+                <div className="flex flex-1 flex-col justify-center gap-1 px-6 pt-4 pb-3">
                     <CardTitle>Bar Chart - Interactive</CardTitle>
                     <CardDescription>
                         Showing total amount of stock in GLPC and SMALL P3 warehouses.
                     </CardDescription>
                 </div>
                 <div className="flex">
-                    {["GLPC", "SMALL_P3"].map((key) => {
+                    {["GLPC", "SMALL_P3", "PNT"].map((key) => {
                         const chart = key as keyof typeof chartConfig
                         return (
                             <button
@@ -121,6 +128,7 @@ const SummaryScreen = () => {
 
                         <Bar dataKey="GLPC" fill="var(--color-GLPC)" />
                         <Bar dataKey="SMALL_P3" fill="var(--color-SMALL_P3)" />
+                        <Bar dataKey="PNT" fill="var(--color-PNT)" />
                     </BarChart>
                 </ChartContainer>
             </CardContent>

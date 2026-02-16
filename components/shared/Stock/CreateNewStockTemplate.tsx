@@ -101,9 +101,11 @@ const CreateNewStockTemplate = () => {
 
     return (
         <div className={`flex gap-4 items-center justify-start`}>
+            <p className={`text-nowrap text-xs text-muted-foreground`}>Not found?</p>
+
             <Dialog open={isOpen} onOpenChange={setIsOpen}>
                 <DialogTrigger asChild>
-                    <Button>Create New</Button>
+                    <Button size={`sm`} >Create New</Button>
                 </DialogTrigger>
                 <DialogContent className="sm:max-w-md">
                     <DialogHeader>
@@ -181,8 +183,6 @@ const CreateNewStockTemplate = () => {
                     </DialogFooter>
                 </DialogContent>
             </Dialog>
-
-            <p>No results found</p>
         </div>
     );
 };

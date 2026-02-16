@@ -13,6 +13,7 @@ import {Item} from "@/components/ui/item";
 import {IStockItemTemplate} from "@/types/stock/StockItem";
 import {ButtonGroup} from "@/components/ui/button-group";
 import TemplatePhotoChange from "@/components/shared/Stock/TemplatePhotoChange";
+import {timeToString} from "@/utils/timeToString";
 
 interface props {
     data: IStockItemTemplate;
@@ -22,7 +23,7 @@ const StockItemPreview: React.FC<props> = ({data}) => {
     const [isImageDialogOpen, setIsImageDialogOpen] = useState(false);
 
     return (
-        <Item variant={`muted`} className={`flex items-center gap-2`}>
+        <div className={`flex items-center gap-2 backdrop-blur-sm border p-2 rounded-md w-full`}>
             <div className={`grid md:grid-cols-[120px_1fr] gap-4 w-full`}>
                 <Dialog open={isImageDialogOpen} onOpenChange={setIsImageDialogOpen}>
                     <DialogTrigger asChild>
@@ -100,29 +101,28 @@ const StockItemPreview: React.FC<props> = ({data}) => {
                     </DialogContent>
                 </Dialog>
 
-                <div className={`flex flex-col gap-2 w-full`}>
-                    <p>{data.description_eng}</p>
-                    <Separator />
-                    <p>{data.description_orginall}</p>
-                </div>
-            </div>
 
-            <div className={`w-full flex items-center justify-between mt-2`}>
-                <Badge className="cursor-pointer">
-                    <Copy className="w-3 h-3 mr-1" /> {data.material_number}
-                </Badge>
-                <Label className={`text-xs text-muted-foreground`}>
-                    {dayjs(data.updated_at).format('HH:mm · MMM D, YYYY')}
-                </Label>
-                <div className={`flex items-center gap-4`}>
-                    <Label className={`text-xs`}>
-                        <Bot className="w-3 h-3 inline mr-1" />
-                        {data.robot_match?.join(' | ')}
+                <div className={`flex flex-col gap-2 w-full`}>
+                    <div className={`w-full flex items-center justify-between`}>
+                        <Badge className="cursor-pointer">
+                            <Copy className="w-3 h-3" /> {data.material_number}
+                        </Badge>
+                        <div className={`flex items-center gap-4`}>
+                            <Label className={`text-xs`}>
+                                <Bot className="w-4 h-4 inline" />
+                                {data.robot_match?.join(' | ')}
+                            </Label>
+                            <TemplateEditDialog part={data} />
+                        </div>
+                    </div>
+
+                    <p>{data.description_eng}</p>
+                    <Label className={`text-xs text-muted-foreground`}>
+                        {timeToString(data.updated_at)}
                     </Label>
-                    <TemplateEditDialog part={data} />
                 </div>
             </div>
-        </Item>
+        </div>
     );
 };
 
