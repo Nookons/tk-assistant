@@ -141,9 +141,6 @@ const UserProfilePage = ({isOwn = false} : {isOwn: boolean}) => {
                         <span className="text-xs uppercase tracking-widest text-muted-foreground font-medium">
                             Score progress
                         </span>
-                        <span className={`ml-auto text-sm font-semibold ${rank.color}`}>
-                            {user.score} pts
-                        </span>
                     </div>
                     <ScoreBar score={user.score} />
                 </div>

@@ -26,13 +26,9 @@ function DashboardHeader({ onMenuToggle, sidebarOpen }: HeaderProps) {
             </Button>
 
             {/* Search */}
-            <div className="flex-1 flex items-center gap-2 rounded-md border border-border bg-muted/50 px-3 py-2 max-w-sm">
-                <Search size={15} className="text-muted-foreground shrink-0" />
-                <span className="text-sm text-muted-foreground">Search...</span>
-                <Badge variant="outline" className="ml-auto text-[10px] px-1.5 hidden sm:flex">
-                    ⌘K
-                </Badge>
-            </div>
+            <p className="font-medium text-xs text-muted-foreground shrink-0">
+                Powered by Kolomiiets Dmytro
+            </p>
 
             <div className="flex items-center gap-2 ml-auto">
                 <Button variant="ghost" size="icon" className="relative">

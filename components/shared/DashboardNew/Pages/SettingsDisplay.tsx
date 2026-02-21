@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState } from 'react';
+import React, {useEffect, useState} from 'react';
 import { useUserStore } from "@/store/user";
 import dayjs from "dayjs";
 import relativeTime from "dayjs/plugin/relativeTime";
@@ -279,10 +279,15 @@ const PasswordChangeForm = ({user}: {user: IUser}) => {
 const SettingsDisplay = () => {
     const [isNameChange, setIsNameChange] = useState<boolean>(false);
     const [input_value, setInput_value] = useState<string>('')
+
     const user = useUserStore((state) => state.currentUser);
     const user_update = useUserStore(state => state.updateUser)
 
     if (!user) return null;
+
+    useEffect(() => {
+        console.log(user);
+    }, [user]);
 
     const rank = getScoreRank(user.score);
     const leader = isLeader(user.position);
@@ -410,11 +415,8 @@ const SettingsDisplay = () => {
                             <div className="flex items-center gap-2 mb-3">
                                 <Star className="h-3.5 w-3.5 text-amber-400" />
                                 <span className="text-xs uppercase tracking-widest text-muted-foreground font-medium">
-                            Score progress
-                        </span>
-                                <span className={`ml-auto text-sm font-semibold ${rank.color}`}>
-                            {user.score} pts
-                        </span>
+                                    Score progress
+                                </span>
                             </div>
                             <ScoreBar score={user.score} />
                         </div>

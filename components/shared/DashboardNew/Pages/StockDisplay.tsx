@@ -13,13 +13,14 @@ import {Button} from "@/components/ui/button";
 import {Select, SelectContent, SelectGroup, SelectItem, SelectTrigger, SelectValue} from "@/components/ui/select";
 import {usePersistedTab} from "@/hooks/usePersistedTab";
 
-const WAREHOUSES = ["all", "GLPC", "SMALL_P3", "PNT"] as const;
+const WAREHOUSES = ["all", "GLPC", "SMALL_P3", "PNT", "P3"] as const;
 type Warehouse = typeof WAREHOUSES[number];
 const WAREHOUSE_LABELS: Record<Warehouse, string> = {
     all:      "All",
     GLPC:     "GLPC",
     SMALL_P3: "SMALL P3",
     PNT:      "PNT",
+    P3:      "P3",
 };
 
 const STORAGE_KEY = 'stock_sub_tab';

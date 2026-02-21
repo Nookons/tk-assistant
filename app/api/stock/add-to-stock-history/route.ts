@@ -16,7 +16,8 @@ export async function POST(request: Request) {
             warehouse,
             location
         })
-        .select();
+        .select()
+        .maybeSingle();
 
     if (insertError) {
         return NextResponse.json({ error: insertError.message }, { status: 500 });

@@ -8,6 +8,7 @@ import {Tooltip, TooltipContent, TooltipProvider, TooltipTrigger} from "@/compon
 import React, {useState} from "react";
 import {AuthService} from "@/services/authService";
 import Image from "next/image";
+import {useNavBadges} from "@/hooks/useNavBadges";
 
 
 interface SidebarProps {
@@ -23,6 +24,8 @@ function Sidebar({activeItem, onSelect, open}: SidebarProps) {
         if (typeof window === "undefined") return false;
         return localStorage.getItem("isExpanded") === "true";
     });
+
+    const badges = useNavBadges(); // ← добавь хук
 
     if (!user) return null;
 
@@ -50,14 +53,18 @@ function Sidebar({activeItem, onSelect, open}: SidebarProps) {
                 {/* Logo */}
                 <div className={`flex h-16 items-center border-b border-border shrink-0 px-3 ${collapsed ? "justify-center" : "gap-3 px-5 justify-between"}`}>
                     <div className="flex items-center gap-3 min-w-0">
-                        {/*<div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-primary">
-                            <Image width={50} height={50} src={`/img/tk-logo.png`} alt={`logotype`} />
-                        </div>*/}
-                        {!collapsed && (
+                        {!collapsed ? (
                             <span className="font-bold text-base tracking-tight whitespace-nowrap overflow-hidden">
                                 TK Service
                             </span>
-                        )}
+                        ) : (
+                            <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg">
+                                <span className="font-bold text-base tracking-tight whitespace-nowrap overflow-hidden">
+                                    TK
+                                </span>
+                            </div>
+                        )
+                        }
                     </div>
 
                     {/* Collapse toggle — desktop only */}
@@ -97,6 +104,7 @@ function Sidebar({activeItem, onSelect, open}: SidebarProps) {
 
                     {NAV_ITEMS.map((item) => {
                         const isActive = activeItem === item.id;
+                        const badgeCount = badges[item.id] ?? item.badge;
 
                         const btn = (
                             <button
@@ -117,17 +125,16 @@ function Sidebar({activeItem, onSelect, open}: SidebarProps) {
                                     {!collapsed && item.label}
                                 </span>
 
-                                {!collapsed && item.badge && (
+                                {!collapsed && badgeCount && (
                                     <Badge
                                         variant={isActive ? "secondary" : "default"}
                                         className="h-5 min-w-5 text-[10px] px-1.5"
                                     >
-                                        {item.badge}
+                                        {badgeCount > 99 ? "99+" : badgeCount}
                                     </Badge>
                                 )}
 
-                                {/* Badge dot when collapsed */}
-                                {collapsed && item.badge && (
+                                {collapsed && badgeCount && (
                                     <span className="absolute top-1.5 right-1.5 h-2 w-2 rounded-full bg-primary"/>
                                 )}
                             </button>
@@ -141,7 +148,7 @@ function Sidebar({activeItem, onSelect, open}: SidebarProps) {
                                 </TooltipTrigger>
                                 <TooltipContent side="right" className="text-xs">
                                     {item.label}
-                                    {item.badge ? ` (${item.badge})` : ""}
+                                    {badgeCount ? ` (${badgeCount})` : ""}
                                 </TooltipContent>
                             </Tooltip>
                         ) : (

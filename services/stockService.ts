@@ -26,47 +26,11 @@ export class StockService {
         return updatedItem;
     }
 
-    static async removeHistoryItem(data: IHistoryStockItem): Promise<IStockItemTemplate> {
+    static async removeHistoryItem(data: IHistoryStockItem): Promise<IHistoryStockItem> {
+        const { data: result, error } = await supabase
+            .rpc('remove_stock_history_item', { p_id: data.id });
 
-        // First, get the current stock item
-        const { data: stockItem, error: fetchError } = await supabase
-            .from('stock')
-            .select()
-            .eq('material_number', data.material_number)
-            .eq('warehouse', data.warehouse)
-            .eq('location', data.location)
-            .single();
-
-        if (fetchError || !stockItem) {
-            throw new Error(`Failed to fetch stock item: ${fetchError?.message || 'Item not found'}`);
-        }
-
-        // Update the stock quantity (revert the change)
-        const { data: mainStock, error: stockError } = await supabase
-            .from('stock')
-            .update({ quantity: stockItem.quantity - data.value })  // ✅ Fixed: object syntax
-            .eq('material_number', data.material_number)
-            .eq('warehouse', data.warehouse)
-            .eq('location', data.location)
-            .select()
-            .single();
-
-        if (stockError) {
-            throw new Error(`Failed to update stock: ${stockError.message}`);
-        }
-
-        // Delete the history item
-        const { data: deletedItem, error: deleteError } = await supabase
-            .from('stock_history')
-            .delete()
-            .eq('id', data.id)
-            .select()
-            .single();
-
-        if (deleteError) {
-            throw new Error(`Failed to delete history item: ${deleteError.message}`);
-        }
-
-        return deletedItem;
+        if (error) throw new Error(error.message);
+        return result;
     }
 }

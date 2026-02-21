@@ -7,7 +7,7 @@ import {
     Package,
     Settings,
     ShoppingCart,
-    Users
+    Users, Warehouse
 } from "lucide-react";
 import DashboardContent from "@/components/shared/DashboardNew/Pages/DashboardContent";
 import StockDisplay from "@/components/shared/DashboardNew/Pages/StockDisplay";
@@ -17,6 +17,7 @@ import RobotsDisplay from "@/components/shared/DashboardNew/Pages/RobotsDisplay"
 import SettingsDisplay from "@/components/shared/DashboardNew/Pages/SettingsDisplay";
 import ErrorParseDisplay from "@/components/shared/DashboardNew/Pages/ErrorParseDisplay";
 import ErrorParseProvider from "@/components/shared/DashboardNew/Pages/ErrorParseProvider";
+import InventoryDisplay from "@/components/shared/DashboardNew/Pages/InventoryDisplay";
 
 interface NavItem {
     id: string;
@@ -25,14 +26,17 @@ interface NavItem {
     badge?: number;
 }
 
+
+
 export const NAV_ITEMS: NavItem[] = [
     { id: "dashboard", label: "Dashboard", icon: <LayoutDashboard size={18} /> },
     { id: "robots", label: "Robots", icon: <Bot size={18} /> },
-    { id: "employees", label: "Employees", icon: <Users size={18} />, badge: 3 },
-    { id: "stock", label: "Stock", icon: <Package size={18} /> },
+    { id: "employees", label: "Employees", icon: <Users size={18} /> },
     { id: "reports", label: "Reports", icon: <FileText size={18} /> },
-    { id: "settings", label: "Settings", icon: <Settings size={18} /> },
     { id: "error_parse", label: "Parsing", icon: <ChartBarStacked  size={18} /> },
+    { id: "stock", label: "Stock", icon: <Package size={18} /> },
+    { id: "inventory", label: "Inventory", icon: <Warehouse   size={18} /> },
+    { id: "settings", label: "Settings", icon: <Settings size={18} /> },
 ];
 
 export const PAGE_REGISTRY: Record<string, React.ComponentType<any>> = {
@@ -43,4 +47,5 @@ export const PAGE_REGISTRY: Record<string, React.ComponentType<any>> = {
     robots:    RobotsDisplay,
     settings:    SettingsDisplay,
     error_parse:    ErrorParseProvider,
+    inventory:    InventoryDisplay,
 };

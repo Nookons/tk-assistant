@@ -43,7 +43,7 @@ export default function Dashboard() {
                 <main className="flex-1 overflow-y-auto">
                     {CurrentPage && (
                         <>
-                            {activeNav === 'settings'
+                            {activeNav === 'settings' || activeNav === 'inventory'
                                 ? <CurrentPage onSelect={(id: string) => onTabChange(id)} />
                                 : <div className={`p-6`}><CurrentPage onSelect={(id: string) => onTabChange(id)} /></div>
                             }

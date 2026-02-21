@@ -228,7 +228,7 @@ function DashboardContent({onSelect}: Props) {
                     </CardContent>
                 </Card>
 
-                <Card className="lg:col-span-3">
+                <Card className="lg:col-span-3 hidden md:block">
                     <SummaryScreen/>
                 </Card>
             </div>

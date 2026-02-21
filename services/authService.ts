@@ -41,7 +41,6 @@ export class AuthService {
             throw new Error(error.message);
         }
 
-        // 3. Обновляем last_login
         await supabase
             .from('employees')
             .update({ last_login_at: new Date().toISOString() })

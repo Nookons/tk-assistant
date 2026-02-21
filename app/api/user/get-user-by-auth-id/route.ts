@@ -16,7 +16,8 @@ export async function GET(request: Request) {
         .from('employees')
         .select('*')
         .eq('auth_id', auth_id)
-        .maybeSingle();
+        .limit(1)          // ← get at most one row
+        .maybeSingle();    // ← now safe, at most 1 row comes in
 
     if (error) {
         return NextResponse.json({ error: error.message }, { status: 500 });
