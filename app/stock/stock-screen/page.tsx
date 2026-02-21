@@ -91,10 +91,6 @@ const Page = () => {
     return (
         <div className="m-auto p-4 grid md:grid-cols-[1fr_550px] items-start gap-6">
             <div className={`backdrop-blur-sm p-2 rounded-md`}>
-                <div className="hidden md:block">
-                    <SummaryScreen/>
-                </div>
-
                 <div className="flex flex-col gap-2 mt-4">
                     <Input
                         value={search_value}

@@ -19,10 +19,7 @@ import {cn} from "@/lib/utils"
 import {useTheme} from "next-themes";
 import {useEffect} from "react";
 import {Label} from "@/components/ui/label";
-import Snow from "@/app/snow";
 
-
-// Removed unused import: Home
 
 interface NavigationItem {
     name: string
@@ -186,7 +183,7 @@ export function Header() {
                 <div className="flex items-end gap-2">
                     <div className="hidden sm:flex items-center gap-2">
                         <UserButton setMobileMenuOpen={setMobileMenuOpen}/>
-                        <ThemeToggle setMobileMenuOpen={setMobileMenuOpen}/>
+                        <ThemeToggle />
                     </div>
 
                     {/* Mobile Menu Button */}
@@ -213,7 +210,7 @@ export function Header() {
                     <div className="container py-4 px-2 bg-muted/90 backdrop-blur-2xl  space-y-4">
                         <div className="flex sm:hidden items-center justify-end gap-2 pb-4 border-b">
                             <UserButton setMobileMenuOpen={setMobileMenuOpen}/>
-                            <ThemeToggle setMobileMenuOpen={setMobileMenuOpen}/>
+                            <ThemeToggle />
                         </div>
 
                         {navigation.map((section) => (

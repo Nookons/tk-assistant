@@ -1,4 +1,3 @@
-import {ILocalIssue} from "@/app/exceptions-parsing/page";
 
 export const addNotes = async ({add_by, date, note}: {add_by: number, date: Date, note: string}) => {
     if (!add_by) return;

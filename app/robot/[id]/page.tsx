@@ -1,163 +1,198 @@
 'use client'
-import React, {useEffect, useState} from 'react';
+import React, {useMemo} from 'react';
 import {useParams} from "next/navigation";
-import {IRobot} from "@/types/robot/robot";
+import {useRobotsStore} from "@/store/robotsStore";
 import {Label} from "@/components/ui/label";
-import {Bubbles} from "lucide-react";
+import {Badge} from "@/components/ui/badge";
+import {Button} from "@/components/ui/button";
+import {ButtonGroup} from "@/components/ui/button-group";
+import {Separator} from "@/components/ui/separator";
+import {Card, CardContent, CardHeader, CardTitle} from "@/components/ui/card";
+import {
+    Breadcrumb, BreadcrumbEllipsis, BreadcrumbItem,
+    BreadcrumbLink, BreadcrumbList, BreadcrumbPage, BreadcrumbSeparator,
+} from "@/components/ui/breadcrumb";
+import {
+    DropdownMenu, DropdownMenuContent, DropdownMenuGroup,
+    DropdownMenuItem, DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
+import {Empty, EmptyDescription, EmptyHeader, EmptyMedia, EmptyTitle} from "@/components/ui/empty";
+import Image from "next/image";
+import Link from "next/link";
+import {Bubbles, Clock, MapPin, Wrench} from "lucide-react";
+
 import RobotHistory from "@/components/shared/robot/changedParts/RobotHistory";
 import PartsPicker from "@/components/shared/robot/addNewParts/partsPicker";
 import AddCommentRobot from "@/components/shared/robot/addComment/AddCommentRobot";
 import CommentsList from "@/components/shared/robot/commentsList/CommentsList";
-import Image from "next/image";
-import {useRobotsStore} from "@/store/robotsStore";
-import {Badge} from "@/components/ui/badge";
-import {timeToString} from "@/utils/timeToString";
-import {Empty, EmptyDescription, EmptyHeader, EmptyMedia, EmptyTitle} from "@/components/ui/empty";
 import PartCopy from "@/components/shared/dashboard/PartCopy/PartCopy";
 import RobotGraph from "@/components/shared/robot/robotGraph/RobotGraph";
 import RobotStatusDialog from "@/components/shared/robot/EditStatus/RobotEditStatus";
-import {Separator} from "@/components/ui/separator";
-import {ButtonGroup} from "@/components/ui/button-group";
+import {timeToString} from "@/utils/timeToString";
+import {useUserStore} from "@/store/user";
 
+// ── Helpers ───────────────────────────────────────────────────────────────────
+
+const isOffline = (status: string) => status === "离线 | Offline";
+
+function RobotImage({type, status}: { type: string; status: string }) {
+    const offline = isOffline(status);
+    const src = type === "K50H"
+        ? (offline ? "/img/K50H_red.svg" : "/img/K50H_green.svg")
+        : (offline ? "/img/A42T_red.svg" : "/img/A42T_Green.svg");
+    return <Image src={src} alt="robot" width={36} height={36}/>;
+}
+
+// ── Page ──────────────────────────────────────────────────────────────────────
 
 const Page = () => {
-    const params = useParams();
+    const params   = useParams();
     const robot_id = params?.id;
+    const user = useUserStore(state => state.currentUser)
+    const robots_list = useRobotsStore(state => state.robots);
 
-    const robots_list = useRobotsStore(state => state.robots)
-
-    const [current_Robot, setCurrent_Robot] = useState<IRobot | null>(null)
-
-
-    useEffect(() => {
-        if (robots_list) {
-            const robot_data = robots_list.find(item => item.id === Number(robot_id))
-            if (robot_data) setCurrent_Robot(robot_data)
-        }
-    }, [robots_list])
-
+    // useMemo вместо useEffect + useState
+    const current_Robot = useMemo(() => {
+        if (!robots_list) return null;
+        return robots_list.find(item => item.id === Number(robot_id)) ?? null;
+    }, [robots_list, robot_id]);
 
     if (!current_Robot) return null;
 
+    const offline      = isOffline(current_Robot.status);
+    const hasProblem   = current_Robot.type_problem.length > 0;
+    const hasParts     = current_Robot.parts_history.length > 0;
+
     return (
-        <div className="max-w-[1600px] min-h-screen m-auto grid md:grid-cols-[1fr_650px] gap-8 px-4">
-            {/* ROBOT INFO */}
-            <div className="">
-                <div className={`grid md:grid-cols-2 gap-4 py-4`}>
-                    <div className={`flex relative justify-between md:justify-start items-center gap-2`}>
-                        <div className={`flex items-center gap-2`}>
-                            {current_Robot.robot_type === "K50H"
-                                ?
-                                <>
-                                    {current_Robot.status === "离线 | Offline"
-                                        ? <Image src={`/img/K50H_red.svg`} alt={`robot_img`} width={30} height={30}/>
-                                        : <Image src={`/img/K50H_green.svg`} alt={`robot_img`} width={30} height={30}/>
-                                    }
-                                </>
-                                :
-                                <>
-                                    {current_Robot.status === "离线 | Offline"
-                                        ? <Image src={`/img/A42T_red.svg`} alt={`robot_img`} width={30} height={30}/>
-                                        : <Image src={`/img/A42T_Green.svg`} alt={`robot_img`} width={30} height={30}/>
-                                    }
-                                </>
-                            }
-                            <Label
-                                className={`font-bold text-base md:text-2xl`}>{current_Robot.robot_number}</Label>
-                        </div>
-                        <div className={`flex items-center gap-2`}>
-                            <Label>{current_Robot.status}</Label>
-                        </div>
-                    </div>
-                </div>
+        <div className="min-h-screen bg-background">
 
-                <ButtonGroup className={`w-full grid grid-cols-2 ${current_Robot.parts_history.length > 0 && "grid-cols-3"}`}>
-                    {current_Robot.status === "在线 | Online"
-                        ?
-                        <RobotStatusDialog
-                            currentRobot={current_Robot}
-                            actionType="sendToMaintenance"
-                        />
-                        :
-                        <RobotStatusDialog
-                            currentRobot={current_Robot}
-                            actionType="sendToMap"
-                        />
-                    }
-
-                    <PartsPicker
-                        robot={current_Robot}
-                    />
-
-                    {current_Robot.parts_history.length > 0 &&
-                        <PartCopy robot={current_Robot}/>
-                    }
-                </ButtonGroup>
-
-                <hr className={`my-4`}/>
-
-                <div className="backdrop-blur-xl p-2 rounded-sm">
-                    <div className={`flex flex-col md:grid md:grid-cols-1  items-start gap-4`}>
-                        <div className={`flex flex-col gap-2 flex-wrap w-full mb-8`}>
-                            {current_Robot.type_problem.length > 0
-                                ?
-                                <div className={`rounded p-2 w-full flex flex-col gap-2`}>
-                                    <div className={`flex items-center justify-between gap-2`}>
-                                        <Badge variant={`destructive`} className="">{current_Robot.type_problem}</Badge>
-
-                                        <RobotStatusDialog
-                                            currentRobot={current_Robot}
-                                            actionType="edit"
-                                        />
-                                    </div>
-                                    <Label className="text-xl">{current_Robot.problem_note}</Label>
-                                    <div className={`flex items-center justify-between gap-2`}>
-                                        <div className={`mt-4`}>
-                                            <p className="text-xs text-muted-foreground">{current_Robot.updated_by?.user_name} - {current_Robot.updated_by?.warehouse}</p>
-                                            <p className="text-xs text-muted-foreground">{timeToString(current_Robot.updated_at)}</p>
-                                        </div>
-                                    </div>
-                                </div>
-                                :
-                                <Empty className="backdrop-blur-xl">
-                                    <EmptyHeader>
-                                        <EmptyMedia variant="icon">
-                                            <Bubbles/>
-                                        </EmptyMedia>
-                                        <EmptyTitle>No Issue</EmptyTitle>
-                                        <EmptyDescription>
-                                            Robot going well and without any problems.
-                                        </EmptyDescription>
-                                    </EmptyHeader>
-                                </Empty>
-                            }
-                        </div>
-
-                        <Separator className={`my-4`}/>
-
-                        <div className={`w-full`}>
-                            <div className={`rounded mb-4 w-full`}>
-                                <AddCommentRobot
-                                    robot_data={current_Robot}
-                                />
-                            </div>
-                            <div className={`w-full`}>
-                                <CommentsList
-                                    robot_id={current_Robot.id}
-                                />
-                            </div>
-                        </div>
-                    </div>
-                </div>
+            {/* ── Top bar ── */}
+            <div className="sticky top-0 z-10 border-b border-border bg-card/80 backdrop-blur px-6 py-3">
+                <Breadcrumb>
+                    <BreadcrumbList>
+                        <BreadcrumbSeparator className={`rotate-180 text-foreground font-bold`}/>
+                        <BreadcrumbItem>
+                            <BreadcrumbLink>
+                                <Link className={`text-foreground font-bold`} href={`/dashboard/${user?.auth_id || ""}`}>Back</Link>
+                            </BreadcrumbLink>
+                        </BreadcrumbItem>
+                    </BreadcrumbList>
+                </Breadcrumb>
             </div>
 
+            <div className="max-w-[1600px] mx-auto px-4 lg:px-8 py-6 space-y-6">
 
-            <div className={`flex flex-col items-start gap-4 w-full`}>
-                <RobotGraph current_Robot={current_Robot}/>
-                <div className={`w-full`}>
-                    <RobotHistory
-                        robot={current_Robot}
-                    />
+                {/* ── Hero header ── */}
+                <div className="flex flex-wrap items-center justify-between gap-4">
+                    <div className="flex items-center gap-4">
+                        <div className={`flex h-14 w-14 items-center justify-center rounded-xl border-2 ${offline ? "border-destructive/40 bg-destructive/5" : "border-emerald-500/40 bg-emerald-500/5"}`}>
+                            <RobotImage type={current_Robot.robot_type} status={current_Robot.status}/>
+                        </div>
+                        <div>
+                            <div className="flex items-center gap-2">
+                                <h1 className="text-2xl font-bold tracking-tight">
+                                    {current_Robot.robot_number}
+                                </h1>
+                                <Badge variant={offline ? "destructive" : "default"} className="text-xs">
+                                    {offline ? "Offline" : "Online"}
+                                </Badge>
+                            </div>
+                            <div className="flex items-center gap-3 mt-1 text-xs text-muted-foreground">
+                                <span className="flex items-center gap-1">
+                                    <MapPin size={11}/> {current_Robot.warehouse ?? "—"}
+                                </span>
+                                <span className="flex items-center gap-1">
+                                    <Clock size={11}/> {timeToString(current_Robot.updated_at)}
+                                </span>
+                                {current_Robot.updated_by && (
+                                    <span>{current_Robot.updated_by.user_name}</span>
+                                )}
+                            </div>
+                        </div>
+                    </div>
+
+                    {/* Action buttons */}
+                    <ButtonGroup className={`grid gap-0 ${hasParts ? "grid-cols-3" : "grid-cols-2"}`}>
+                        {offline
+                            ? <RobotStatusDialog currentRobot={current_Robot} actionType="sendToMap"/>
+                            : <RobotStatusDialog currentRobot={current_Robot} actionType="sendToMaintenance"/>
+                        }
+                        <PartsPicker robot={current_Robot}/>
+                        {hasParts && <PartCopy robot={current_Robot}/>}
+                    </ButtonGroup>
+                </div>
+
+                {/* ── Main grid ── */}
+                <div className="grid grid-cols-1 lg:grid-cols-[1fr_640px] gap-6">
+                    <div className="space-y-4">
+
+                        <Card className={hasProblem ? "border-destructive/40" : ""}>
+                            <CardHeader className="pb-3">
+                                <div className="flex items-center justify-between">
+                                    <CardTitle className="text-sm font-medium text-muted-foreground uppercase tracking-wider">
+                                        Current Issue
+                                    </CardTitle>
+                                    {hasProblem && (
+                                        <RobotStatusDialog currentRobot={current_Robot} actionType="edit"/>
+                                    )}
+                                </div>
+                            </CardHeader>
+                            <CardContent>
+                                {hasProblem ? (
+                                    <div className="space-y-3">
+                                        <Badge variant="destructive">{current_Robot.type_problem}</Badge>
+                                        <p className="text-base font-medium">{current_Robot.problem_note}</p>
+                                        <p className="text-xs text-muted-foreground">
+                                            {current_Robot.updated_by?.user_name} · {current_Robot.updated_by?.warehouse} · {timeToString(current_Robot.updated_at)}
+                                        </p>
+                                    </div>
+                                ) : (
+                                    <Empty>
+                                        <EmptyHeader>
+                                            <EmptyMedia variant="icon">
+                                                <Bubbles/>
+                                            </EmptyMedia>
+                                            <EmptyTitle>No Issue</EmptyTitle>
+                                            <EmptyDescription>
+                                                Robot is running without any problems.
+                                            </EmptyDescription>
+                                        </EmptyHeader>
+                                    </Empty>
+                                )}
+                            </CardContent>
+                        </Card>
+
+                        <Card>
+                            <CardHeader className="pb-3">
+                                <CardTitle className="text-sm font-medium text-muted-foreground uppercase tracking-wider">
+                                    Comments
+                                </CardTitle>
+                            </CardHeader>
+                            <CardContent className="space-y-4">
+                                <AddCommentRobot robot_data={current_Robot}/>
+                                <Separator/>
+                                <CommentsList robot_id={current_Robot.id}/>
+                            </CardContent>
+                        </Card>
+                    </div>
+
+                    <div className="space-y-4">
+                        <Card>
+                            <CardHeader className="pb-3">
+                                <div className="flex items-center justify-between">
+                                    <CardTitle className="text-sm font-medium text-muted-foreground uppercase tracking-wider flex items-center gap-2">
+                                        <Wrench size={14}/> Parts History
+                                    </CardTitle>
+                                    <Badge variant="secondary" className="text-xs">
+                                        {current_Robot.parts_history.length} records
+                                    </Badge>
+                                </div>
+                            </CardHeader>
+                            <CardContent>
+                                <RobotHistory robot={current_Robot}/>
+                            </CardContent>
+                        </Card>
+                    </div>
                 </div>
             </div>
         </div>

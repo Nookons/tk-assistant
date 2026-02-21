@@ -6,18 +6,18 @@ export async function GET(request: Request) {
         .from('robots_maintenance_list')
         .select(`
             *,
-            add_by:employees!add_by(user_name, card_id, email, phone, warehouse, position),
-            updated_by:employees!updated_by(user_name, card_id, email, phone, warehouse, position),
+            add_by:employees!add_by(*),
+            updated_by:employees!updated_by(*),
             
             status_history:change_status_robots!robot_id(
                 *,
-                user:employees!add_by(user_name, card_id, email, phone, warehouse, position)
+                user:employees!add_by(*)
             ),
             
             
             parts_history:changed_parts!robot_id(
                 *,
-                user:employees!card_id(user_name, card_id, email, phone, warehouse, position),
+                user:employees!card_id(*),
                 robot:robots_maintenance_list!id(*)
             )
         `)

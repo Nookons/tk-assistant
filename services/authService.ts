@@ -6,7 +6,7 @@ export class AuthService {
     static async getUserByCardId(cardId: string): Promise<IUser | null> {
         const { data, error } = await supabase
             .from('employees')
-            .select('id, created_at, user_name, card_id, email, phone, warehouse, updated_at, score, position, avatar_url, auth_id')
+            .select('*')
             .eq('card_id', cardId)
             .maybeSingle();
 

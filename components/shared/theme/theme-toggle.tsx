@@ -6,15 +6,13 @@ import { useTheme } from "next-themes"
 import { Button } from "@/components/ui/button"
 
 interface props {
-    setMobileMenuOpen: (isOpen: boolean) => void;
 }
 
-export const ThemeToggle: React.FC<props> = ({setMobileMenuOpen})=> {
+export const ThemeToggle: React.FC<props> = ()=> {
     const { theme, setTheme } = useTheme()
 
     const toggleTheme = () => {
         setTheme(theme === "light" ? "dark" : "light")
-        setMobileMenuOpen(false)
     }
 
     return (

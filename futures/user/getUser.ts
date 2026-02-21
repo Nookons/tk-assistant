@@ -1,7 +1,7 @@
 
-export const getUserData = async ({user_phone} : {user_phone: string}) => {
+export const getUserByAuthId = async (auth_id : string) => {
     try {
-        const res = await fetch(`/api/user/get-user-by-phone?phone=${user_phone}`, {
+        const res = await fetch(`/api/user/get-user-by-auth-id?auth_id=${auth_id}`, {
             method: 'GET',
             headers: {
                 "Content-Type": "application/json",

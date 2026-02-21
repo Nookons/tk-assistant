@@ -254,7 +254,7 @@ const RobotHistory = ({robot}: { robot: IRobot }) => {
                                                     {event.problem_note && (
                                                         <div className="space-y-2">
                                                             <Label
-                                                                className="text-xs  whitespace-pre-wrap overflow-hidden transition-all duration-200"
+                                                                className="text-xs whitespace-pre-wrap overflow-hidden transition-all duration-200"
                                                                 style={{
                                                                     maxHeight: isExpanded ? '1000px' : '4.5em',
                                                                     display: '-webkit-box',
@@ -262,7 +262,9 @@ const RobotHistory = ({robot}: { robot: IRobot }) => {
                                                                     WebkitBoxOrient: 'vertical'
                                                                 }}
                                                             >
-                                                                {event.problem_note}
+                                                                <p className={`max-w-[150px]`}>
+                                                                    {event.problem_note}
+                                                                </p>
                                                             </Label>
                                                             <div className={`flex items-center gap-2 justify-between`}>
                                                                 {event.type_problem && (

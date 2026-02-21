@@ -39,12 +39,6 @@ const Exception = ({ data }: { data: IRobotException[] }) => {
                         <TableHead className="font-semibold">Robot</TableHead>
                         <TableHead className="font-semibold">Error Details</TableHead>
                         <TableHead className="font-semibold">Recovery</TableHead>
-                        <TableHead className="font-semibold">
-                            <div className="flex items-center gap-1.5">
-                                <Clock className="w-4 h-4" />
-                                Timeline
-                            </div>
-                        </TableHead>
                         <TableHead className="font-semibold text-center">Duration</TableHead>
                         <TableHead className="font-semibold">
                             <div className="flex items-center gap-1.5">
@@ -102,27 +96,6 @@ const Exception = ({ data }: { data: IRobotException[] }) => {
                                                     <p className="text-xs max-w-[200px] line-clamp-1 text-muted-foreground mt-1 leading-relaxed">
                                                         {exception.second_column}
                                                     </p>
-                                                )}
-                                            </div>
-                                        </div>
-                                    </div>
-                                </TableCell>
-
-                                {/* Recovery Cell */}
-                                <TableCell>
-                                    <div className="space-y-1.5 max-w-[250px] overflow-hidden">
-                                        <div className="flex items-start gap-2">
-                                            <CheckCircle2 className="w-4 h-4 text-green-500 mt-0.5 shrink-0" />
-                                            <div>
-                                                {exception.issue_description && (
-                                                    <div className="font-medium text-sm leading-tight">
-                                                        {exception.issue_description}
-                                                    </div>
-                                                )}
-                                                {exception.recovery_title && (
-                                                    <div className="text-xs text-muted-foreground mt-1 leading-relaxed">
-                                                        {exception.recovery_title}
-                                                    </div>
                                                 )}
                                             </div>
                                         </div>
