@@ -368,7 +368,7 @@ const SettingsDisplay = () => {
                     </Badge>
                 </div>
 
-                <div className={`grid grid-cols-2 gap-4 w-full`}>
+                <div className={`grid md:grid-cols-2 gap-4 w-full`}>
                     <div>
                         {/* Name */}
                         <div className="mb-6">
