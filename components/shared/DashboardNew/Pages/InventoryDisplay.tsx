@@ -47,7 +47,7 @@ const StockHistoryList = () => {
 
     if (!stock_history) return null;
 
-    const sorted = [...stock_history.filter(i => i.warehouse === warehouse)]
+    const sorted = [...stock_history.filter(robot => warehouse.toLowerCase() === 'leader' || robot.warehouse === warehouse)]
         .sort((a, b) => dayjs(b.created_at).valueOf() - dayjs(a.created_at).valueOf())
         .slice(0, 25);
 
@@ -218,7 +218,7 @@ selected, setSelected,
                     </div>
                 </Field>
                 <Field label="Warehouse" required>
-                    <Select value={warehouse} onValueChange={setWarehouse} disabled={true}>
+                    <Select value={warehouse} onValueChange={setWarehouse} disabled={false}>
                         <SelectTrigger className="w-full">
                             <Warehouse size={14} className="text-muted-foreground mr-1"/>
                             <SelectValue placeholder="Select"/>

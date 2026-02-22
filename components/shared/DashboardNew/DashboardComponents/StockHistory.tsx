@@ -15,7 +15,7 @@ const StockHistory = () => {
 
     const recentItems = useMemo<IHistoryStockItem[]>(() => {
         if (!stock_history) return [];
-        const filtered = stock_history.filter(item => item.warehouse === warehouse);
+        const filtered = stock_history.filter(robot => warehouse.toLowerCase() === 'leader' || robot.warehouse === warehouse)
         return [...filtered].reverse().slice(0, PREVIEW_LIMIT);
     }, [stock_history]);
 

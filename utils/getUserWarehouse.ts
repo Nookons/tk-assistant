@@ -1,5 +1,7 @@
 
 export const getUserWarehouse = (full_warehouse: string): string => {
+    if (full_warehouse.toLowerCase().includes("leader")) return "Leader";
+
     if (full_warehouse.includes("GLPC")) return "GLPC";
     if (full_warehouse.includes("TK CEE")) return "GLPC";
     if (full_warehouse.includes("PNT")) return "PNT";

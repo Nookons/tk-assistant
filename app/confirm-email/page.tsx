@@ -4,6 +4,7 @@ import { useRouter, useSearchParams } from "next/navigation";
 import { Loader2, CheckCircle, XCircle } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {supabase} from "@/lib/supabaseClient";
+import {useUserStore} from "@/store/user";
 
 type Status = "loading" | "success" | "error";
 
@@ -11,34 +12,62 @@ export default function ConfirmPage() {
     const [status, setStatus] = useState<Status>("loading");
     const [message, setMessage] = useState("");
     const router = useRouter();
-    const searchParams = useSearchParams();
+
+    const user_update = useUserStore(state => state.updateUser)
 
     useEffect(() => {
-        const handleConfirm = async () => {
-            const token_hash = searchParams.get("token_hash");
-            const type = searchParams.get("type"); // "email_change" | "signup" | etc.
-
-            if (!token_hash || !type) {
-                setStatus("error");
-                setMessage("Invalid confirmation link.");
-                return;
+        const checkCurrentSession = async () => {
+            const { data: { session } } = await supabase.auth.getSession();
+            if (session?.user) {
+                const user = session.user as any;
+                if (user.email) {
+                    user_update({ email: user.email });
+                    setStatus("success");
+                    return true;
+                }
             }
+            return false;
+        };
 
-            const { error } = await supabase.auth.verifyOtp({
-                token_hash,
-                type: type as any,
+        checkCurrentSession().then(handled => {
+            if (handled) return;
+
+            const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event, session) => {
+                if (event === 'SIGNED_IN' || event === 'USER_UPDATED') {
+                    const { data: { user } } = await supabase.auth.getUser();
+                    if (user?.email) {
+                        user_update({ email: user.email });
+                    }
+                    setStatus("success");
+                }
             });
 
-            if (error) {
-                setStatus("error");
-                setMessage(error.message);
-            } else {
+            const timer = setTimeout(() => {
+                setStatus(prev => prev === 'loading' ? 'error' : prev);
+                setMessage('Confirmation link expired or already used.');
+            }, 5000);
+
+            return () => {
+                subscription.unsubscribe();
+                clearTimeout(timer);
+            };
+        });
+    }, []);
+
+    useEffect(() => {
+        const confirm = async () => {
+            const { data: { session } } = await supabase.auth.getSession();
+
+            if (session?.user) {
+                await supabase.auth.signOut();
                 setStatus("success");
-                // Обнови юзера в store если нужно
+            } else {
+                setStatus("error");
+                setMessage('Confirmation link expired or already used.');
             }
         };
 
-        handleConfirm();
+        confirm();
     }, []);
 
     return (
@@ -59,8 +88,8 @@ export default function ConfirmPage() {
                         <p className="text-sm text-muted-foreground">
                             Your email has been successfully changed.
                         </p>
-                        <Button className="w-full" onClick={() => router.push("/profile")}>
-                            Go to profile
+                        <Button className="w-full" onClick={() => window.location.href = '/login'}>
+                            Sign in with new email
                         </Button>
                     </>
                 )}
@@ -70,7 +99,7 @@ export default function ConfirmPage() {
                         <XCircle className="h-10 w-10 text-red-500 mx-auto" />
                         <h2 className="text-lg font-semibold">Something went wrong</h2>
                         <p className="text-sm text-muted-foreground">{message}</p>
-                        <Button variant="outline" className="w-full" onClick={() => router.push("/profile")}>
+                        <Button variant="outline" className="w-full" onClick={() => router.push("/")}>
                             Back to profile
                         </Button>
                     </>

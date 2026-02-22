@@ -14,29 +14,11 @@ import {getAllStockHistory} from "@/futures/stock/getAllStockHistory";
 import {toast} from "sonner";
 
 const MainProvider = () => {
-    const router = useRouter();
-
-    const getSession = async () => {
-        const isSession = await AuthService.hasSession();
-
-        if (!isSession) {
-            const current_href = window.location.href;
-
-            if (current_href.includes('/login')) return;
-            router.push('/login');
-        }
-    }
-
-    useEffect(() => {
-        getSession()
-    }, []);
-
     const [isClient, setIsClient] = React.useState(false);
 
     React.useEffect(() => {
         setIsClient(true);
     });
-
 
     const setRobots = useRobotsStore(state => state.setRobots)
     const setStockTemplates = useStockStore(state => state.set_items_templates)

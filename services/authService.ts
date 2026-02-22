@@ -73,13 +73,59 @@ export class AuthService {
             return null;
         }
 
-        // создаём новый объект с email из Supabase
         return {
             ...employeeData,
             auth_email: authUser.email
         };
     }
 
+    static async requestPasswordReset(emailOrCardId: string): Promise<void> {
+        const isCardId = /^\d{8}$/.test(emailOrCardId.trim());
+
+        let authEmail: string;
+
+        if (isCardId) {
+            // Ищем по card_id
+            const { data, error } = await supabase
+                .from('employees')
+                .select('email, card_id')
+                .eq('card_id', emailOrCardId.trim())
+                .maybeSingle();
+
+            if (error || !data) {
+                throw new Error('No account found with this Card ID');
+            }
+
+            if (!data.email || data.email.includes('@company.local')) {
+                throw new Error(
+                    'This account has no real email address. Please contact your administrator to reset the password.'
+                );
+            }
+
+            authEmail = data.email;
+        } else {
+            // Ищем по реальному email
+            const { data, error } = await supabase
+                .from('employees')
+                .select('email, card_id')
+                .eq('email', emailOrCardId.trim())
+                .maybeSingle();
+
+            if (error || !data) {
+                throw new Error('No account found with this email address');
+            }
+
+            authEmail = data.email;
+        }
+
+        const { error: resetError } = await supabase.auth.resetPasswordForEmail(authEmail, {
+            redirectTo: `${window.location.origin}/reset-password`,
+        });
+
+        if (resetError) {
+            throw new Error(resetError.message);
+        }
+    }
 
     static async changePassword(newPassword: string): Promise<boolean> {
         const { data: { user }, error: userError } = await supabase.auth.getUser();
@@ -88,7 +134,6 @@ export class AuthService {
             throw new Error('Not authenticated');
         }
 
-        // 2. Меняем пароль
         const { error } = await supabase.auth.updateUser({
             password: newPassword,
         });
@@ -104,7 +149,6 @@ export class AuthService {
 
         return true;
     }
-
 
     static async logout() {
         await supabase.auth.signOut();
@@ -122,9 +166,10 @@ export class AuthService {
             throw new Error('User not found or not logged in');
         }
 
-        const { data: updatedData, error: updateError } = await supabase.auth.updateUser({
-            email: newEmail,
-        });
+        const { data: updatedData, error: updateError } = await supabase.auth.updateUser(
+            { email: newEmail },
+            { emailRedirectTo: `${window.location.origin}/confirm-email` } // ← добавить
+        );
 
         if (updateError || !updatedData.user) {
             throw new Error(updateError?.message || 'Failed to update email');

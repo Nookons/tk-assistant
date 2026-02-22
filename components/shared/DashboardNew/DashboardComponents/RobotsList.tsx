@@ -41,7 +41,7 @@ const RobotsList = ({previewLimit = 5, warehouse = 'GLPC'}: RobotsHistoryProps) 
         const query = search_value.trim().toLowerCase();
 
         return robots
-            .filter(robot => robot.warehouse === warehouse)
+            .filter(robot => warehouse.toLowerCase() === 'leader' || robot.warehouse === warehouse)
             .filter(robot =>
                 query === "" || robot.robot_number.toString().toLowerCase().includes(query)
             )
