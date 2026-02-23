@@ -4,21 +4,21 @@ interface IProps {
     material_number: string;
     warehouse: string;
     location: string;
-    quantity: string;
+    quantity: number;
 }
 
-export const AddToStockHistory = async ({card_id, material_number, location, warehouse, quantity}: IProps) => {
+export const AddToStockHistory = async ({data}: {data: IProps}) => {
     const res = await fetch(`/api/stock/add-to-stock-history`, {
         method: 'POST',
         headers: {
             "Content-Type": "application/json"
         },
         body: JSON.stringify({
-            add_by: card_id,
-            material_number,
-            value: quantity,
-            warehouse,
-            location
+            add_by: data.card_id,
+            material_number: data.material_number,
+            quantity: data.quantity,
+            warehouse: data.warehouse,
+            location: data.location
         })
     });
 

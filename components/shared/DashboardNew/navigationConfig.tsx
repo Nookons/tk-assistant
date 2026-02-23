@@ -15,7 +15,6 @@ import ReportsDisplay from "@/components/shared/DashboardNew/Pages/ReportsDispla
 import EmployeesDisplay from "@/components/shared/DashboardNew/Pages/EmployeesDisplay";
 import RobotsDisplay from "@/components/shared/DashboardNew/Pages/RobotsDisplay";
 import SettingsDisplay from "@/components/shared/DashboardNew/Pages/SettingsDisplay";
-import ErrorParseDisplay from "@/components/shared/DashboardNew/Pages/ErrorParseDisplay";
 import ErrorParseProvider from "@/components/shared/DashboardNew/Pages/ErrorParseProvider";
 import InventoryDisplay from "@/components/shared/DashboardNew/Pages/InventoryDisplay";
 

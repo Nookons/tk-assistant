@@ -11,8 +11,6 @@ import {Button} from "@/components/ui/button";
 import {ExceptionService} from "@/services/exceptionService";
 import {toast} from "sonner";
 import {useExceptionStore} from "@/store/exception";
-import {id} from "date-fns/locale";
-
 const Exception = ({ data }: { data: IRobotException[] }) => {
     const remove_exception_store = useExceptionStore(state => state.remove_exception);
 

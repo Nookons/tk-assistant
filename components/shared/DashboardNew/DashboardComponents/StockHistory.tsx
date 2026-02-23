@@ -45,13 +45,13 @@ const StockHistory = () => {
                     recentItems.map((item) => (
                         <TableRow
                             key={item.id}
-                            className={item.value < 0 ? "bg-destructive/5 hover:bg-destructive/10" : ""}
+                            className={item.quantity < 0 ? "bg-destructive/5 hover:bg-destructive/10" : ""}
                         >
                             <TableCell>{item.warehouse}</TableCell>
                             <TableCell>{item.user.user_name}</TableCell>
                             <TableCell>{item.material_number}</TableCell>
-                            <TableCell className={`font-medium ${item.value < 0 ? "text-destructive" : "text-emerald-500"}`}>
-                                {item.value > 0 ? `+${item.value}` : item.value}
+                            <TableCell className={`font-medium ${item.quantity < 0 ? "text-destructive" : "text-emerald-500"}`}>
+                                {item.quantity > 0 ? `+${item.quantity}` : item.quantity}
                             </TableCell>
                         </TableRow>
                     ))

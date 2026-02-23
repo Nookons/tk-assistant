@@ -10,7 +10,7 @@ import {useEffect, useState} from "react";
 import {IRobotException} from "@/types/Exception/Exception";
 import {NoteItem} from "@/types/Important/Important";
 import {IHistoryParts} from "@/types/robot/robot";
-import {generateMonthReport} from "@/futures/PDF/monthReport";
+import {generateMonthReport} from "@/futures/pdf/monthReport";
 import dayjs from "dayjs";
 
 export interface IMonthParts extends IHistoryParts {

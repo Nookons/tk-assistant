@@ -3,7 +3,7 @@ import React, {useEffect, useMemo, useState} from 'react';
 import dayjs from "dayjs";
 import ChangedParts from "@/components/shared/dashboard/ShiftStats/ChangedParts";
 import {useRobotsStore} from "@/store/robotsStore";
-import {getWorkDate} from "@/futures/Date/getWorkDate";
+import {getWorkDate} from "@/futures/date/getWorkDate";
 import {IRobot} from "@/types/robot/robot";
 import { IUser } from "@/types/user/user";
 

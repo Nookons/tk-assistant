@@ -1,16 +1,21 @@
 import {ParamValue} from "next/dist/server/request/params";
 
-export const addChangeParts = async ({parts, card_id, robot_id}: {parts: string[], card_id: ParamValue | number, robot_id: number}) => {
-    if (!parts) return;
+interface props {
+    parts_numbers: string[];
+    card_id:   number;
+    robot_id:  number;
+    warehouse: string;
+    location:  string;
+    quantity: number;
+}
+
+export const addChangeParts = async ({data}: {data: props}) => {
+    if (!data) return;
 
     const res = await fetch(`/api/robots/add-change-parts`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-            parts: parts,
-            card_id: card_id,
-            robot_id: robot_id
-        }),
+        body: JSON.stringify(data),
     });
 
     if (!res.ok) {
@@ -21,7 +26,7 @@ export const addChangeParts = async ({parts, card_id, robot_id}: {parts: string[
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-            card_id,
+            card_id: data.card_id,
             value: Number(0.5),
         })
     })

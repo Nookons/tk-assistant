@@ -3,7 +3,7 @@ interface IProps {
     card_id: string;
     material_number: string;
     warehouse: string;
-    quantity: string;
+    quantity: number;
     location: string;
     location_key: string;
 }

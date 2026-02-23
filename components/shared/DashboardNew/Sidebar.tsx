@@ -1,5 +1,5 @@
 import {LayoutDashboard, LogOut, ChevronsLeft, ChevronsRight} from "lucide-react";
-import {NAV_ITEMS} from "@/components/shared/DashboardNew/Navigation_config";
+import {NAV_ITEMS} from "@/components/shared/DashboardNew/navigationConfig";
 import {Badge} from "@/components/ui/badge";
 import {Separator} from "@/components/ui/separator";
 import {useUserStore} from "@/store/user";

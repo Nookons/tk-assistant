@@ -78,7 +78,7 @@ const StockHistoryList = () => {
                             <TableCell className="font-medium">{el.user.user_name}</TableCell>
                             <TableCell className="font-medium">{el.warehouse}</TableCell>
                             <TableCell className="font-medium">{el.location}</TableCell>
-                            <TableCell className="font-medium">{el.value}</TableCell>
+                            <TableCell className="font-medium">{el.quantity}</TableCell>
                             <TableCell className="font-medium">{el.material_number}</TableCell>
                             <TableCell className="font-medium">
                                 {timeToString(dayjs(el.created_at).valueOf())}

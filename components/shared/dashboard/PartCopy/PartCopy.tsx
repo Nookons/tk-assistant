@@ -16,7 +16,7 @@ import { getPartByNumber } from "@/futures/stock/getPartByNumber";
 import { IStockItemTemplate } from "@/types/stock/StockItem";
 import { timeToString } from "@/utils/timeToString";
 import { toast } from "sonner";
-import { getWorkDate } from "@/futures/Date/getWorkDate";
+import { getWorkDate } from "@/futures/date/getWorkDate";
 
 interface IPartLocal extends IStockItemTemplate {
     part_user_data: IHistoryParts;

@@ -47,22 +47,17 @@ const MovePartDialog = ({location, part}: { location: string | null, part: Locat
 
             setIsSending(true)
 
-            await AddToStock({
+            const moveData = {
                 card_id: user_store.card_id.toString(),
                 material_number: part.material_number,
                 location: new_location_value,
                 warehouse: part.warehouse,
                 location_key: `${part.warehouse.toLowerCase()}-${new_location_value.toLowerCase()}`,
-                quantity: part.total_quantity.toString()
-            })
+                quantity: Number(part.total_quantity)
+            };
 
-            await AddToStockHistory({
-                card_id: user_store.card_id.toString(),
-                material_number: part.material_number,
-                location: new_location_value,
-                warehouse: part.warehouse,
-                quantity: part.total_quantity.toString()
-            })
+            await AddToStock(moveData)
+            await AddToStockHistory({ data: moveData })
 
             await fetch(`/api/stock/use-part`, {
                 method: "POST",

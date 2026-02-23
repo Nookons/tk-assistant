@@ -16,8 +16,8 @@ import {
     SelectTrigger,
     SelectValue
 } from "@/components/ui/select";
-import {getWorkDate} from "@/futures/Date/getWorkDate";
-import {getInitialShift} from "@/futures/Date/getInitialShift";
+import {getWorkDate} from "@/futures/date/getWorkDate";
+import {getInitialShift} from "@/futures/date/getInitialShift";
 
 // Интерфейс пользователя
 interface IUser {

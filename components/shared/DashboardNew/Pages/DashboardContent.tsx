@@ -27,16 +27,6 @@ interface StatCard {
     color: string;
 }
 
-
-interface PlaceholderWidgetProps {
-    icon: React.ReactNode;
-    title: string;
-    description: string;
-    hint?: string;
-    minHeight?: string;
-}
-
-
 interface Props {
     onSelect: (id: string) => void;
 }
@@ -62,12 +52,12 @@ function DashboardContent({onSelect}: Props) {
         const lastMonth = filterByMonth(lastMonthDate.month(), lastMonthDate.year());
 
         // Считаем приход (>0) и расход (<0) отдельно
-        const income = thisMonth.filter(i => i.value > 0).reduce((sum, i) => sum + i.value, 0);
-        const outcome = thisMonth.filter(i => i.value < 0).reduce((sum, i) => sum + Math.abs(i.value), 0);
+        const income = thisMonth.filter(i => i.quantity > 0).reduce((sum, i) => sum + i.quantity, 0);
+        const outcome = thisMonth.filter(i => i.quantity < 0).reduce((sum, i) => sum + Math.abs(i.quantity), 0);
         const net = income - outcome;
 
         // % изменения net относительно прошлого месяца
-        const lastNet = lastMonth.reduce((sum, i) => sum + i.value, 0);
+        const lastNet = lastMonth.reduce((sum, i) => sum + i.quantity, 0);
         const diff = lastNet === 0 ? 100 : Math.round(((net - lastNet) / Math.abs(lastNet)) * 100);
 
         return {

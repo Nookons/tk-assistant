@@ -84,7 +84,7 @@ const StockHistoryList = () => {
                             </TableRow>
                         )}
                         {sorted.map((el) => (
-                            <TableRow key={el.id} className={el.value < 0 ? "bg-destructive/5 hover:bg-destructive/10" : ""}>
+                            <TableRow key={el.id} className={el.quantity < 0 ? "bg-destructive/5 hover:bg-destructive/10" : ""}>
                                 <TableCell>
                                     <ButtonGroup>
                                         <Button variant="secondary" size="sm" disabled={handleRemove.isPending}>
@@ -105,8 +105,8 @@ const StockHistoryList = () => {
                                     <Badge variant="outline" className="text-xs font-mono">{el.warehouse}</Badge>
                                 </TableCell>
                                 <TableCell className="text-sm font-mono text-muted-foreground hidden md:table-cell">{el.location}</TableCell>
-                                <TableCell className={`text-sm font-semibold tabular-nums ${el.value < 0 ? "text-destructive" : "text-emerald-500"}`}>
-                                    {el.value > 0 ? `+${el.value.toLocaleString()}` : el.value.toLocaleString()}
+                                <TableCell className={`text-sm font-semibold tabular-nums ${el.quantity < 0 ? "text-destructive" : "text-emerald-500"}`}>
+                                    {el.quantity > 0 ? `+${el.quantity.toLocaleString()}` : el.quantity.toLocaleString()}
                                 </TableCell>
                                 <TableCell className="text-sm font-mono text-muted-foreground max-w-[100px] truncate">{el.material_number}</TableCell>
                                 <TableCell className="text-xs text-muted-foreground whitespace-nowrap hidden sm:table-cell">
@@ -296,16 +296,19 @@ const Page = () => {
                 card_id: user_store!.card_id.toString(),
                 material_number: picked_template!.material_number,
                 location_key: `${warehouse.toLowerCase()}-${location.toLowerCase()}`,
-                warehouse, location, quantity,
+                warehouse,
+                location,
+                quantity: Number(quantity),
             };
+
             await AddToStock(data);
-            const history_response = await AddToStockHistory(data);
+            const history_response = await AddToStockHistory({data});
             add_new({
                 ...data,
                 id: history_response.id.toString(),
-                value: Number(quantity),
                 created_at: dayjs().toDate(),
                 add_by: user_store?.card_id || 0,
+                quantity: data.quantity,
                 user: user_store!,
             });
             toast.success("Added to stock", {

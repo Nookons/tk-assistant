@@ -2,7 +2,7 @@
 import {useEffect, useState} from "react";
 import Sidebar from "@/components/shared/DashboardNew/Sidebar";
 import DashboardHeader from "@/components/shared/DashboardNew/DashboardHeader";
-import { PAGE_REGISTRY } from "@/components/shared/DashboardNew/Navigation_config";
+import { PAGE_REGISTRY } from "@/components/shared/DashboardNew/navigationConfig";
 
 export default function Dashboard() {
     const [activeNav, setActiveNav] = useState<string>(() => {

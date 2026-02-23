@@ -1,4 +1,3 @@
-// hooks/useNavBadges.ts
 import {useStockStore} from "@/store/stock";
 import {useRobotsStore} from "@/store/robotsStore";
 
@@ -9,8 +8,8 @@ export const useNavBadges = (): Record<string, number | undefined> => {
     const offlineRobots = robots?.filter(r => r.status === "离线 | Offline").length;
 
     return {
-        robots: offlineRobots || undefined,     // сколько роботов оффлайн
-        stock: 0 || undefined,        // необработанные записи
-        employees: undefined,                    // убираем хардкод
+        robots: offlineRobots || undefined,
+        stock: 0 || undefined,
+        employees: undefined,
     };
 };

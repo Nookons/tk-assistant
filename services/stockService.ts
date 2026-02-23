@@ -26,6 +26,24 @@ export class StockService {
         return updatedItem;
     }
 
+    static async removePartsFromStock(payload: {
+        warehouse: string;
+        location: string;
+        material_number: string;
+        quantity: number;
+    }): Promise<unknown> {
+        const locationKey = `${payload.warehouse.toLowerCase()}-${payload.location.toLowerCase()}`;
+
+        const { data: result, error } = await supabase.rpc('remove_parts_from_stock', {
+            p_location_key: locationKey,
+            p_material_number: payload.material_number,
+            p_quantity: payload.quantity,
+        });
+
+        if (error) throw new Error(error.message);
+        return result;
+    }
+
     static async removeHistoryItem(data: IHistoryStockItem): Promise<IHistoryStockItem> {
         const { data: result, error } = await supabase
             .rpc('remove_stock_history_item', { p_id: data.id });

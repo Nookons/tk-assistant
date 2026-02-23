@@ -6,7 +6,7 @@ import { IUser } from "@/types/user/user";
 import { getEmployeesList } from "@/futures/user/getEmployees";
 import { addNewException } from "@/futures/exception/addNewException";
 import { generateIssueKey } from "@/components/shared/DashboardNew/DashboardComponents/ErrorParse/GenerateIssueKey";
-import { getInitialShiftByTime } from "@/futures/Date/getInitialShift";
+import { getInitialShiftByTime } from "@/futures/date/getInitialShift";
 
 const REQUEST_DELAY = 150;
 

@@ -2,7 +2,7 @@ import React, {useState} from 'react';
 import dayjs from "dayjs";
 import {IRobotException} from "@/types/Exception/Exception";
 import {NoteItem} from "@/types/Important/Important";
-import {generateMonthReport} from "@/futures/PDF/monthReport";
+import {generateMonthReport} from "@/futures/pdf/monthReport";
 import MonthPicker from "@/components/shared/DatesPickers/MonthPicker";
 import {Button} from "@/components/ui/button";
 import {Badge} from "@/components/ui/badge";

@@ -51,6 +51,8 @@ export interface IHistoryParts {
     robot_id: number;
     created_at: Timestamp;
     parts_numbers: string;
+    warehouse: string;
+    quantity: number;
     user: IUser;
     robot: IRobotNotFull
 }

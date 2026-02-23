@@ -14,7 +14,7 @@ import {
 } from "@/components/shared/DashboardNew/DashboardComponents/ErrorParse/ValidateErrorLine";
 import {parseErrorTime} from "@/components/shared/DashboardNew/DashboardComponents/ErrorParse/ParseErrorTime";
 import {generateIssueKey} from "@/components/shared/DashboardNew/DashboardComponents/ErrorParse/GenerateIssueKey";
-import {getInitialShiftByTime} from "@/futures/Date/getInitialShift";
+import {getInitialShiftByTime} from "@/futures/date/getInitialShift";
 import {addNewException} from "@/futures/exception/addNewException";
 import {Textarea} from "@/components/ui/textarea";
 import {Button} from "@/components/ui/button";

@@ -14,7 +14,7 @@ import {BellPlus, ChevronDownIcon} from "lucide-react";
 import {Calendar} from "@/components/ui/calendar";
 import {Textarea} from "@/components/ui/textarea";
 import {useUserStore} from "@/store/user";
-import {getWorkDate} from "@/futures/Date/getWorkDate";
+import {getWorkDate} from "@/futures/date/getWorkDate";
 import dayjs from "dayjs";
 import {addNotes} from "@/futures/important/addNotes";
 import {toast} from "sonner";
