@@ -1,5 +1,4 @@
 
-
 export interface IStockAmountItem {
     id: number;
     created_at: Date;
@@ -9,4 +8,6 @@ export interface IStockAmountItem {
     material_number: string;
     warehouse: string;
     location: string;
+    location_key: string;
+    card_id?: number;
 }

@@ -3,6 +3,7 @@ import dayjs from "dayjs";
 import {IStockItemTemplate} from "@/types/stock/StockItem";
 import utc from "dayjs/plugin/utc";
 import {IHistoryStockItem} from "@/types/stock/HistoryStock";
+import {IStockAmountItem} from "@/types/stock/StockAmounts";
 
 dayjs.extend(utc);
 
@@ -26,29 +27,60 @@ export class StockService {
         return updatedItem;
     }
 
-    static async removePartsFromStock(payload: {
-        warehouse: string;
-        location: string;
-        material_number: string;
-        quantity: number;
-    }): Promise<unknown> {
-        const locationKey = `${payload.warehouse.toLowerCase()}-${payload.location.toLowerCase()}`;
+    static async addStockRecord(data: Partial<IHistoryStockItem>): Promise<IStockItemTemplate | null> {
+        const { data: oldItem, error } = await supabase
+            .from('stock')
+            .select('*')
+            .eq('location', data.location)
+            .eq('material_number', data.material_number)
+            .eq('warehouse', data.warehouse?.toUpperCase())
+            .maybeSingle();
 
-        const { data: result, error } = await supabase.rpc('remove_parts_from_stock', {
-            p_location_key: locationKey,
-            p_material_number: payload.material_number,
-            p_quantity: payload.quantity,
-        });
+        if (oldItem) {
+            const { data: updatedItem } = await supabase
+                .from('stock')
+                .update({
+                    quantity: oldItem.quantity + (data.quantity ?? 0),
+                    last_update_by: data.card_id,
+                })
+                .eq('id', oldItem.id)
+                .select()
+                .single();
 
-        if (error) throw new Error(error.message);
-        return result;
+            return updatedItem;
+        }
+
+        const { data: newStockRecord } = await supabase
+            .from('stock')
+            .insert({
+                quantity: data.quantity,
+                last_update_by: data.card_id,
+                material_number: data.material_number,
+                warehouse: data.warehouse,
+                location: data.location,
+                location_key: `${data.warehouse?.toLowerCase()}-${data.location?.toLowerCase()}`,
+            })
+            .select()
+            .single();
+
+        return newStockRecord;
     }
 
-    static async removeHistoryItem(data: IHistoryStockItem): Promise<IHistoryStockItem> {
-        const { data: result, error } = await supabase
-            .rpc('remove_stock_history_item', { p_id: data.id });
+    static async addStockHistory(data: Partial<IHistoryStockItem>): Promise<IHistoryStockItem> {
+        const {data: result, error} = await supabase
+            .from('stock_history')
+            .insert({
+                card_id: data.card_id,
+                material_number: data.material_number,
+                warehouse: data.warehouse,
+                quantity: data.quantity,
+                location: data.location,
+            })
+            .select('*, user:employees!card_id(*)')
+            .single();
 
         if (error) throw new Error(error.message);
+
         return result;
     }
 }

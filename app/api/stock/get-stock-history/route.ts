@@ -7,7 +7,7 @@ export async function GET(request: NextRequest) {
             .from('stock_history')
             .select(`
             *,
-            user:employees!add_by(user_name, card_id, email, phone, warehouse, position)
+            user:employees!card_id(user_name, card_id, email, phone, warehouse, position)
             `)
 
         const { data, error } = await query;

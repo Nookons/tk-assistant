@@ -14,15 +14,10 @@ import { parseErrorTime } from "@/components/shared/DashboardNew/DashboardCompon
 
 import errors_data_raw from "@/utils/ErrorsPatterns/ErrorsPatterns.json";
 import { useRobotsByWarehouse } from "./useRobotsByWarehouse";
+import {getUserWarehouse} from "@/utils/getUserWarehouse";
 
 const errors_data = errors_data_raw as JsonError[];
 
-// ─── Helpers ──────────────────────────────────────────────────────────────────
-
-const findBestTemplate = (query: string, templates: Awaited<ReturnType<typeof getExceptionsTemplates>>) =>
-    templates
-        ?.filter((t) => query.toLowerCase().includes(t.employee_title.toLowerCase()))
-        .sort((a, b) => b.employee_title.length - a.employee_title.length)[0];
 
 const buildGlpcIssue = (
     parts: string[],
@@ -57,20 +52,34 @@ const buildGlpcIssue = (
     };
 };
 
-const buildP3Issue = (
-    parts: string[],
-    currentEmployee: string,
-    p3Robots: IRobot[],
-    templates: NonNullable<Awaited<ReturnType<typeof getExceptionsTemplates>>>,
-    now: dayjs.Dayjs
-): ILocalIssue | null => {
-    const [robot_number, , error_sub_type, recovery_text, errorTime] = parts;
+const buildP3Issue = (parts: string[], currentEmployee: string, p3Robots: IRobot[], templates: NonNullable<Awaited<ReturnType<typeof getExceptionsTemplates>>>, now: dayjs.Dayjs): ILocalIssue | null => {
+    const robot_number  = parts[0];
+    const issue_type    = parts[1];
+    const issue_sub_type = parts[2];
+    const start_time    = parts[parts.length - 1]; // всегда последний
+    const recovery_title = parts.slice(3, parts.length - 1).join(', '); // всё между
 
-    const pattern = findBestTemplate(error_sub_type, templates);
+    console.log(start_time);
+
+    const pattern = templates.find(item => {
+        const title = item.employee_title?.toLowerCase() ?? '';
+        const subType = issue_sub_type?.toLowerCase() ?? '';
+
+        return title.includes(subType) || subType.includes(title);
+    });
+
     if (!pattern) return null;
 
-    const startTime = parseErrorTime(errorTime, now);
-    const robotType = p3Robots.find((r) => Number(r.robot_number) === Number(robot_number))?.robot_type ?? "Unknown";
+    let device_type = '';
+
+    const hasTime = /^\d{1,2}:\d{2}$/.test(start_time.trim());
+    const startTime = parseErrorTime(hasTime ? start_time : '', now);
+
+    if (robot_number.startsWith('H')) {
+        device_type = 'Workstation'
+    } else {
+        device_type = p3Robots.find((r) => Number(r.robot_number) === Number(robot_number))?.robot_type ?? "Unknown";
+    }
 
     return {
         employee:          currentEmployee,
@@ -79,11 +88,11 @@ const buildP3Issue = (
         error_robot:       robot_number,
         error_start_time:  startTime.toDate(),
         error_end_time:    startTime.add(pattern.solving_time, "minute").toDate(),
-        recovery_title:    recovery_text,
+        recovery_title:    recovery_title,
         solving_time:      pattern.solving_time,
-        device_type:       robotType,
+        device_type:       device_type,
         issue_type:        pattern.equipment_type,
-        issue_description: error_sub_type,
+        issue_description: issue_sub_type,
         warehouse:         "P3",
     };
 };
@@ -112,10 +121,6 @@ export const useErrorParser = () => {
             .map((l) => l.trim())
             .filter(Boolean);
 
-        if (!lines.length) {
-            toast.error("No data to parse");
-            return;
-        }
 
         if (!templates_data) {
             toast.error("Templates not loaded. Try again.");
@@ -123,36 +128,56 @@ export const useErrorParser = () => {
         }
 
         const users: IUser[] | null = await getEmployeesList();
+
         if (!users) {
             toast.error("Failed to fetch employees list");
             return;
         }
 
-        const now             = dayjs();
+        const now= dayjs();
+
         let currentEmployee   = "";
+        let user_warehouse: string = '';
+
         const tempParsed: ILocalIssue[] = [];
         const tempErrors: string[]      = [];
 
         lines.forEach((line, index) => {
             const lineNum = index + 1;
+            const current_user = users.find((u) => u.user_name.toLowerCase() === line.toLowerCase());
 
-            // ── Employee name line
-            const isUser = users.find((u) => u.user_name === line);
-            if (isUser) {
+            if (current_user) {
+                console.log(current_user);
                 currentEmployee = line;
+                user_warehouse = getUserWarehouse(current_user.warehouse);
                 return;
             }
 
-            const parts = line.trim().split(".");
+            console.log(currentEmployee);
+            console.log(user_warehouse);
+            console.log(line);
 
-            // ── Try GLPC format first
-            const glpcValidation = validateErrorLine(line);
-            if (glpcValidation.valid) {
-                if (!currentEmployee) {
-                    tempErrors.push(`Line ${lineNum}: No employee specified - "${line}"`);
+            //console.log([...line].map(c => c + ' = ' + c.charCodeAt(0)));
+            const parts = line.trim().split(/[.,]/).map(s => s.trim());
+
+            if (user_warehouse === 'P3') {
+                if (parts.length < 5) {
+                    if (parts.length < 2) return;
+                    tempErrors.push(`Line ${lineNum}: Error have not correct pattern, plase use only . and must be 5 parts -> ${line}`);
                     return;
                 }
 
+                const issue = buildP3Issue(parts, currentEmployee, p3, templates_data, now);
+
+                if (!issue) {
+                    tempErrors.push(`Line ${lineNum}: Unknown error type "${parts[2]}" (P3)`);
+                    return;
+                }
+
+                tempParsed.push(issue);
+                return;
+
+            } else {
                 const issue = buildGlpcIssue(parts, currentEmployee, robots, now);
 
                 if (!issue) {
@@ -163,21 +188,6 @@ export const useErrorParser = () => {
                 tempParsed.push(issue);
                 return;
             }
-
-            // ── Try P3 format
-            const p3Validation = validateErrorLineP3(line);
-            if (!p3Validation.valid) {
-                tempErrors.push(`Line ${lineNum}: ${glpcValidation.error} - "${line}"`);
-                return;
-            }
-
-            const issue = buildP3Issue(parts, currentEmployee, p3, templates_data, now);
-            if (!issue) {
-                tempErrors.push(`Line ${lineNum}: Unknown error type "${parts[2]}" (P3)`);
-                return;
-            }
-
-            tempParsed.push(issue);
         });
 
         setParsedIssues(tempParsed);

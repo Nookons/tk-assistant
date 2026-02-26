@@ -3,123 +3,28 @@ import React, {useEffect, useState} from 'react';
 import AllPartsPicker from "@/components/shared/AllPartsPicker/AllPartsPicker";
 import {Input} from "@/components/ui/input";
 import {Button} from "@/components/ui/button";
-import {Select, SelectContent, SelectGroup, SelectItem, SelectLabel, SelectTrigger, SelectValue} from "@/components/ui/select";
+import {
+    Select,
+    SelectContent,
+    SelectGroup,
+    SelectItem,
+    SelectLabel,
+    SelectTrigger,
+    SelectValue
+} from "@/components/ui/select";
 import {useUserStore} from "@/store/user";
 import {useStockStore} from "@/store/stock";
 import {IStockItemTemplate} from "@/types/stock/StockItem";
 import {toast} from "sonner";
 import {AddToStock} from "@/futures/stock/AddToStock";
 import {AddToStockHistory} from "@/futures/stock/AddToStockHistory";
-import {Loader2, Package, PackagePlus, Warehouse, MapPin, Hash, ClipboardList} from "lucide-react";
+import {Loader2, PackagePlus, Warehouse, MapPin, Hash, ClipboardList} from "lucide-react";
 import StockItemPreview from "@/components/shared/Stock/StockItemPreview";
-import {Table, TableBody, TableCell, TableHead, TableHeader, TableRow} from "@/components/ui/table";
-import {Badge} from "@/components/ui/badge";
-import {ButtonGroup} from "@/components/ui/button-group";
-import {Pencil, Trash2} from "lucide-react";
-import {useMutation} from "@tanstack/react-query";
-import {StockService} from "@/services/stockService";
-import {IHistoryStockItem} from "@/types/stock/HistoryStock";
-import {timeToString} from "@/utils/timeToString";
 import dayjs from "dayjs";
 import {Separator} from "@/components/ui/separator";
-import {getUserWarehouse} from "@/utils/getUserWarehouse";
 import {Tabs, TabsContent, TabsList, TabsTrigger} from "@/components/ui/tabs";
-
-
-const StockHistoryList = () => {
-    const user = useUserStore(state => state.currentUser);
-    const warehouse = getUserWarehouse(user?.warehouse || "");
-    const stock_history = useStockStore(state => state.stock_history);
-    const delete_item_from_history = useStockStore(state => state.delete_item_from_history);
-
-    const handleRemove = useMutation({
-        mutationFn: (data: IHistoryStockItem) => StockService.removeHistoryItem(data),
-        onSuccess: (deletedItem) => {
-            if (delete_item_from_history) delete_item_from_history(deletedItem.id.toString());
-            toast.success("Entry removed");
-        },
-        onError: () => toast.error("Failed to remove entry"),
-    });
-
-    const handleDelete = (item: IHistoryStockItem) => {
-        if (window.confirm('Remove this entry?')) handleRemove.mutate(item);
-    };
-
-    if (!stock_history) return null;
-
-    const sorted = [...stock_history.filter(robot => warehouse.toLowerCase() === 'leader' || robot.warehouse === warehouse)]
-        .sort((a, b) => dayjs(b.created_at).valueOf() - dayjs(a.created_at).valueOf())
-        .slice(0, 25);
-
-    return (
-        <div className="rounded-xl border bg-card overflow-hidden h-full flex flex-col">
-            <div>
-                <p className={`px-4 py-2 text-xs font-medium text-muted-foreground`}>In this section, you will find historical data exclusively for the warehouse in which you are currently working.</p>
-            </div>
-            <div className="flex items-center gap-2 px-4 py-3 border-b bg-muted/30 shrink-0">
-                <ClipboardList size={15} className="text-muted-foreground"/>
-                <span className="text-sm font-medium">Recent Entries</span>
-                <Badge variant="secondary" className="ml-auto text-xs">{sorted.length}</Badge>
-            </div>
-            <div className="overflow-auto flex-1">
-                <Table>
-                    <TableHeader>
-                        <TableRow className="hover:bg-transparent">
-                            <TableHead className="text-xs w-[80px]">Actions</TableHead>
-                            <TableHead className="text-xs">Employee</TableHead>
-                            <TableHead className="text-xs hidden sm:table-cell">Warehouse</TableHead>
-                            <TableHead className="text-xs hidden md:table-cell">Location</TableHead>
-                            <TableHead className="text-xs">Qty</TableHead>
-                            <TableHead className="text-xs">Material</TableHead>
-                            <TableHead className="text-xs hidden sm:table-cell">Time</TableHead>
-                        </TableRow>
-                    </TableHeader>
-                    <TableBody>
-                        {sorted.length === 0 && (
-                            <TableRow>
-                                <TableCell colSpan={7} className="py-10 text-center text-sm text-muted-foreground">
-                                    <Package size={24} className="mx-auto mb-2 opacity-30"/>
-                                    No entries yet for {warehouse}
-                                </TableCell>
-                            </TableRow>
-                        )}
-                        {sorted.map((el) => (
-                            <TableRow key={el.id} className={el.quantity < 0 ? "bg-destructive/5 hover:bg-destructive/10" : ""}>
-                                <TableCell>
-                                    <ButtonGroup>
-                                        <Button variant="secondary" size="sm" disabled={handleRemove.isPending}>
-                                            <Pencil size={13}/>
-                                        </Button>
-                                        <Button
-                                            variant="destructive"
-                                            size="sm"
-                                            onClick={() => handleDelete(el)}
-                                            disabled={handleRemove.isPending}
-                                        >
-                                            <Trash2 size={13}/>
-                                        </Button>
-                                    </ButtonGroup>
-                                </TableCell>
-                                <TableCell className="text-sm font-medium">{el.user.user_name}</TableCell>
-                                <TableCell className="hidden sm:table-cell">
-                                    <Badge variant="outline" className="text-xs font-mono">{el.warehouse}</Badge>
-                                </TableCell>
-                                <TableCell className="text-sm font-mono text-muted-foreground hidden md:table-cell">{el.location}</TableCell>
-                                <TableCell className={`text-sm font-semibold tabular-nums ${el.quantity < 0 ? "text-destructive" : "text-emerald-500"}`}>
-                                    {el.quantity > 0 ? `+${el.quantity.toLocaleString()}` : el.quantity.toLocaleString()}
-                                </TableCell>
-                                <TableCell className="text-sm font-mono text-muted-foreground max-w-[100px] truncate">{el.material_number}</TableCell>
-                                <TableCell className="text-xs text-muted-foreground whitespace-nowrap hidden sm:table-cell">
-                                    {timeToString(dayjs(el.created_at).valueOf())}
-                                </TableCell>
-                            </TableRow>
-                        ))}
-                    </TableBody>
-                </Table>
-            </div>
-        </div>
-    );
-};
+import StockHistoryList from "@/components/shared/DashboardNew/DashboardComponents/Stock/StockHistoryList";
+import {StockService} from "@/services/stockService";
 
 
 const Field = ({label, required, hint, children}: {
@@ -140,9 +45,9 @@ const Field = ({label, required, hint, children}: {
 
 
 const StockForm = ({
-location, setLocation,
-selected, setSelected,
-   quantity, setQuantity,
+                       location, setLocation,
+                       selected, setSelected,
+                       quantity, setQuantity,
                        warehouse, setWarehouse,
                        picked_template, isLoadingTemplate, isSubmitting,
                        canShowForm, handleSubmit
@@ -151,10 +56,13 @@ selected, setSelected,
         {/* Step 1 */}
         <div className="space-y-4">
             <div className="flex items-center gap-2">
-                <div className="flex h-5 w-5 items-center justify-center rounded-full bg-muted text-[11px] font-bold text-muted-foreground">1</div>
+                <div
+                    className="flex h-5 w-5 items-center justify-center rounded-full bg-muted text-[11px] font-bold text-muted-foreground">1
+                </div>
                 <span className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">Location</span>
             </div>
-            <Field label="Storage Location Code" required hint="Enter the storage location code for GLPC, PNT, SMALL P3…">
+            <Field label="Storage Location Code" required
+                   hint="Enter the storage location code for GLPC, PNT, SMALL P3…">
                 <div className="relative">
                     <MapPin size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground"/>
                     <Input
@@ -168,10 +76,13 @@ selected, setSelected,
         </div>
 
         {/* Step 2 */}
-        <div className={`space-y-4 transition-opacity ${canShowForm ? "opacity-100" : "opacity-40 pointer-events-none select-none"}`}>
+        <div
+            className={`space-y-4 transition-opacity ${canShowForm ? "opacity-100" : "opacity-40 pointer-events-none select-none"}`}>
             <Separator/>
             <div className="flex items-center gap-2">
-                <div className="flex h-5 w-5 items-center justify-center rounded-full bg-muted text-[11px] font-bold text-muted-foreground">2</div>
+                <div
+                    className="flex h-5 w-5 items-center justify-center rounded-full bg-muted text-[11px] font-bold text-muted-foreground">2
+                </div>
                 <span className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">Material</span>
             </div>
             {isLoadingTemplate ? (
@@ -187,16 +98,20 @@ selected, setSelected,
             {selected && !picked_template && !isLoadingTemplate && (
                 <div className="rounded-lg border border-destructive/40 bg-destructive/10 px-3 py-2.5">
                     <p className="text-sm text-destructive font-medium">Template not found</p>
-                    <p className="text-xs text-destructive/70 mt-0.5">No template for: <span className="font-mono">{selected}</span></p>
+                    <p className="text-xs text-destructive/70 mt-0.5">No template for: <span
+                        className="font-mono">{selected}</span></p>
                 </div>
             )}
         </div>
 
         {/* Step 3 */}
-        <div className={`space-y-4 transition-opacity ${canShowForm ? "opacity-100" : "opacity-40 pointer-events-none select-none"}`}>
+        <div
+            className={`space-y-4 transition-opacity ${canShowForm ? "opacity-100" : "opacity-40 pointer-events-none select-none"}`}>
             <Separator/>
             <div className="flex items-center gap-2">
-                <div className="flex h-5 w-5 items-center justify-center rounded-full bg-muted text-[11px] font-bold text-muted-foreground">3</div>
+                <div
+                    className="flex h-5 w-5 items-center justify-center rounded-full bg-muted text-[11px] font-bold text-muted-foreground">3
+                </div>
                 <span className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">Quantity & Warehouse</span>
             </div>
             <div className="grid grid-cols-2 gap-3">
@@ -259,11 +174,17 @@ const Page = () => {
     const user_store = useUserStore(state => state.currentUser)
     const items_templates = useStockStore(state => state.items_templates)
     const [picked_template, setPicked_template] = useState<IStockItemTemplate | null>(null)
-    const add_new = useStockStore(state => state.add_item_to_history);
+    const store_stock_history_add = useStockStore(state => state.add_item_to_history);
 
     useEffect(() => {
-        if (!selected) { setPicked_template(null); return; }
-        if (!items_templates || !Array.isArray(items_templates)) { setPicked_template(null); return; }
+        if (!selected) {
+            setPicked_template(null);
+            return;
+        }
+        if (!items_templates || !Array.isArray(items_templates)) {
+            setPicked_template(null);
+            return;
+        }
         setIsLoadingTemplate(true);
         const id = setTimeout(() => {
             try {
@@ -279,46 +200,24 @@ const Page = () => {
         return () => clearTimeout(id);
     }, [selected, items_templates]);
 
-    const validateForm = () => {
-        if (!user_store)      { toast.error("User not found. Please log in."); return false; }
-        if (!picked_template) { toast.error("Please select a material"); return false; }
-        if (!warehouse)       { toast.error("Please select a warehouse"); return false; }
-        if (!quantity || parseInt(quantity) <= 0) { toast.error("Please enter a valid quantity"); return false; }
-        return true;
-    };
-
     const handleSubmit = async () => {
-        if (!validateForm()) return;
-        setIsSubmitting(true);
         try {
             const data = {
-                id: dayjs().valueOf(),
-                card_id: user_store!.card_id.toString(),
-                material_number: picked_template!.material_number,
-                location_key: `${warehouse.toLowerCase()}-${location.toLowerCase()}`,
-                warehouse,
-                location,
+                card_id: user_store?.card_id,
+                material_number: picked_template?.material_number,
+                warehouse: warehouse,
                 quantity: Number(quantity),
-            };
+                location: location,
+            }
 
-            await AddToStock(data);
-            const history_response = await AddToStockHistory({data});
-            add_new({
-                ...data,
-                id: history_response.id.toString(),
-                created_at: dayjs().toDate(),
-                add_by: user_store?.card_id || 0,
-                quantity: data.quantity,
-                user: user_store!,
-            });
-            toast.success("Added to stock", {
-                description: `${quantity} units of ${picked_template!.material_number}`
-            });
-            setQuantity("");
-        } catch (e) {
-            toast.error(e instanceof Error ? e.message : "Failed to add to stock");
-        } finally {
-            setIsSubmitting(false);
+            const history_response = await StockService.addStockHistory(data)
+            store_stock_history_add(history_response);
+
+            await StockService.addStockRecord(data)
+            toast.success(`Item was successfully added to Stock`)
+
+        } catch (err) {
+            err && toast.error(err.toString());
         }
     };
 
