@@ -1,4 +1,4 @@
-import { Label } from "@/components/ui/label";
+import {Label} from "@/components/ui/label";
 import {
     Sheet, SheetClose,
     SheetContent,
@@ -8,18 +8,20 @@ import {
     SheetTitle,
     SheetTrigger
 } from "@/components/ui/sheet";
-import React, { useEffect, useMemo, useState } from 'react';
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { IRobot } from "@/types/robot/robot";
-import { useStockStore } from "@/store/stock";
-import { ScrollArea } from "@/components/ui/scroll-area";
-import { IStockItemTemplate } from "@/types/stock/StockItem";
-import { cn } from "@/lib/utils";
-import { Search } from "lucide-react";
+import React, {useEffect, useMemo, useState} from 'react';
+import {Button} from "@/components/ui/button";
+import {Input} from "@/components/ui/input";
+import {IRobot} from "@/types/robot/robot";
+import {useStockStore} from "@/store/stock";
+import {ScrollArea} from "@/components/ui/scroll-area";
+import {IStockItemTemplate} from "@/types/stock/StockItem";
+import {cn} from "@/lib/utils";
+import {Search} from "lucide-react";
 import PartPreview from "@/components/shared/robot/PartPreview";
+import Image from "next/image";
+import {Avatar, AvatarFallback, AvatarImage} from "@/components/ui/avatar";
 
-const PartsPicker = ({ robot }: { robot: IRobot }) => {
+const PartsPicker = ({robot}: { robot: IRobot }) => {
     const stock_templates = useStockStore(state => state.items_templates);
 
     const [robot_parts, setRobot_parts] = useState<IStockItemTemplate[]>([]);
@@ -55,7 +57,7 @@ const PartsPicker = ({ robot }: { robot: IRobot }) => {
     return (
         <Sheet>
             <SheetTrigger asChild>
-                <Button variant="outline">Open</Button>
+                <Button variant="outline">New part</Button>
             </SheetTrigger>
 
             <SheetContent side="bottom" className="h-screen flex flex-col p-0">
@@ -73,7 +75,8 @@ const PartsPicker = ({ robot }: { robot: IRobot }) => {
 
                         <div className="px-4 py-3 border-b shrink-0">
                             <div className="relative">
-                                <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                                <Search
+                                    className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground"/>
                                 <Input
                                     value={search}
                                     onChange={(e) => setSearch(e.target.value)}
@@ -89,7 +92,8 @@ const PartsPicker = ({ robot }: { robot: IRobot }) => {
                         <ScrollArea className="h-[50dvh] md:h-[70dvh]">
                             <div className="grid md:grid-cols-4 gap-2 p-3">
                                 {filteredParts.length === 0 ? (
-                                    <div className="col-span-full flex items-center justify-center py-16 text-sm text-muted-foreground">
+                                    <div
+                                        className="col-span-full flex items-center justify-center py-16 text-sm text-muted-foreground">
                                         No parts found for &quot;{search}&quot;
                                     </div>
                                 ) : filteredParts.map((item) => (
@@ -103,8 +107,24 @@ const PartsPicker = ({ robot }: { robot: IRobot }) => {
                                                 : "border-border hover:border-primary/50 hover:bg-muted"
                                         )}
                                     >
-                                        <p className="text-[10px] font-mono text-muted-foreground">{item.material_number}</p>
-                                        <p className="text-sm font-medium mt-0.5 line-clamp-2">{item.description_eng}</p>
+                                        <div className={`grid ${filteredParts.length < 4 && 'grid-cols-[150px_1fr]'} gap-2`}>
+                                            {filteredParts.length < 4 && (
+                                                <Avatar className="w-[150px] h-[150px] rounded-md">
+                                                    <AvatarImage
+                                                        src={item.avatar_url}
+                                                        alt="part image"
+                                                        className="object-cover"
+                                                    />
+                                                    <AvatarFallback className="rounded-md text-xs text-muted-foreground">
+                                                        No img
+                                                    </AvatarFallback>
+                                                </Avatar>
+                                            )}
+                                            <div>
+                                                <p className="text-[10px] font-mono text-muted-foreground">{item.material_number}</p>
+                                                <p className="text-sm font-medium mt-0.5 line-clamp-2">{item.description_eng}</p>
+                                            </div>
+                                        </div>
                                     </div>
                                 ))}
                             </div>
@@ -112,11 +132,19 @@ const PartsPicker = ({ robot }: { robot: IRobot }) => {
                     </div>
 
                     <div className="w-full md:max-w-[400px] shrink-0 flex flex-col p-5 gap-4">
-                        {selectedPart ? (
-                            <PartPreview selectedPart={selectedPart} />
-                        ) : (
-                            <p className="text-sm text-muted-foreground">Select a part from the list</p>
-                        )}
+                        {selectedPart
+                            ?
+                            (
+                                <PartPreview
+                                    selectedPart={selectedPart}
+                                    robot={robot}
+                                />
+                            )
+                            :
+                            (
+                                <p className="text-sm text-muted-foreground">Select a part from the list</p>
+                            )
+                        }
                     </div>
                 </div>
 

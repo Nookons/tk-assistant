@@ -47,7 +47,9 @@ const MainProvider = () => {
     });
 
     useEffect(() => {
-        setRobots(data);
+        if (data !== undefined) {
+            setRobots(data);
+        }
     }, [data]);
 
     useEffect(() => {

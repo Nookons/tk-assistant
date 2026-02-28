@@ -4,7 +4,7 @@ import React, { useMemo } from 'react'
 import { useParams, notFound } from 'next/navigation'
 import Link from 'next/link'
 import Image from 'next/image'
-import { Bubbles, Clock, MapPin, Wrench } from 'lucide-react'
+import {Bubbles, CheckCircle2Icon, Clock, MapPin, Wrench} from 'lucide-react'
 
 import { useRobotsStore } from '@/store/robotsStore'
 import { useUserStore } from '@/store/user'
@@ -32,6 +32,7 @@ import CommentsList from '@/components/shared/robot/commentsList/CommentsList'
 import PartCopy from '@/components/shared/dashboard/PartCopy/PartCopy'
 import RobotStatusDialog from '@/components/shared/robot/EditStatus/RobotEditStatus'
 import PartsPicker from "@/components/shared/robot/addNewParts/PartsPicker";
+import {Alert, AlertDescription, AlertTitle} from "@/components/ui/alert";
 
 // ─────────────────────────────────────────────────────────
 // Helpers
@@ -93,7 +94,7 @@ export default function RobotPage() {
     const params    = useParams()
     const robotId   = Number(params?.id)
 
-    const robotsList  = useRobotsStore(state => state.robots)
+    const robotsList = useRobotsStore(state => state.robots)
     const user        = useUserStore(state => state.currentUser)
 
     const robot = useMemo(
@@ -101,10 +102,8 @@ export default function RobotPage() {
         [robotsList, robotId],
     )
 
-    // Store not yet hydrated — show skeleton immediately
-    if (!robotsList) return <PageSkeleton />
 
-    // Store is ready but robot doesn't exist → 404
+    if (robotsList === null) return <PageSkeleton />
     if (!robot) notFound()
 
     const offline    = isOffline(robot.status)
@@ -149,7 +148,7 @@ export default function RobotPage() {
                         </div>
 
                         <div>
-                            <div className="flex items-center gap-2">
+                            <div className="flex flex-wrap items-center gap-2">
                                 <h1 className="text-2xl font-bold tracking-tight">
                                     {robot.robot_number}
                                 </h1>
@@ -158,14 +157,14 @@ export default function RobotPage() {
                                 </Badge>
                             </div>
                             <div className="flex items-center gap-3 mt-1 text-xs text-muted-foreground">
-                <span className="flex items-center gap-1">
-                  <MapPin size={11} /> {robot.warehouse ?? '—'}
-                </span>
                                 <span className="flex items-center gap-1">
-                  <Clock size={11} /> {timeToString(robot.updated_at)}
-                </span>
+                                  <MapPin size={11} /> {robot.warehouse ?? '—'}
+                                </span>
+                                <span className="flex text-nowrap items-center gap-1">
+                                  <Clock size={11} /> {timeToString(robot.updated_at)}
+                                </span>
                                 {robot.updated_by && (
-                                    <span>{robot.updated_by.user_name}</span>
+                                    <span className={`line-clamp-1`}>{robot.updated_by.user_name}</span>
                                 )}
                             </div>
                         </div>
@@ -173,7 +172,7 @@ export default function RobotPage() {
 
                     {/* Action buttons */}
                     <ButtonGroup
-                        className={`grid gap-0 ${hasParts ? 'grid-cols-3' : 'grid-cols-2'}`}
+                        className={`w-full col-span-3 grid gap-0 ${hasParts ? 'grid-cols-3' : 'grid-cols-2'}`}
                     >
                         {offline
                             ? <RobotStatusDialog currentRobot={robot} actionType="sendToMap" />
@@ -182,6 +181,18 @@ export default function RobotPage() {
                         <PartsPicker robot={robot} />
                         {hasParts && <PartCopy robot={robot} />}
                     </ButtonGroup>
+                    {hasParts &&
+                        <Alert className="max-w-full">
+                            <CheckCircle2Icon />
+                            <AlertTitle>Changed parts</AlertTitle>
+                            <AlertDescription>
+                                <div className={`flex flex-wrap gap-2 items-center`}>
+                                    <p>Please don't forget to add this parts in list WeCom</p>
+                                    <Badge>GLP-C Spare Parts Inventory 备件管理</Badge>
+                                </div>
+                            </AlertDescription>
+                        </Alert>
+                    }
                 </div>
 
                 {/* ── Main grid ── */}
@@ -224,7 +235,7 @@ export default function RobotPage() {
                         </Card>
 
                         {/* Comments */}
-                        <Card>
+                        <Card className={``}>
                             <CardHeader className="pb-3">
                                 <CardTitle className="text-sm font-medium text-muted-foreground uppercase tracking-wider">
                                     Comments
@@ -239,9 +250,9 @@ export default function RobotPage() {
                     </div>
 
                     {/* Right column */}
-                    <div className="space-y-4">
-                        <Card>
-                            <CardHeader className="pb-3">
+                    <div className="">
+                        <div>
+                            <div className="pb-3">
                                 <div className="flex items-center justify-between">
                                     <CardTitle className="text-sm font-medium text-muted-foreground uppercase tracking-wider flex items-center gap-2">
                                         <Wrench size={14} /> Parts History
@@ -250,11 +261,11 @@ export default function RobotPage() {
                                         {robot.parts_history.length} records
                                     </Badge>
                                 </div>
-                            </CardHeader>
-                            <CardContent>
+                            </div>
+                            <div>
                                 <RobotHistory robot={robot} />
-                            </CardContent>
-                        </Card>
+                            </div>
+                        </div>
                     </div>
 
                 </div>

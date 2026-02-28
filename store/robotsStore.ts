@@ -14,7 +14,7 @@ export interface IComment {
 }
 
 interface RobotsState {
-    robots: IRobot[];
+    robots: IRobot[] | null;
     isLoading: boolean;
     error: string | null;
 
@@ -47,21 +47,21 @@ interface RobotsState {
 }
 
 export const useRobotsStore = create<RobotsState>((set, get) => ({
-    robots: [],
+    robots: null,
     isLoading: false,
     error: null,
 
     // === CRUD для роботов ===
     addRobot: (robot) =>
         set((state) => ({
-            robots: [...state.robots, robot]
+            robots: [...state.robots ?? [], robot]
         })),
 
     setRobots: (robots) => set({robots}),
 
     updateRobot: (robotId, updatedFields) =>
         set((state) => ({
-            robots: state.robots.map((robot) =>
+            robots: (state.robots ?? []).map((robot) =>
                 robot.id === robotId
                     ? {...robot, ...updatedFields}
                     : robot
@@ -70,13 +70,13 @@ export const useRobotsStore = create<RobotsState>((set, get) => ({
 
     deleteRobot: (robotId) =>
         set((state) => ({
-            robots: state.robots.filter((robot) => robot.id !== robotId)
+            robots: (state.robots ?? []).filter((robot) => robot.id !== robotId)
         })),
 
     // === История запчастей ===
     addPartsHistory: (robotId, partsEntry) =>
         set((state) => ({
-            robots: state.robots.map((robot) =>
+            robots: (state.robots ?? []).map((robot) =>
                 robot.id === robotId
                     ? {
                         ...robot,
@@ -88,7 +88,7 @@ export const useRobotsStore = create<RobotsState>((set, get) => ({
 
     updatePartsHistory: (robotId, partsId, updatedFields) =>
         set((state) => ({
-            robots: state.robots.map((robot) =>
+            robots: (state.robots ?? []).map((robot) =>
                 robot.id === robotId
                     ? {
                         ...robot,
@@ -104,7 +104,7 @@ export const useRobotsStore = create<RobotsState>((set, get) => ({
 
     deletePartsHistory: (robotId, partsId) =>
         set((state) => ({
-            robots: state.robots.map((robot) =>
+            robots: (state.robots ?? []).map((robot) =>
                 robot.id === robotId
                     ? {
                         ...robot,
@@ -126,7 +126,7 @@ export const useRobotsStore = create<RobotsState>((set, get) => ({
      */
     updateRobotStatus: (robotId, newStatus, statusHistoryEntry) =>
         set((state) => ({
-            robots: state.robots.map((robot) =>
+            robots: (state.robots ?? []).map((robot) =>
                 robot.id === robotId
                     ? {
                         ...robot,
@@ -145,7 +145,7 @@ export const useRobotsStore = create<RobotsState>((set, get) => ({
      */
     addStatusHistory: (robotId, statusEntry) =>
         set((state) => ({
-            robots: state.robots.map((robot) =>
+            robots: (state.robots ?? []).map((robot) =>
                 robot.id === robotId
                     ? {
                         ...robot,
@@ -163,7 +163,7 @@ export const useRobotsStore = create<RobotsState>((set, get) => ({
      */
     updateStatusHistory: (robotId, statusId, updatedFields) =>
         set((state) => ({
-            robots: state.robots.map((robot) =>
+            robots: (state.robots ?? []).map((robot) =>
                 robot.id === robotId
                     ? {
                         ...robot,
@@ -184,7 +184,7 @@ export const useRobotsStore = create<RobotsState>((set, get) => ({
      */
     deleteStatusHistory: (robotId, statusId) =>
         set((state) => ({
-            robots: state.robots.map((robot) =>
+            robots: (state.robots ?? []).map((robot) =>
                 robot.id === robotId
                     ? {
                         ...robot,
@@ -206,9 +206,7 @@ export const useRobotsStore = create<RobotsState>((set, get) => ({
     /**
      * Получает робота по ID
      */
-    getRobotById: (robotId) => {
-        return get().robots.find((robot) => robot.id === robotId);
-    },
+    getRobotById: (robotId) => get().robots?.find((robot) => robot.id === robotId),
 
     /**
      * Получает историю статусов робота

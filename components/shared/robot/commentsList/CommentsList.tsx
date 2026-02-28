@@ -76,7 +76,7 @@ const CommentItem: React.FC<CommentItemProps> = ({
                                                  }) => {
     const [showReplies, setShowReplies] = useState(false);
     const [expanded, setExpanded] = useState(false);
-    const MAX_LENGTH = 120; // Максимальная длина до обрезки
+    const MAX_LENGTH = 125; // Максимальная длина до обрезки
     const isLong = comment.body.length > MAX_LENGTH;
 
     const user = useUserStore(state => state.currentUser);
@@ -101,10 +101,80 @@ const CommentItem: React.FC<CommentItemProps> = ({
                             </Label>
                         </div>
                     </div>
+                    <div className="flex items-center justify-between">
+                        <div className="flex items-center gap-1">
+                            <Button
+                                size="sm"
+                                variant="ghost"
+                                className={`h-8 px-2 gap-1 ${comment.liked_by_user ? 'text-red-500' : ''}`}
+                                onClick={() => onLike(comment.id)}
+                            >
+                                <Heart className={`h-4 w-4 ${comment.liked_by_user ? 'fill-current' : ''}`} />
+                                {comment.likes !== undefined && comment.likes > 0 && (
+                                    <span className="text-xs">{comment.likes}</span>
+                                )}
+                            </Button>
+
+                            <Button
+                                size="sm"
+                                variant="ghost"
+                                className="h-8 px-2 gap-1"
+                                onClick={() => onReply(comment.id, comment.employees?.user_name || "User")}
+                            >
+                                <MessageSquare className="h-4 w-4" />
+                            </Button>
+                        </div>
+
+                        <div className="flex items-center gap-1">
+                            {isOwner && (
+                                <>
+                                    <Button
+                                        size="sm"
+                                        variant="ghost"
+                                        className="h-8 w-8 p-0"
+                                        onClick={() => onEdit(comment)}
+                                    >
+                                        <Pencil className="h-4 w-4" />
+                                    </Button>
+
+                                    <AlertDialog>
+                                        <AlertDialogTrigger asChild>
+                                            <Button
+                                                variant="ghost"
+                                                size="sm"
+                                                className="h-8 w-8 p-0 text-destructive hover:text-destructive"
+                                                disabled={deletingId === comment.id}
+                                            >
+                                                {deletingId === comment.id ? (
+                                                    <Loader className="h-4 w-4 animate-spin" />
+                                                ) : (
+                                                    <Trash2 className="h-4 w-4" />
+                                                )}
+                                            </Button>
+                                        </AlertDialogTrigger>
+                                        <AlertDialogContent>
+                                            <AlertDialogHeader>
+                                                <AlertDialogTitle>Delete Comment?</AlertDialogTitle>
+                                                <AlertDialogDescription>
+                                                    This action cannot be undone. This will permanently delete your comment.
+                                                </AlertDialogDescription>
+                                            </AlertDialogHeader>
+                                            <AlertDialogFooter>
+                                                <AlertDialogCancel>Cancel</AlertDialogCancel>
+                                                <AlertDialogAction onClick={() => onDelete(comment.id)}>
+                                                    Delete
+                                                </AlertDialogAction>
+                                            </AlertDialogFooter>
+                                        </AlertDialogContent>
+                                    </AlertDialog>
+                                </>
+                            )}
+                        </div>
+                    </div>
                 </div>
 
                 {/* Текст комментария с разворачиванием */}
-                <p className="text-sm text-foreground whitespace-pre-wrap break-words mb-1">
+                <p className={`text-sm ${!expanded && "line-clamp-2"} text-foreground whitespace-pre-wrap wrap-break-word mb-1`}>
                     {isLong && !expanded
                         ? comment.body.slice(0, MAX_LENGTH) + "..."
                         : comment.body}
@@ -119,78 +189,6 @@ const CommentItem: React.FC<CommentItemProps> = ({
                         {expanded ? "Show less" : "Show more"}
                     </Button>
                 )}
-
-                <div className="flex items-center justify-between">
-                    <div className="flex items-center gap-1">
-                        <Button
-                            size="sm"
-                            variant="ghost"
-                            className={`h-8 px-2 gap-1 ${comment.liked_by_user ? 'text-red-500' : ''}`}
-                            onClick={() => onLike(comment.id)}
-                        >
-                            <Heart className={`h-4 w-4 ${comment.liked_by_user ? 'fill-current' : ''}`} />
-                            {comment.likes !== undefined && comment.likes > 0 && (
-                                <span className="text-xs">{comment.likes}</span>
-                            )}
-                        </Button>
-
-                        <Button
-                            size="sm"
-                            variant="ghost"
-                            className="h-8 px-2 gap-1"
-                            onClick={() => onReply(comment.id, comment.employees?.user_name || "User")}
-                        >
-                            <MessageSquare className="h-4 w-4" />
-                            <span className="text-xs">Reply</span>
-                        </Button>
-                    </div>
-
-                    <div className="flex items-center gap-1">
-                        {isOwner && (
-                            <>
-                                <Button
-                                    size="sm"
-                                    variant="ghost"
-                                    className="h-8 w-8 p-0"
-                                    onClick={() => onEdit(comment)}
-                                >
-                                    <Pencil className="h-4 w-4" />
-                                </Button>
-
-                                <AlertDialog>
-                                    <AlertDialogTrigger asChild>
-                                        <Button
-                                            variant="ghost"
-                                            size="sm"
-                                            className="h-8 w-8 p-0 text-destructive hover:text-destructive"
-                                            disabled={deletingId === comment.id}
-                                        >
-                                            {deletingId === comment.id ? (
-                                                <Loader className="h-4 w-4 animate-spin" />
-                                            ) : (
-                                                <Trash2 className="h-4 w-4" />
-                                            )}
-                                        </Button>
-                                    </AlertDialogTrigger>
-                                    <AlertDialogContent>
-                                        <AlertDialogHeader>
-                                            <AlertDialogTitle>Delete Comment?</AlertDialogTitle>
-                                            <AlertDialogDescription>
-                                                This action cannot be undone. This will permanently delete your comment.
-                                            </AlertDialogDescription>
-                                        </AlertDialogHeader>
-                                        <AlertDialogFooter>
-                                            <AlertDialogCancel>Cancel</AlertDialogCancel>
-                                            <AlertDialogAction onClick={() => onDelete(comment.id)}>
-                                                Delete
-                                            </AlertDialogAction>
-                                        </AlertDialogFooter>
-                                    </AlertDialogContent>
-                                </AlertDialog>
-                            </>
-                        )}
-                    </div>
-                </div>
             </div>
 
             {/* Reply form */}
