@@ -2,7 +2,6 @@ import { NextResponse } from 'next/server';
 import { supabase } from '@/lib/supabaseClient';
 import { StockByLocationResponse, LocationItem } from '@/types/stock/SummaryItem';
 
-// Type for raw Supabase response
 interface StockRow {
     location: string;
     warehouse: string;
@@ -11,15 +10,12 @@ interface StockRow {
     material_number: string;
     item: {
         description_eng: string;
-    } | Array<{ description_eng: string }>;
+        avatar_url: string;
+    } | Array<{ description_eng: string; avatar_url: string }>;
 }
 
-// Constants
 const UNKNOWN_LOCATION = 'unknown';
 
-/**
- * Extract description from item field (handles both object and array formats)
- */
 function extractDescription(item: StockRow['item']): string {
     if (Array.isArray(item) && item.length > 0) {
         return item[0]?.description_eng ?? '';
@@ -27,16 +23,19 @@ function extractDescription(item: StockRow['item']): string {
     return (item as { description_eng: string })?.description_eng ?? '';
 }
 
-/**
- * Group stock data by location and material
- */
+function extractAvatarUrl(item: StockRow['item']): string {
+    if (Array.isArray(item) && item.length > 0) {
+        return item[0]?.avatar_url ?? '';
+    }
+    return (item as { avatar_url: string })?.avatar_url ?? '';
+}
+
 function groupStockByLocation(data: StockRow[]): StockByLocationResponse {
     const locationMap = new Map<string, Map<string, LocationItem>>();
 
     for (const row of data) {
         const locationKey = row.location_key ?? UNKNOWN_LOCATION;
 
-        // Initialize location map if needed
         if (!locationMap.has(locationKey)) {
             locationMap.set(locationKey, new Map());
         }
@@ -44,33 +43,27 @@ function groupStockByLocation(data: StockRow[]): StockByLocationResponse {
         const itemsMap = locationMap.get(locationKey)!;
         const materialNumber = row.material_number;
 
-        // Initialize material entry if needed
         if (!itemsMap.has(materialNumber)) {
             itemsMap.set(materialNumber, {
                 material_number: materialNumber,
                 description_eng: extractDescription(row.item),
+                avatar_url: extractAvatarUrl(row.item), // ✅ теперь берётся отдельно
                 warehouse: row.warehouse,
                 location_key: locationKey,
                 total_quantity: 0,
             });
         }
 
-        // Accumulate quantity
         const item = itemsMap.get(materialNumber)!;
         item.total_quantity += Number(row.quantity ?? 0);
     }
 
-    // Transform to response format
     return Array.from(locationMap.entries()).map(([location_key, items]) => ({
         location: location_key,
         items: Array.from(items.values()),
     }));
 }
 
-/**
- * GET /api/stock-by-location
- * Retrieves stock data grouped by location and material
- */
 export async function GET() {
     try {
         const { data, error } = await supabase
@@ -82,11 +75,11 @@ export async function GET() {
         location_key,
         material_number,
         item:stock_items_template!material_number(
-          description_eng
+          description_eng,
+          avatar_url
         )
       `);
 
-        // Handle Supabase errors
         if (error) {
             console.error('Supabase query error:', error);
             return NextResponse.json(
@@ -95,7 +88,6 @@ export async function GET() {
             );
         }
 
-        // Check if data exists
         if (!data || data.length === 0) {
             return NextResponse.json(
                 { message: 'No stock data available' },
@@ -103,7 +95,6 @@ export async function GET() {
             );
         }
 
-        // Group and format data
         const result = groupStockByLocation(data as StockRow[]);
 
         return NextResponse.json(result, { status: 200 });

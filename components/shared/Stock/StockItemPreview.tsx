@@ -23,7 +23,7 @@ const StockItemPreview: React.FC<props> = ({data}) => {
     const [isImageDialogOpen, setIsImageDialogOpen] = useState(false);
 
     return (
-        <div className={`flex items-center gap-2 backdrop-blur-sm border p-2 rounded-md w-full`}>
+        <div className={`flex items-start gap-2 backdrop-blur-sm border p-2 rounded-md w-full`}>
             <div className={`grid md:grid-cols-[120px_1fr] gap-4 w-full`}>
                 <Dialog open={isImageDialogOpen} onOpenChange={setIsImageDialogOpen}>
                     <DialogTrigger asChild>
@@ -112,7 +112,7 @@ const StockItemPreview: React.FC<props> = ({data}) => {
                         <TemplateEditDialog part={data}/>
                     </div>
 
-                    <p>{data.description_eng}</p>
+                    <p className={`line-clamp-1`}>{data.description_eng}</p>
                     <Label className="cursor-pointer">
                         {data.material_number}
                     </Label>

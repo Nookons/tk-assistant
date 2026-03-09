@@ -207,8 +207,6 @@ const InventoryDisplay = () => {
 
     return (
         <div className="w-full flex flex-col overflow-hidden h-screen">
-
-            {/* Header */}
             <div className="flex items-center gap-3 border-b px-4 py-3 sm:px-5 shrink-0">
                 <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-primary/10">
                     <PackagePlus size={15} className="text-primary" />
@@ -219,11 +217,8 @@ const InventoryDisplay = () => {
                 </div>
             </div>
 
-            {/* Body: tabs on mobile, split on desktop */}
             <div className="flex-1 overflow-hidden">
-
-                {/* ── Mobile ── */}
-                <div className="md:hidden">
+                <div className="md:hidden w-full">
                     <Tabs defaultValue="form" className="flex flex-col">
                         <TabsList className="w-full rounded-none h-10 bg-muted/40 border-b shrink-0">
                             <TabsTrigger value="form" className="flex-1 gap-1.5 text-xs rounded-none">
@@ -243,7 +238,7 @@ const InventoryDisplay = () => {
                 </div>
 
                 {/* ── Desktop ── */}
-                <div className="hidden md:grid md:grid-cols-[420px_1fr] h-full divide-x">
+                <div className="hidden md:grid md:grid-cols-[520px_1fr] h-full divide-x">
                     <div className="overflow-y-auto">
                         <StockForm {...formProps} />
                     </div>

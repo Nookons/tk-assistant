@@ -20,6 +20,7 @@ export interface LocationItem {
     total_quantity: number;
     warehouse: string;
     location_key: string;
+    avatar_url: string;
 }
 
 export interface LocationStock {

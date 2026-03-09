@@ -1,5 +1,5 @@
 'use client'
-import React, { useMemo, useState } from 'react';
+import React, {useEffect, useMemo, useState} from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { Input } from '@/components/ui/input';
 import { getLocationsSummary } from '@/futures/stock/getLocationsSummary';
@@ -83,6 +83,10 @@ const Page = () => {
         retry: 3,
     });
 
+    useEffect(() => {
+        console.log(locationsSummary);
+    }, [locationsSummary]);
+
     const filteredData = useMemo<StockByLocationResponse>(() => {
         if (!locationsSummary) return [];
         let data = [...locationsSummary];
@@ -157,7 +161,7 @@ const Page = () => {
                         <SheetTrigger asChild>
                             <Button variant={`outline`}>
                                 <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none"
-                                     stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"
+                                     stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"
                                      className="lucide lucide-layers-plus-icon lucide-layers-plus">
                                     <path
                                         d="M12.83 2.18a2 2 0 0 0-1.66 0L2.6 6.08a1 1 0 0 0 0 1.83l8.58 3.91a2 2 0 0 0 .83.18 2 2 0 0 0 .83-.18l8.58-3.9a1 1 0 0 0 0-1.831z"/>
@@ -168,7 +172,7 @@ const Page = () => {
                                 </svg>
                             </Button>
                         </SheetTrigger>
-                        <SheetContent className={`sm:max-w-[70vw]`}>
+                        <SheetContent className={`w-full sm:max-w-[70vw]`}>
                             <InventoryDisplay />
                         </SheetContent>
                     </Sheet>
@@ -213,10 +217,10 @@ const Page = () => {
                 ? <EmptyState query={searchValue} />
                 : (
                     <div className="grid grid-cols-1 xl:grid-cols-4 gap-3">
-                        {paginatedData.map(el => (
-                            <>
+                        {paginatedData.map((el, index) => (
+                            <div key={`${el.location}-${index}`}>
                                 <LocationCard el={el} onClick={() => setPickedItem(el)} />
-                            </>
+                            </div>
                         ))}
                     </div>
                 )

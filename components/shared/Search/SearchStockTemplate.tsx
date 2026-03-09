@@ -1,7 +1,6 @@
 "use client"
 import React, {useMemo, useState} from 'react';
 import {Input} from "@/components/ui/input";
-import {toast} from "sonner";
 import {IStockItemTemplate} from "@/types/stock/StockItem";
 import {Separator} from "@/components/ui/separator";
 import {useStockStore} from "@/store/stock";
@@ -11,7 +10,6 @@ import {Badge} from "@/components/ui/badge";
 import {PackageSearch} from "lucide-react";
 
 const PREVIEW_LIMIT = 15;
-
 
 const SearchStockTemplate = () => {
     const stock_store = useStockStore(state => state.items_templates);
@@ -87,7 +85,7 @@ const SearchStockTemplate = () => {
                     <p className="text-xs">No parts found for &quot;{value}&quot;</p>
                 </div>
             ) : (
-                <div className="grid grid-cols-3 gap-2">
+                <div className={`grid ${filteredData.length === 1 ? 'grid-cols-1' : `grid-cols-2 md:grid-cols-3`} gap-2`}>
                     {filteredData.slice(0, PREVIEW_LIMIT).map((part) => (
                         <StockItemPreview key={part.material_number} data={part}/>
                     ))}

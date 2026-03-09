@@ -1,8 +1,9 @@
 import React from 'react';
 import {Container, HandCoins, Warehouse} from "lucide-react";
 import {LocationStock} from "@/types/stock/SummaryItem";
+import {Badge} from "@/components/ui/badge";
 
-const ITEMS_PER_CARD = 4;
+const ITEMS_PER_CARD = 3;
 
 const LocationCard = ({ el, onClick }: { el: LocationStock; onClick: () => void }) => {
     const visibleItems = el.items.filter(i => i.total_quantity > 0);
@@ -15,7 +16,7 @@ const LocationCard = ({ el, onClick }: { el: LocationStock; onClick: () => void 
     return (
         <button
             onClick={onClick}
-            className="group flex flex-col rounded-xl border bg-card hover:border-primary/40 hover:bg-muted/30 transition-all duration-200 text-left w-full"
+            className="group h-full flex flex-col rounded-xl border bg-card hover:border-primary/40 hover:bg-muted/30 transition-all duration-200 text-left w-full"
         >
             <div className="flex items-center justify-between px-4 py-3 border-b border-border/60">
                 <div className="flex items-center gap-2.5">
@@ -24,7 +25,7 @@ const LocationCard = ({ el, onClick }: { el: LocationStock; onClick: () => void 
                     </div>
                     <span className="text-sm font-semibold tracking-tight">{locationLabel}</span>
                 </div>
-                <div className="flex items-center gap-1.5 text-[11px] text-muted-foreground bg-muted/60 rounded-md px-2 py-1">
+                <div className="flex text-xs items-center gap-1.5 text-muted-foreground bg-muted/60 rounded-md px-2 py-1">
                     <Warehouse size={16} />
                     <span>{warehouseName}</span>
                 </div>

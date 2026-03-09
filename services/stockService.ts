@@ -11,7 +11,7 @@ export class StockService {
     static async updateItemTemplate(data: Partial<IStockItemTemplate> & { id: number }): Promise<IStockItemTemplate> {
 
         const { data: updatedItem, error } = await supabase
-            .from('stock')
+            .from('stock_items_template')
             .update({
                 ...data,
                 updated_at: dayjs().utc().toISOString()
