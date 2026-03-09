@@ -78,11 +78,8 @@ export default function RobotPage() {
         [robotsList, robotId],
     )
 
-
     if (robotsList === null) return <PageSkeleton />
     if (!robot) notFound()
-
-    const hasProblem = robot.type_problem.length > 0
 
     return (
         <div className="min-h-screen bg-background">

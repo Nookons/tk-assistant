@@ -15,7 +15,7 @@ import {useStockStore} from "@/store/stock";
 import {ScrollArea} from "@/components/ui/scroll-area";
 import {IStockItemTemplate, IStockLocationSlot} from "@/types/stock/StockItem";
 import {cn} from "@/lib/utils";
-import {Search} from "lucide-react";
+import {ListPlus, Search} from "lucide-react";
 import PartPreview from "@/components/shared/robot/PartPreview";
 import {Avatar, AvatarFallback, AvatarImage} from "@/components/ui/avatar";
 
@@ -57,7 +57,7 @@ const PartsPicker = ({robot}: { robot: IRobot }) => {
     return (
         <Sheet open={isOpen} onOpenChange={() => setIsOpen(!isOpen)}>
             <SheetTrigger asChild>
-                <Button variant="outline">New part</Button>
+                <p>Add new part</p>
             </SheetTrigger>
 
             <SheetContent side="bottom" className="h-screen flex flex-col p-0">

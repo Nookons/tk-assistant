@@ -98,7 +98,7 @@ const ACTION_CONFIGS: Record<ActionType, ActionConfig> = {
         title: 'Edit status',
         description: 'Here you can edit the status of the robot.',
         buttonText: 'Save',
-        buttonVariant: 'ghost',
+        buttonVariant: 'outline',
         buttonFullWidth: false,
         successMessage: 'Robot successfully sent to maintenance',
         newStatus: STATUS.OFFLINE,
@@ -113,8 +113,8 @@ const ACTION_CONFIGS: Record<ActionType, ActionConfig> = {
         icon: Construction,
         title: 'Send to Maintenance',
         description: 'Please select the issue type and provide any additional notes about the problem.',
-        buttonText: '',
-        buttonVariant: 'outline',
+        buttonText: 'Send to Maintenance',
+        buttonVariant: 'ghost',
         buttonFullWidth: true,
         successMessage: 'Robot successfully sent to maintenance',
         newStatus: STATUS.OFFLINE,
@@ -129,8 +129,8 @@ const ACTION_CONFIGS: Record<ActionType, ActionConfig> = {
         icon: SmilePlus,
         title: 'Send to Map',
         description: 'Please select the issue type and provide any additional notes about the problem.',
-        buttonText: '',
-        buttonVariant: 'default',
+        buttonText: 'Send to Map',
+        buttonVariant: 'ghost',
         buttonFullWidth: true,
         successMessage: 'Robot successfully sent to map',
         newStatus: STATUS.ONLINE,
@@ -257,19 +257,7 @@ const RobotStatusDialog: React.FC<RobotStatusDialogProps> = ({currentRobot, acti
     return (
         <Dialog open={isOpen} onOpenChange={setIsOpen}>
             <DialogTrigger asChild>
-                <Button
-                    variant={config.buttonVariant}
-                    disabled={isLoading}
-                    className={config.buttonFullWidth ? 'w-full' : ''}
-                    aria-label={config.title}
-                >
-                    {isLoading ? (
-                        <Loader className="animate-spin" />
-                    ) : (
-                        <Icon />
-                    )}
-                    {config.buttonFullWidth && config.buttonText}
-                </Button>
+                <p>{config.buttonFullWidth && config.buttonText}</p>
             </DialogTrigger>
 
             <DialogContent className="sm:max-w-[425px]">

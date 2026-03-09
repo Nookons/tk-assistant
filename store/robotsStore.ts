@@ -51,7 +51,6 @@ export const useRobotsStore = create<RobotsState>((set, get) => ({
     isLoading: false,
     error: null,
 
-    // === CRUD для роботов ===
     addRobot: (robot) =>
         set((state) => ({
             robots: [...state.robots ?? [], robot]
@@ -73,7 +72,6 @@ export const useRobotsStore = create<RobotsState>((set, get) => ({
             robots: (state.robots ?? []).filter((robot) => robot.id !== robotId)
         })),
 
-    // === История запчастей ===
     addPartsHistory: (robotId, partsEntry) =>
         set((state) => ({
             robots: (state.robots ?? []).map((robot) =>
@@ -116,14 +114,6 @@ export const useRobotsStore = create<RobotsState>((set, get) => ({
             ),
         })),
 
-    // === История статусов ===
-
-    /**
-     * Обновляет статус робота и добавляет запись в историю статусов
-     * @param robotId - ID робота
-     * @param newStatus - Новый статус
-     * @param statusHistoryEntry - Запись истории статуса
-     */
     updateRobotStatus: (robotId, newStatus, statusHistoryEntry) =>
         set((state) => ({
             robots: (state.robots ?? []).map((robot) =>
@@ -138,11 +128,6 @@ export const useRobotsStore = create<RobotsState>((set, get) => ({
             ),
         })),
 
-    /**
-     * Добавляет запись в историю статусов робота
-     * @param robotId - ID робота
-     * @param statusEntry - Запись истории статуса
-     */
     addStatusHistory: (robotId, statusEntry) =>
         set((state) => ({
             robots: (state.robots ?? []).map((robot) =>
@@ -155,12 +140,6 @@ export const useRobotsStore = create<RobotsState>((set, get) => ({
             ),
         })),
 
-    /**
-     * Обновляет запись в истории статусов
-     * @param robotId - ID робота
-     * @param statusId - ID записи статуса
-     * @param updatedFields - Поля для обновления
-     */
     updateStatusHistory: (robotId, statusId, updatedFields) =>
         set((state) => ({
             robots: (state.robots ?? []).map((robot) =>
@@ -177,11 +156,6 @@ export const useRobotsStore = create<RobotsState>((set, get) => ({
             ),
         })),
 
-    /**
-     * Удаляет запись из истории статусов
-     * @param robotId - ID робота
-     * @param statusId - ID записи статуса
-     */
     deleteStatusHistory: (robotId, statusId) =>
         set((state) => ({
             robots: (state.robots ?? []).map((robot) =>
@@ -196,29 +170,16 @@ export const useRobotsStore = create<RobotsState>((set, get) => ({
             ),
         })),
 
-    // === Статус загрузки ===
     setLoading: (isLoading) => set({isLoading}),
-
     setError: (error) => set({error}),
 
-    // === Вспомогательные методы ===
-
-    /**
-     * Получает робота по ID
-     */
     getRobotById: (robotId) => get().robots?.find((robot) => robot.id === robotId),
 
-    /**
-     * Получает историю статусов робота
-     */
     getRobotStatusHistory: (robotId) => {
         const robot = get().getRobotById(robotId);
         return robot?.status_history || [];
     },
 
-    /**
-     * Получает последний (актуальный) статус робота
-     */
     getLatestStatus: (robotId) => {
         const robot = get().getRobotById(robotId);
         if (!robot || !robot.status_history?.length) {
@@ -229,8 +190,5 @@ export const useRobotsStore = create<RobotsState>((set, get) => ({
         return robot.status_history[robot.status_history.length - 1];
     },
 
-    /**
-     * Очищает store
-     */
     clearStore: () => set({robots: [], isLoading: false, error: null}),
 }));
