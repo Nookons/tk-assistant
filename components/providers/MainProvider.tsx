@@ -66,6 +66,7 @@ const MainProvider = () => {
 
     useEffect(() => {
         if (IStockHistory !== undefined) {
+            console.log(IStockHistory);
             setStockHistory(IStockHistory);
         }
     }, [IStockHistory]);

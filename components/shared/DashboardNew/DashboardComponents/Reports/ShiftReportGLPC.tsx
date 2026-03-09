@@ -5,7 +5,6 @@ import {getWorkDate} from "@/futures/date/getWorkDate";
 import dayjs from "dayjs";
 import {IRobotException} from "@/types/Exception/Exception";
 import {IChangeRecord} from "@/types/Parts/ChangeRecord";
-import {IStatusHistory} from "@/components/shared/dashboard/ShiftStats/MonthStats";
 import {useMutation} from "@tanstack/react-query";
 import {ReportService} from "@/services/reportService";
 import {toast} from "sonner";
@@ -23,8 +22,7 @@ import {ChevronDownIcon, FileDown, Loader2, Moon, Sun} from "lucide-react";
 import ExceptionDashboard from "@/components/shared/StatsDisplay/ExceptionDashboard";
 import ChangedPartsList from "@/components/shared/Lists/ChangedParts";
 import ChangedStatus from "@/components/shared/Lists/ChangedStatus";
-
-// ── Component ─────────────────────────────────────────────────────────────────
+import {IStatusHistory} from "@/app/reports/shein/page";
 
 const ShiftReportGlpc = () => {
     const set_exception_store = useExceptionStore(state => state.set_today_exception);

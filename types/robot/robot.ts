@@ -29,8 +29,8 @@ export interface IRobot {
     warehouse: string;
     updated_by?: IUser;
 
-    status_history: IHistoryStatus[];
-    parts_history: IHistoryParts[];
+    status_history?: IHistoryStatus[];
+    parts_history?: IHistoryParts[];
 }
 
 export interface IHistoryStatus {

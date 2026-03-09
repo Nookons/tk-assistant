@@ -7,13 +7,13 @@ import {
     SheetTitle,
     SheetTrigger
 } from "@/components/ui/sheet";
-import React, {useEffect, useMemo, useRef, useState} from 'react';
+import React, {useEffect, useMemo, useState} from 'react';
 import {Button} from "@/components/ui/button";
 import {Input} from "@/components/ui/input";
 import {IRobot} from "@/types/robot/robot";
 import {useStockStore} from "@/store/stock";
 import {ScrollArea} from "@/components/ui/scroll-area";
-import {IStockItemTemplate} from "@/types/stock/StockItem";
+import {IStockItemTemplate, IStockLocationSlot} from "@/types/stock/StockItem";
 import {cn} from "@/lib/utils";
 import {Search} from "lucide-react";
 import PartPreview from "@/components/shared/robot/PartPreview";
@@ -26,7 +26,7 @@ const PartsPicker = ({robot}: { robot: IRobot }) => {
     const [selectedPart, setSelectedPart] = useState<IStockItemTemplate | null>(null);
     const [search, setSearch] = useState("");
 
-    const closeRef = useRef<HTMLButtonElement>(null);
+    const [isOpen, setIsOpen] = useState<boolean>(false)
 
     useEffect(() => {
         if (stock_templates) {
@@ -55,7 +55,7 @@ const PartsPicker = ({robot}: { robot: IRobot }) => {
 
 
     return (
-        <Sheet>
+        <Sheet open={isOpen} onOpenChange={() => setIsOpen(!isOpen)}>
             <SheetTrigger asChild>
                 <Button variant="outline">New part</Button>
             </SheetTrigger>
@@ -109,7 +109,7 @@ const PartsPicker = ({robot}: { robot: IRobot }) => {
                                     >
                                         <div className={`grid ${filteredParts.length < 4 && 'grid-cols-[150px_1fr]'} gap-2`}>
                                             {filteredParts.length < 4 && (
-                                                <Avatar className="w-[150px] h-[150px] rounded-md">
+                                                <Avatar className="w-full h-full rounded-md">
                                                     <AvatarImage
                                                         src={item.avatar_url}
                                                         alt="part image"
@@ -133,29 +133,20 @@ const PartsPicker = ({robot}: { robot: IRobot }) => {
 
                     <div className="w-full md:max-w-[400px] shrink-0 flex flex-col p-5 gap-4">
                         {selectedPart
-                            ?
-                            (
+                            ? (
                                 <PartPreview
+                                    setSelectedPart={setSelectedPart}
+                                    onSuccess={() => setIsOpen(false)}
                                     selectedPart={selectedPart}
                                     robot={robot}
-                                    setSelectedPart={setSelectedPart}
-                                    onSuccess={() => closeRef.current?.click()}
                                 />
                             )
-                            :
-                            (
+                            : (
                                 <p className="text-sm text-muted-foreground">Select a part from the list</p>
                             )
                         }
                     </div>
                 </div>
-
-                <SheetFooter className="px-6 py-4 border-t shrink-0">
-                    <SheetClose asChild>
-                        <Button ref={closeRef} variant="outline">Close</Button>
-                    </SheetClose>
-                </SheetFooter>
-
             </SheetContent>
         </Sheet>
     );

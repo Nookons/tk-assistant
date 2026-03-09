@@ -8,8 +8,9 @@ import { getScoreRank } from "@/components/shared/DashboardNew/DashboardComponen
 import { isLeader } from "@/components/shared/DashboardNew/DashboardComponents/Settings/isLeader";
 import Image from "next/image";
 import {
+    BicepsFlexed,
     Building2, CalendarDays, Check, Eye, EyeOff,
-    KeyRound, LaptopMinimalCheck, Loader2, Lock, Mail, MailPlus, Phone, Save, Shield, Star, User,
+    KeyRound, LaptopMinimalCheck, Loader2, Lock, Mail, MailPlus, Phone, RefreshCcwIcon, Save, Shield, Star, User,
     UserCheck, UserRoundPen,
 } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
@@ -24,6 +25,7 @@ import { toast } from "sonner";
 import {AuthService} from "@/services/authService";
 import {IUser} from "@/types/user/user";
 import {UserService} from "@/services/userService";
+import {Empty, EmptyContent, EmptyDescription, EmptyHeader, EmptyMedia, EmptyTitle} from "@/components/ui/empty";
 
 dayjs.extend(relativeTime);
 
@@ -323,7 +325,7 @@ const SettingsDisplay = () => {
     return (
         <div>
             {/* ── Hero banner */}
-            <div className="relative h-36 bg-gradient-to-br from-primary/15 via-primary/5 to-background border-b border-border/30 overflow-hidden">
+            <div className="relative h-16 bg-linear-to-br from-emerald-500/20 to-background border-b border-border/30 overflow-hidden">
                 <div
                     className="absolute inset-0 opacity-[0.04]"
                     style={{
@@ -359,7 +361,7 @@ const SettingsDisplay = () => {
 
                     <Badge
                         variant={leader ? "default" : "secondary"}
-                        className={`mb-2 gap-1.5 px-3 py-1.5 text-xs font-medium ${
+                        className={`mb-6 bg-muted gap-1.5 px-3 py-1.5 text-xs font-medium ${
                             leader ? "bg-amber-500/15 text-amber-400 border-amber-500/30" : ""
                         }`}
                     >
@@ -386,7 +388,7 @@ const SettingsDisplay = () => {
                                 </div>
                             :
                                 <div className={`flex items-center gap-2`}>
-                                    <Button
+                                    {/*<Button
                                         size={`sm`}
                                         variant={`ghost`}
                                         onClick={() => {
@@ -395,7 +397,7 @@ const SettingsDisplay = () => {
                                         }}
                                     >
                                         <UserRoundPen />
-                                    </Button>
+                                    </Button>*/}
                                     <h1 className="text-2xl font-bold tracking-tight">{user.user_name}</h1>
                                 </div>
                             }
@@ -428,28 +430,38 @@ const SettingsDisplay = () => {
                             <InfoRow icon={Building2}    label="Warehouse"    value={user.warehouse} />
                             <InfoRow icon={CalendarDays} label="Member since" value={dayjs(user.created_at).format("D MMMM YYYY")} />
                         </div>
+
+                        <section className="grid grid-cols-2 gap-4 w-full">
+                            <div className="rounded-xl border border-border/40 bg-card/60 px-4 py-4">
+                                <SectionTitle>
+                                    <Mail className="h-3.5 w-3.5 text-muted-foreground" />
+                                    Change email
+                                </SectionTitle>
+                                <EmailChangeForm user={user} />
+                            </div>
+
+                            <div className="rounded-xl border border-border/40 bg-card/60 px-4 py-4">
+                                <SectionTitle>
+                                    <Lock className="h-3.5 w-3.5 text-muted-foreground" />
+                                    Change password
+                                </SectionTitle>
+                                <PasswordChangeForm user={user} />
+                            </div>
+                        </section>
+
                     </div>
 
-                    {/* ── Account security */}
-                    <section className="space-y-8">
-                        {/* Email change */}
-                        <div className="rounded-xl border border-border/40 bg-card/60 px-4 py-4">
-                            <SectionTitle>
-                                <Mail className="h-3.5 w-3.5 text-muted-foreground" />
-                                Change email
-                            </SectionTitle>
-                            <EmailChangeForm user={user} />
-                        </div>
-
-                        {/* Password change */}
-                        <div className="rounded-xl border border-border/40 bg-card/60 px-4 py-4">
-                            <SectionTitle>
-                                <Lock className="h-3.5 w-3.5 text-muted-foreground" />
-                                Change password
-                            </SectionTitle>
-                            <PasswordChangeForm user={user} />
-                        </div>
-                    </section>
+                    <Empty className="h-full bg-muted/30">
+                        <EmptyHeader>
+                            <EmptyMedia variant="icon">
+                                <BicepsFlexed />
+                            </EmptyMedia>
+                            <EmptyTitle>User History</EmptyTitle>
+                            <EmptyDescription className="max-w-xs text-pretty">
+                                Your history is currently in working... soon it will be here
+                            </EmptyDescription>
+                        </EmptyHeader>
+                    </Empty>
                 </div>
             </div>
         </div>

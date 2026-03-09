@@ -80,7 +80,7 @@ export const useRobotsStore = create<RobotsState>((set, get) => ({
                 robot.id === robotId
                     ? {
                         ...robot,
-                        parts_history: [...robot.parts_history, partsEntry]
+                        parts_history: [...(robot.parts_history ?? []), partsEntry]
                     }
                     : robot
             ),
@@ -92,7 +92,7 @@ export const useRobotsStore = create<RobotsState>((set, get) => ({
                 robot.id === robotId
                     ? {
                         ...robot,
-                        parts_history: robot.parts_history.map((parts) =>
+                        parts_history: (robot.parts_history ?? []).map((parts) =>
                             parts.id === partsId
                                 ? {...parts, ...updatedFields}
                                 : parts
@@ -108,7 +108,7 @@ export const useRobotsStore = create<RobotsState>((set, get) => ({
                 robot.id === robotId
                     ? {
                         ...robot,
-                        parts_history: robot.parts_history.filter(
+                        parts_history: (robot.parts_history ?? []).filter(
                             (parts) => parts.id !== partsId
                         )
                     }
@@ -132,7 +132,7 @@ export const useRobotsStore = create<RobotsState>((set, get) => ({
                         ...robot,
                         status: newStatus,
                         updated_at: statusHistoryEntry.created_at,
-                        status_history: [...robot.status_history, statusHistoryEntry]
+                        status_history: [...(robot.status_history ?? []), statusHistoryEntry]
                     }
                     : robot
             ),
@@ -149,7 +149,7 @@ export const useRobotsStore = create<RobotsState>((set, get) => ({
                 robot.id === robotId
                     ? {
                         ...robot,
-                        status_history: [...robot.status_history, statusEntry]
+                        status_history: [...(robot.status_history ?? []), statusEntry]
                     }
                     : robot
             ),
@@ -167,7 +167,7 @@ export const useRobotsStore = create<RobotsState>((set, get) => ({
                 robot.id === robotId
                     ? {
                         ...robot,
-                        status_history: robot.status_history.map((status) =>
+                        status_history: (robot.status_history ?? []).map((status) =>
                             status.id === statusId
                                 ? {...status, ...updatedFields}
                                 : status
@@ -188,7 +188,7 @@ export const useRobotsStore = create<RobotsState>((set, get) => ({
                 robot.id === robotId
                     ? {
                         ...robot,
-                        status_history: robot.status_history.filter(
+                        status_history: (robot.status_history ?? []).filter(
                             (status) => status.id !== statusId
                         )
                     }
@@ -221,7 +221,7 @@ export const useRobotsStore = create<RobotsState>((set, get) => ({
      */
     getLatestStatus: (robotId) => {
         const robot = get().getRobotById(robotId);
-        if (!robot || robot.status_history.length === 0) {
+        if (!robot || !robot.status_history?.length) {
             return undefined;
         }
 

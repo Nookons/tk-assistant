@@ -3,7 +3,7 @@ import "./globals.css";
 import {ThemeProvider} from "@/components/shared/theme/theme-provider";
 import {Toaster} from "@/components/ui/sonner";
 import {QueryProvider} from "@/components/providers/query-provider";
-import MainProvider from "@/app/MainProvider";
+import MainProvider from "@/components/providers/MainProvider";
 import Snow from "@/app/snow";
 import * as React from "react";
 

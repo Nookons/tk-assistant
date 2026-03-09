@@ -51,12 +51,10 @@ function DashboardContent({onSelect}: Props) {
         const thisMonth = filterByMonth(now.month(), now.year());
         const lastMonth = filterByMonth(lastMonthDate.month(), lastMonthDate.year());
 
-        // Считаем приход (>0) и расход (<0) отдельно
         const income = thisMonth.filter(i => i.quantity > 0).reduce((sum, i) => sum + i.quantity, 0);
         const outcome = thisMonth.filter(i => i.quantity < 0).reduce((sum, i) => sum + Math.abs(i.quantity), 0);
         const net = income - outcome;
 
-        // % изменения net относительно прошлого месяца
         const lastNet = lastMonth.reduce((sum, i) => sum + i.quantity, 0);
         const diff = lastNet === 0 ? 100 : Math.round(((net - lastNet) / Math.abs(lastNet)) * 100);
 
@@ -113,10 +111,9 @@ function DashboardContent({onSelect}: Props) {
         };
     }, [robots_history]);
 
-    // Итоговые карточки — static + динамическая карточка из stock
     const statCards: StatCard[] = useMemo(() => [
         {
-            title: "Changed Statuses",
+            title: "Robots on repair",
             value: String(robots_stats.income),
             change: robots_stats.change,
             positive: true,
@@ -124,49 +121,33 @@ function DashboardContent({onSelect}: Props) {
             color: "text-emerald-500",
         },
         {
-            title: "Stock In",
-            value: String(stockStats.income),
+            title: "Stock out",
+            value: String(stockStats.outcome),
             change: stockStats.change,
             positive: true,
             icon: <PackagePlus size={20}/>,
             color: "text-emerald-500",
         },
         {
-            title: "Stock Out",
-            value: String(stockStats.outcome),
+            title: "Stock in",
+            value: String(stockStats.income),
             change: stockStats.change,
             positive: false,
             icon: <PackageMinus size={20}/>,
             color: "text-destructive",
         },
-        {
-            title: "Stock Net",         // итог: приход минус расход
-            value: String(stockStats.net),
-            change: stockStats.change,
-            positive: stockStats.positive,
-            icon: <Package size={20}/>,
-            color: "text-violet-500",
-        },
     ], [stockStats, robots_stats]);
 
     return (
         <div className="space-y-6">
-            {/* Page title */}
             <div className="flex flex-wrap items-center justify-between gap-3">
                 <div>
                     <h1 className="text-2xl font-bold tracking-tight">Dashboard for {getUserWarehouse(user?.warehouse || "")}</h1>
                     <p className="text-sm text-muted-foreground mt-0.5">Welcome {user?.user_name}! Have a good day.</p>
                 </div>
-                {/*<div className="flex items-center gap-2">
-                    <Button variant="outline" size="sm" className="gap-2">
-                        <Calendar size={14}/>
-                        <span className="hidden sm:inline">Last 30 days</span>
-                    </Button>
-                    <Button size="sm">Export</Button>
-                </div>*/}
             </div>
 
-            <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-4">
+            <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-4">
                 {statCards.map((card) => (
                     <Card key={card.title}>
                         <CardHeader className="flex flex-row items-center justify-between pb-2 space-y-0">

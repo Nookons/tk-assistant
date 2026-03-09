@@ -4,7 +4,7 @@ import { IChangeRecord } from "@/types/Parts/ChangeRecord";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { Wrench, Calendar, Hash, Bot, User as UserIcon } from "lucide-react";
+import { Wrench, Hash, Bot, User as UserIcon } from "lucide-react";
 import dayjs from "dayjs";
 import relativeTime from "dayjs/plugin/relativeTime";
 import Image from "next/image";

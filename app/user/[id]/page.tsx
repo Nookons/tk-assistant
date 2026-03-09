@@ -5,17 +5,17 @@ import Image from "next/image";
 import dayjs from "dayjs";
 import relativeTime from "dayjs/plugin/relativeTime";
 import {
-    Award,
+    Award, BicepsFlexed,
     Building2,
-    CalendarDays,
+    CalendarDays, ListTodo,
     Mail,
-    Phone,
+    Phone, Send,
     Shield,
     Star,
     User,
     Wrench,
 } from "lucide-react";
-import { Badge } from "@/components/ui/badge";
+import {Badge} from "@/components/ui/badge";
 import {IUser} from "@/types/user/user";
 import {useParams} from "next/navigation";
 import {useQuery} from "@tanstack/react-query";
@@ -33,10 +33,13 @@ import {InfoRow} from "@/components/shared/DashboardNew/DashboardComponents/Sett
 import {StatCard} from "@/components/shared/DashboardNew/DashboardComponents/Settings/StatCard";
 import {getScoreRank} from "@/components/shared/DashboardNew/DashboardComponents/Settings/getScoreRank";
 import {isLeader} from "@/components/shared/DashboardNew/DashboardComponents/Settings/isLeader";
+import {Empty, EmptyDescription, EmptyHeader, EmptyMedia, EmptyTitle} from "@/components/ui/empty";
+import {ButtonGroup} from "@/components/ui/button-group";
+import {Button} from "@/components/ui/button";
 
 dayjs.extend(relativeTime);
 
-const UserProfilePage = ({isOwn = false} : {isOwn: boolean}) => {
+const UserProfilePage = ({isOwn = false}: { isOwn: boolean }) => {
     const params = useParams();
     const auth_id = params.id || ''
 
@@ -62,7 +65,8 @@ const UserProfilePage = ({isOwn = false} : {isOwn: boolean}) => {
                         <BreadcrumbSeparator className={`rotate-180 text-foreground font-bold`}/>
                         <BreadcrumbItem>
                             <BreadcrumbLink>
-                                <Link className={`text-foreground font-bold`} href={`/dashboard/${user?.auth_id || ""}`}>Back</Link>
+                                <Link className={`text-foreground font-bold`}
+                                      href={`/dashboard/${user?.auth_id || ""}`}>Back</Link>
                             </BreadcrumbLink>
                         </BreadcrumbItem>
                     </BreadcrumbList>
@@ -70,7 +74,8 @@ const UserProfilePage = ({isOwn = false} : {isOwn: boolean}) => {
             </div>
 
             {/* ── Hero banner */}
-            <div className="relative h-36 bg-gradient-to-br from-primary/15 via-primary/5 to-background border-b border-border/30 overflow-hidden">
+            <div
+                className="relative h-36 bg-gradient-to-br from-primary/15 via-primary/5 to-background border-b border-border/30 overflow-hidden">
                 {/* Decorative grid */}
                 <div
                     className="absolute inset-0 opacity-[0.04]"
@@ -81,77 +86,100 @@ const UserProfilePage = ({isOwn = false} : {isOwn: boolean}) => {
                     }}
                 />
                 {/* Glow */}
-                <div className="absolute -top-12 -left-12 w-48 h-48 rounded-full bg-primary/10 blur-3xl" />
+                <div className="absolute -top-12 -left-12 w-48 h-48 rounded-full bg-primary/10 blur-3xl"/>
             </div>
 
             {/* ── Profile content */}
-            <div className="max-w-3xl mx-auto px-4 pb-16">
-                {/* Avatar — overlaps banner */}
-                <div className="relative -mt-14 mb-4 flex items-end justify-between">
-                    <div className="relative">
-                        <div className="w-24 h-24 rounded-2xl border-4 border-background overflow-hidden bg-muted shadow-xl">
-                            {user.avatar_url ? (
-                                <Image
-                                    src={user.avatar_url || ""}
-                                    alt={user.user_name}
-                                    width={96}
-                                    height={96}
-                                    className="w-full h-full object-cover"
-                                />
-                            ) : (
-                                <div className="w-full h-full flex items-center justify-center">
-                                    <User className="h-10 w-10 text-muted-foreground/40" />
-                                </div>
-                            )}
+            <div className={`grid grid-cols-2 gap-2 p-4 backdrop-blur-sm`}>
+                <div className="mx-auto w-full px-4 pb-16">
+                    {/* Avatar — overlaps banner */}
+                    <div className="relative -mt-14 mb-4 flex items-end justify-between">
+                        <div className="relative">
+                            <div
+                                className="w-24 h-24 rounded-2xl border-4 border-background overflow-hidden bg-muted shadow-xl">
+                                {user.avatar_url ? (
+                                    <Image
+                                        src={user.avatar_url || ""}
+                                        alt={user.user_name}
+                                        width={96}
+                                        height={96}
+                                        className="w-full h-full object-cover"
+                                    />
+                                ) : (
+                                    <div className="w-full h-full flex items-center justify-center">
+                                        <User className="h-10 w-10 text-muted-foreground/40"/>
+                                    </div>
+                                )}
+                            </div>
+                            {/* Online indicator */}
+                            <span
+                                className="absolute bottom-1.5 right-1.5 w-3.5 h-3.5 rounded-full bg-emerald-500 border-2 border-background"/>
                         </div>
-                        {/* Online indicator */}
-                        <span className="absolute bottom-1.5 right-1.5 w-3.5 h-3.5 rounded-full bg-emerald-500 border-2 border-background" />
+
+                        <div>
+                            <ButtonGroup>
+                                <Button variant={`ghost`}><Send /> Message</Button>
+                                <Button variant={`ghost`}><ListTodo /> Add task</Button>
+                            </ButtonGroup>
+                        </div>
+
+                        {/* Role badge */}
+                        {/*<Badge
+                            variant={leader ? "default" : "secondary"}
+                            className={`mb-2 gap-1.5 px-3 py-1.5 text-xs font-medium ${
+                                leader ? "bg-amber-500/15 text-amber-400 border-amber-500/30" : ""
+                            }`}
+                        >
+                            {leader ? <Shield className="h-3 w-3"/> : <User className="h-3 w-3"/>}
+                            {user.position}
+                        </Badge>*/}
                     </div>
 
-                    {/* Role badge */}
-                    <Badge
-                        variant={leader ? "default" : "secondary"}
-                        className={`mb-2 gap-1.5 px-3 py-1.5 text-xs font-medium ${
-                            leader ? "bg-amber-500/15 text-amber-400 border-amber-500/30" : ""
-                        }`}
-                    >
-                        {leader ? <Shield className="h-3 w-3" /> : <User className="h-3 w-3" />}
-                        {user.position}
-                    </Badge>
-                </div>
+                    {/* Name + meta */}
+                    <div className="mb-6">
+                        <h1 className="text-2xl font-bold tracking-tight">{user.user_name}</h1>
+                        <p className="text-sm text-muted-foreground mt-1">
+                            {user.warehouse} · Last seen {lastSeen}
+                        </p>
+                    </div>
 
-                {/* Name + meta */}
-                <div className="mb-6">
-                    <h1 className="text-2xl font-bold tracking-tight">{user.user_name}</h1>
-                    <p className="text-sm text-muted-foreground mt-1">
-                        {user.warehouse} · Last seen {lastSeen}
-                    </p>
-                </div>
+                    {/* ── Stats grid */}
+                    <div className="grid grid-cols-2 sm:grid-cols-4 gap-2.5 mb-6">
+                        <StatCard icon={Star} label="Score" value={user.score.toLocaleString()} accent/>
+                        <StatCard icon={CalendarDays} label="Member" value={memberSince}/>
+                    </div>
 
-                {/* ── Stats grid */}
-                <div className="grid grid-cols-2 sm:grid-cols-4 gap-2.5 mb-6">
-                    <StatCard icon={Star}        label="Score"    value={user.score.toLocaleString()} accent />
-                    <StatCard icon={CalendarDays} label="Member"   value={memberSince} />
-                </div>
-
-                {/* ── Score progress */}
-                <div className="rounded-xl border border-border/40 bg-card/60 px-4 py-3.5 mb-6">
-                    <div className="flex items-center gap-2 mb-3">
-                        <Star className="h-3.5 w-3.5 text-amber-400" />
-                        <span className="text-xs uppercase tracking-widest text-muted-foreground font-medium">
+                    {/* ── Score progress */}
+                    <div className="rounded-xl border border-border/40 bg-card/60 px-4 py-3.5 mb-6">
+                        <div className="flex items-center gap-2 mb-3">
+                            <Star className="h-3.5 w-3.5 text-amber-400"/>
+                            <span className="text-xs uppercase tracking-widest text-muted-foreground font-medium">
                             Score progress
                         </span>
+                        </div>
+                        <ScoreBar score={user.score}/>
                     </div>
-                    <ScoreBar score={user.score} />
-                </div>
 
-                {/* ── Info */}
-                <div className="rounded-xl border border-border/40 bg-card/60 px-4 divide-y divide-border/30">
-                    <InfoRow icon={Mail}      label="Email"     value={user.email} />
-                    <InfoRow icon={Phone}     label="Phone"     value={String(user.phone)} />
-                    <InfoRow icon={Building2} label="Warehouse" value={user.warehouse} />
-                    <InfoRow icon={CalendarDays} label="Member since" value={dayjs(user.created_at).format("D MMMM YYYY")} />
+                    {/* ── Info */}
+                    <div className="rounded-xl border border-border/40 bg-card/60 px-4 divide-y divide-border/30">
+                        <InfoRow icon={Mail} label="Email" value={user.email}/>
+                        <InfoRow icon={Phone} label="Phone" value={String(user.phone)}/>
+                        <InfoRow icon={Building2} label="Warehouse" value={user.warehouse}/>
+                        <InfoRow icon={CalendarDays} label="Member since"
+                                 value={dayjs(user.created_at).format("D MMMM YYYY")}/>
+                    </div>
                 </div>
+                <Empty className="h-full bg-muted/30">
+                    <EmptyHeader>
+                        <EmptyMedia variant="icon">
+                            <BicepsFlexed/>
+                        </EmptyMedia>
+                        <EmptyTitle>User History</EmptyTitle>
+                        <EmptyDescription className="max-w-xs text-pretty">
+                            Your history is currently in working... soon it will be here
+                        </EmptyDescription>
+                    </EmptyHeader>
+                </Empty>
             </div>
         </div>
     );

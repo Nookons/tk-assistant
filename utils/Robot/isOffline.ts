@@ -1,0 +1,2 @@
+
+export const isOffline = (status: string) => status === '离线 | Offline'

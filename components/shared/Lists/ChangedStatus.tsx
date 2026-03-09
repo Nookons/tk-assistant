@@ -12,7 +12,7 @@ import {
 } from "lucide-react";
 import dayjs from "dayjs";
 import relativeTime from "dayjs/plugin/relativeTime";
-import {IStatusHistory} from "@/components/shared/dashboard/ShiftStats/MonthStats";
+import {IStatusHistory} from "@/app/reports/shein/page";
 
 dayjs.extend(relativeTime);
 

@@ -3,22 +3,18 @@ import {Wrench, Minus, ChevronDown, ChevronUp} from "lucide-react";
 import {Button} from "@/components/ui/button";
 import Link from "next/link";
 import {timeToString} from "@/utils/timeToString";
+import {IHistoryParts} from "@/types/robot/robot";
 
 const COLLAPSE_LIMIT = 1;
 
-interface PartEntry {
-    parts_numbers: string;
-    created_at: number;
-}
-
 interface PartsCellProps {
-    parts_history: PartEntry[];
+    parts_history: IHistoryParts[] | undefined;
 }
 
 function PartsCell({parts_history}: PartsCellProps) {
     const [expanded, setExpanded] = useState(false);
 
-    if (parts_history.length === 0) {
+    if (!parts_history) {
         return <Minus size={14} className="text-muted-foreground/40"/>;
     }
 

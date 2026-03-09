@@ -20,6 +20,7 @@ interface SidebarProps {
 
 function Sidebar({activeItem, onSelect, open}: SidebarProps) {
     const user = useUserStore(state => state.currentUser);
+
     const [collapsed, setCollapsed] = useState<boolean>(() => {
         if (typeof window === "undefined") return false;
         return localStorage.getItem("isExpanded") === "true";

@@ -16,7 +16,8 @@ import EmployeesDisplay from "@/components/shared/DashboardNew/Pages/EmployeesDi
 import RobotsDisplay from "@/components/shared/DashboardNew/Pages/RobotsDisplay";
 import SettingsDisplay from "@/components/shared/DashboardNew/Pages/SettingsDisplay";
 import ErrorParseProvider from "@/components/shared/DashboardNew/Pages/ErrorParseProvider";
-import InventoryDisplay from "@/components/shared/DashboardNew/Pages/InventoryDisplay";
+import InventoryDisplay from "@/components/shared/DashboardNew/DashboardComponents/Stock/InventoryDisplay";
+import PartsCatalogue from "@/components/shared/DashboardNew/Pages/PartsCatalogue";
 
 interface NavItem {
     id: string;
@@ -25,8 +26,6 @@ interface NavItem {
     badge?: number;
 }
 
-
-
 export const NAV_ITEMS: NavItem[] = [
     { id: "dashboard", label: "Dashboard", icon: <LayoutDashboard size={18} /> },
     { id: "robots", label: "Robots", icon: <Bot size={18} /> },
@@ -34,7 +33,7 @@ export const NAV_ITEMS: NavItem[] = [
     { id: "reports", label: "Reports", icon: <FileText size={18} /> },
     { id: "error_parse", label: "Parsing", icon: <ChartBarStacked  size={18} /> },
     { id: "stock", label: "Stock", icon: <Package size={18} /> },
-    { id: "inventory", label: "Inventory", icon: <Warehouse   size={18} /> },
+    { id: "parts_catalogue", label: "Parts Catalogue", icon: <Warehouse   size={18} /> },
     { id: "settings", label: "Settings", icon: <Settings size={18} /> },
 ];
 
@@ -46,5 +45,5 @@ export const PAGE_REGISTRY: Record<string, React.ComponentType<any>> = {
     robots:    RobotsDisplay,
     settings:    SettingsDisplay,
     error_parse:    ErrorParseProvider,
-    inventory:    InventoryDisplay,
+    parts_catalogue:    PartsCatalogue,
 };

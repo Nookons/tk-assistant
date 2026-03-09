@@ -2,7 +2,6 @@
 import React, {useMemo} from 'react';
 import {useQuery} from "@tanstack/react-query";
 import {getStockSummary} from "@/futures/stock/getStockSummary";
-import BasicLoading from "../BaseUI/BasicLoading";
 import {ChartConfig, ChartContainer, ChartTooltip, ChartTooltipContent} from "@/components/ui/chart";
 import {CardContent, CardDescription, CardHeader, CardTitle} from "@/components/ui/card";
 import {Bar, BarChart, XAxis, YAxis} from "recharts";
@@ -80,7 +79,7 @@ const SummaryScreen = () => {
         return Array.from(map.values());
     }, [stockSummary]);
 
-    if (isLoading) return <BasicLoading/>;
+    if (isLoading) return null;
     if (isError || !stockSummary) return <div>Failed to load stock summary.</div>;
 
     return (

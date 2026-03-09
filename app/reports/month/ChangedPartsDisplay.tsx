@@ -29,6 +29,8 @@ const ChangedPartsDisplay = ({date, setChanged_parts_data}: ChangedPartsDisplayP
         const targetMonth = dayjs(date).format("YYYY-MM");
 
         for (const robot of robots_store) {
+            if (!robot.parts_history?.length) continue;
+
             for (const part of robot.parts_history) {
                 if (dayjs(part.created_at).format("YYYY-MM") !== targetMonth) continue;
 
@@ -55,10 +57,8 @@ const ChangedPartsDisplay = ({date, setChanged_parts_data}: ChangedPartsDisplayP
         return result;
     }, [robots_store, parts_templates_store, date]);
 
-    // Сбрасываем страницу при смене месяца
     useEffect(() => { setPage(1); }, [date]);
 
-    // Синхронизируем полный массив с родителем (не нарезанный!)
     useEffect(() => {
         setChanged_parts_data(month_parts);
     }, [month_parts]);

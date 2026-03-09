@@ -13,15 +13,12 @@ export class robotService {
 
         const user = useUserStore.getState().currentUser;
 
-        // ⚠️ parts_numbers: [part.material_number] — ты вставляешь массив из одного элемента
-        // если колонка в БД это array — окей
-        // если колонка ожидает просто число/строку — убери []
         const { data, error } = await supabase
             .from('changed_parts')
             .insert({
                 robot_id:      robot.id,
-                parts_numbers: [part.material_number],  // ← array или одно значение?
-                card_id:       user?.card_id ?? 0,       // ?? лучше чем || для чисел (|| считает 0 falsy)
+                parts_numbers: [part.material_number],
+                card_id:       user?.card_id ?? 0,
                 warehouse:     robot?.warehouse ?? '',
                 quantity,
             })

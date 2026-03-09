@@ -91,10 +91,6 @@ function HistoryCardSkeleton() {
     )
 }
 
-// ─────────────────────────────────────────────────────────
-// Main component
-// ─────────────────────────────────────────────────────────
-
 const RobotHistory = ({ robot }: { robot: IRobot }) => {
     const [events, setEvents]           = useState<HistoryEvent[]>([])
     const [loading, setLoading]         = useState(true)
@@ -231,39 +227,6 @@ const RobotHistory = ({ robot }: { robot: IRobot }) => {
                                             <span className="text-xs text-muted-foreground line-clamp-1">
                                                 {event.user?.user_name ?? 'Unknown'}
                                             </span>
-
-                                            {event.type === 'parts' && event.card_id === user?.card_id && (
-                                                <AlertDialog>
-                                                    <AlertDialogTrigger asChild>
-                                                        <Button
-                                                            variant="ghost"
-                                                            size="sm"
-                                                            className="h-auto p-1"
-                                                            disabled={isDeleting}
-                                                        >
-                                                            {isDeleting
-                                                                ? <Loader className="h-4 w-4 animate-spin" />
-                                                                : <Trash2 className="h-4 w-4" />
-                                                            }
-                                                        </Button>
-                                                    </AlertDialogTrigger>
-                                                    <AlertDialogContent>
-                                                        <AlertDialogHeader>
-                                                            <AlertDialogTitle>Delete Parts History?</AlertDialogTitle>
-                                                            <AlertDialogDescription>
-                                                                This action cannot be undone. This will permanently delete
-                                                                this parts history entry from the robot's records.
-                                                            </AlertDialogDescription>
-                                                        </AlertDialogHeader>
-                                                        <AlertDialogFooter>
-                                                            <AlertDialogCancel>Cancel</AlertDialogCancel>
-                                                            <AlertDialogAction onClick={() => handleDelete(event.id, event.robot_id)}>
-                                                                Delete
-                                                            </AlertDialogAction>
-                                                        </AlertDialogFooter>
-                                                    </AlertDialogContent>
-                                                </AlertDialog>
-                                            )}
                                         </div>
                                     </div>
 

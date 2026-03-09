@@ -4,7 +4,7 @@ import { IChangeRecord } from "@/types/Parts/ChangeRecord";
 import jsPDF from "jspdf";
 import dayjs from "dayjs";
 import autoTable from "jspdf-autotable";
-import { IStatusHistory } from "@/components/shared/dashboard/ShiftStats/MonthStats";
+import {IStatusHistory} from "@/app/reports/shein/page";
 
 // ── Types ─────────────────────────────────────────────────────────────────────
 

@@ -10,9 +10,8 @@ import CreateNewStockTemplate from "@/components/shared/Stock/CreateNewStockTemp
 import {Badge} from "@/components/ui/badge";
 import {PackageSearch} from "lucide-react";
 
-const PREVIEW_LIMIT = 10;
+const PREVIEW_LIMIT = 15;
 
-// ── Component ─────────────────────────────────────────────────────────────────
 
 const SearchStockTemplate = () => {
     const stock_store = useStockStore(state => state.items_templates);
@@ -49,9 +48,7 @@ const SearchStockTemplate = () => {
     if (!stock_store) return null;
 
     return (
-        <div className="rounded-xl border border-border bg-card p-4 space-y-4">
-
-            {/* Header */}
+        <div className="rounded-xl space-y-4">
             <div className="flex items-center justify-between">
                 <div>
                     <h2 className="text-sm font-semibold">Parts Catalogue</h2>
@@ -62,14 +59,12 @@ const SearchStockTemplate = () => {
                 <CreateNewStockTemplate/>
             </div>
 
-            {/* Search */}
             <Input
                 value={value}
                 onChange={(e) => setValue(e.target.value)}
                 placeholder="Material number or description..."
             />
 
-            {/* Results count */}
             {value && (
                 <div className="flex items-center justify-between">
                     <p className="text-xs text-muted-foreground">
@@ -86,14 +81,13 @@ const SearchStockTemplate = () => {
 
             <Separator/>
 
-            {/* Results */}
             {filteredData.length === 0 && value ? (
                 <div className="flex flex-col items-center justify-center py-8 gap-2 text-muted-foreground">
                     <PackageSearch size={28} className="opacity-30"/>
                     <p className="text-xs">No parts found for &quot;{value}&quot;</p>
                 </div>
             ) : (
-                <div className="space-y-2">
+                <div className="grid grid-cols-3 gap-2">
                     {filteredData.slice(0, PREVIEW_LIMIT).map((part) => (
                         <StockItemPreview key={part.material_number} data={part}/>
                     ))}

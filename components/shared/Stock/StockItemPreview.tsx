@@ -36,8 +36,9 @@ const StockItemPreview: React.FC<props> = ({data}) => {
                                 />
                                 {!data?.avatar_url && <AvatarFallback>TK</AvatarFallback>}
                             </Avatar>
-                            <div className="absolute inset-0  opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center rounded">
-                                <ZoomIn className="w-6 h-6" />
+                            <div
+                                className="absolute inset-0  opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center rounded">
+                                <ZoomIn className="w-6 h-6"/>
                             </div>
                         </div>
                     </DialogTrigger>
@@ -58,24 +59,24 @@ const StockItemPreview: React.FC<props> = ({data}) => {
                                                     size="sm"
                                                     onClick={() => zoomIn()}
                                                 >
-                                                    <ZoomIn className="w-4 h-4" />
+                                                    <ZoomIn className="w-4 h-4"/>
                                                 </Button>
                                                 <Button
                                                     variant="ghost"
                                                     size="sm"
                                                     onClick={() => zoomOut()}
                                                 >
-                                                    <ZoomOut className="w-4 h-4" />
+                                                    <ZoomOut className="w-4 h-4"/>
                                                 </Button>
                                                 <Button
                                                     variant="ghost"
                                                     size="sm"
                                                     onClick={() => resetTransform()}
                                                 >
-                                                    <RotateCcw className="w-4 h-4" />
+                                                    <RotateCcw className="w-4 h-4"/>
                                                 </Button>
                                             </ButtonGroup>
-                                            <TemplatePhotoChange part={data} />
+                                            <TemplatePhotoChange part={data}/>
                                         </div>
 
                                         {/* Контейнер с изображением */}
@@ -103,20 +104,18 @@ const StockItemPreview: React.FC<props> = ({data}) => {
 
 
                 <div className={`flex flex-col gap-2 w-full`}>
-                    <div className={`w-full flex items-center justify-between`}>
-                        <Badge className="cursor-pointer">
-                            <Copy className="w-3 h-3" /> {data.material_number}
-                        </Badge>
-                        <div className={`flex items-center gap-4`}>
-                            <Label className={`text-xs`}>
-                                <Bot className="w-4 h-4 inline" />
-                                {data.robot_match?.join(' | ')}
-                            </Label>
-                            <TemplateEditDialog part={data} />
-                        </div>
+                    <div className={`flex items-center w-full justify-between gap-4`}>
+                        <Label className={`text-xs`}>
+                            <Bot className="w-4 h-4 inline"/>
+                            {data.robot_match?.join(' | ')}
+                        </Label>
+                        <TemplateEditDialog part={data}/>
                     </div>
 
                     <p>{data.description_eng}</p>
+                    <Label className="cursor-pointer">
+                        {data.material_number}
+                    </Label>
                     <Label className={`text-xs text-muted-foreground`}>
                         {timeToString(data.updated_at)}
                     </Label>

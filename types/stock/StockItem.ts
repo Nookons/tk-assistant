@@ -14,3 +14,15 @@ export interface IStockItemTemplate {
     robot_match: string[];
     user?: IUser;
 }
+
+export interface IStockLocationSlot{
+    id: number;
+    created_at: Timestamp | string;
+    updated_at: Timestamp | string;
+    quantity: number;
+    last_update_by: number;
+    material_number: string;
+    warehouse: string;
+    location: string;
+    location_key: string;
+}

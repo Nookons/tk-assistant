@@ -21,7 +21,18 @@ import {ButtonGroup} from "@/components/ui/button-group";
 import {Skeleton} from "@/components/ui/skeleton";
 import {useExceptionStore} from "@/store/exception";
 import {generateShiftReport} from "@/futures/pdf/shiftReport";
-import {IStatusHistory} from "@/components/shared/dashboard/ShiftStats/MonthStats";
+import {IUser} from "@/types/user/user";
+
+export interface IStatusHistory {
+    id: number;
+    user: IUser;
+    add_by: number;
+    robot_id: number;
+    created_at: string;
+    new_status: string;
+    old_status: string;
+    robot_number: number;
+}
 
 const Page = () => {
     const [isLoading, setIsLoading] = useState<boolean>(false)
