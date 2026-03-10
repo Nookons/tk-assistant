@@ -80,8 +80,6 @@ const ShiftReportGlpc = () => {
 
     return (
         <div className="space-y-4">
-
-            {/* ── Toolbar ── */}
             <div className="flex flex-wrap items-center justify-between gap-3 rounded-xl border border-border bg-card p-3">
                 <div className="flex items-center gap-2">
                     <Badge variant="outline" className="gap-1.5 text-xs">
@@ -98,8 +96,7 @@ const ShiftReportGlpc = () => {
                     {isLoading && <Loader2 size={14} className="animate-spin text-muted-foreground"/>}
                 </div>
 
-                <div className="flex items-center gap-2">
-                    {/* Date picker */}
+                <div className="flex flex-wrap items-center gap-2">
                     <Popover>
                         <PopoverTrigger asChild>
                             <Button
@@ -122,7 +119,6 @@ const ShiftReportGlpc = () => {
                         </PopoverContent>
                     </Popover>
 
-                    {/* Shift select */}
                     <Select value={shift_type} onValueChange={(v) => setShift_type(v as "day" | "night")}>
                         <SelectTrigger className="h-8 text-sm">
                             <SelectValue placeholder="Shift"/>
@@ -139,7 +135,6 @@ const ShiftReportGlpc = () => {
                         </SelectContent>
                     </Select>
 
-                    {/* PDF export */}
                     <ButtonGroup>
                         <Button
                             size="sm"

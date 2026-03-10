@@ -431,7 +431,7 @@ const SettingsDisplay = () => {
                             <InfoRow icon={CalendarDays} label="Member since" value={dayjs(user.created_at).format("D MMMM YYYY")} />
                         </div>
 
-                        <section className="grid grid-cols-2 gap-4 w-full">
+                        <section className="grid md:grid-cols-2 gap-4 w-full">
                             <div className="rounded-xl border border-border/40 bg-card/60 px-4 py-4">
                                 <SectionTitle>
                                     <Mail className="h-3.5 w-3.5 text-muted-foreground" />
@@ -448,7 +448,6 @@ const SettingsDisplay = () => {
                                 <PasswordChangeForm user={user} />
                             </div>
                         </section>
-
                     </div>
 
                     <Empty className="h-full bg-muted/30">

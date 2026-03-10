@@ -1,21 +1,55 @@
 import React from 'react';
 import {Sheet, SheetContent, SheetDescription, SheetHeader, SheetTitle} from "@/components/ui/sheet";
-import {Container, ExternalLink, HandCoins, Warehouse} from "lucide-react";
+import {Container, ExternalLink, HandCoins, Trash2, Warehouse} from "lucide-react";
 import {Table, TableBody, TableCell, TableHead, TableHeader, TableRow} from "@/components/ui/table";
 import Link from "next/link";
 import {Button} from "@/components/ui/button";
-import {LocationStock} from "@/types/stock/SummaryItem";
+import {LocationItem, LocationStock} from "@/types/stock/SummaryItem";
 import {HoverCard, HoverCardContent, HoverCardTrigger} from "@/components/ui/hover-card";
 import {AspectRatio} from "@/components/ui/aspect-ratio";
 import Image from "next/image";
 import {MaterialImage} from "@/components/shared/DashboardNew/DashboardComponents/Stock/MaterialImage";
+import {
+    AlertDialog, AlertDialogAction, AlertDialogCancel,
+    AlertDialogContent,
+    AlertDialogDescription, AlertDialogFooter,
+    AlertDialogHeader,
+    AlertDialogTitle,
+    AlertDialogTrigger
+} from "@/components/ui/alert-dialog";
+import {StockService} from "@/services/stockService";
+import {toast} from "sonner";
+import {useStockStore} from "@/store/stock";
 
-const LocationSheet = ({el, onClose}: { el: LocationStock | null; onClose: () => void }) => {
+const LocationSheet = ({
+                           el,
+                           onClose,
+                           onUpdate,
+                       }: {
+    el: LocationStock | null;
+    onClose: () => void;
+    onUpdate: (locationKey: string, newItems: LocationItem[]) => void;
+}) => {
     if (!el) return null;
 
     const visibleItems = el.items.filter(i => i.total_quantity > 0);
     const locationLabel = el.location.split('-')[1]?.toUpperCase() ?? el.location;
     const warehouseName = el.items[0]?.warehouse ?? '';
+
+    const deleteHandle = async (item: LocationItem) => {
+        try {
+            const result = await StockService.removeFromStock(item)
+
+            if (result) {
+                toast.success('Item removed successfully.');
+                const newItems = el.items.filter(i => i.material_number !== item.material_number);
+                onUpdate(el.location, newItems);
+            }
+
+        } catch (error) {
+            console.log(error);
+        }
+    }
 
     return (
         <Sheet open={!!el} onOpenChange={open => !open && onClose()}>
@@ -42,6 +76,7 @@ const LocationSheet = ({el, onClose}: { el: LocationStock | null; onClose: () =>
                                 <TableHead className="text-xs w-[110px]">Material</TableHead>
                                 <TableHead className="text-xs">Description</TableHead>
                                 <TableHead className="text-xs text-right w-[75px]">Qty</TableHead>
+                                <TableHead className="text-xs text-right w-[75px]">Remove</TableHead>
                             </TableRow>
                         </TableHeader>
                         <TableBody>
@@ -51,12 +86,14 @@ const LocationSheet = ({el, onClose}: { el: LocationStock | null; onClose: () =>
                                         className="text-xs max-w-[100px] font-mono text-muted-foreground py-2.5 align-top">
                                         <HoverCard openDelay={10} closeDelay={100}>
                                             <HoverCardTrigger asChild>
-                                                <Link
-                                                    className="text-blue-500 hover:underline font-medium"
-                                                    href="#"
-                                                >
-                                                    {item.material_number}
-                                                </Link>
+                                                <div className={`pt-2`}>
+                                                    <Link
+                                                        className="text-blue-500 hover:underline font-medium"
+                                                        href="#"
+                                                    >
+                                                        {item.material_number}
+                                                    </Link>
+                                                </div>
                                             </HoverCardTrigger>
                                             <HoverCardContent side={`left`} className="p-0 w-56 overflow-hidden rounded-xl border shadow-md">
                                                 <MaterialImage url={item.avatar_url} alt={item.material_number} />
@@ -72,6 +109,27 @@ const LocationSheet = ({el, onClose}: { el: LocationStock | null; onClose: () =>
                                                 className="text-sm font-semibold tabular-nums">{item.total_quantity}</span>
                                             <HandCoins size={11} className="text-muted-foreground/40"/>
                                         </div>
+                                    </TableCell>
+                                    <TableCell className="flex justify-end gap-2">
+                                        <AlertDialog>
+                                            <AlertDialogTrigger asChild>
+                                                <Button variant={`ghost`}>
+                                                    <Trash2 size={16}/>
+                                                </Button>
+                                            </AlertDialogTrigger>
+                                            <AlertDialogContent>
+                                                <AlertDialogHeader>
+                                                    <AlertDialogTitle>Are you absolutely sure?</AlertDialogTitle>
+                                                    <AlertDialogDescription>
+                                                        This action cannot be undone. This will permanently delete this items from our servers.
+                                                    </AlertDialogDescription>
+                                                </AlertDialogHeader>
+                                                <AlertDialogFooter>
+                                                    <AlertDialogCancel>Cancel</AlertDialogCancel>
+                                                    <AlertDialogAction onClick={() => deleteHandle(item)}>Continue</AlertDialogAction>
+                                                </AlertDialogFooter>
+                                            </AlertDialogContent>
+                                        </AlertDialog>
                                     </TableCell>
                                 </TableRow>
                             ))}
@@ -93,7 +151,6 @@ const LocationSheet = ({el, onClose}: { el: LocationStock | null; onClose: () =>
                         </Link>
                     </Button>
                 </div>
-
             </SheetContent>
         </Sheet>
     );

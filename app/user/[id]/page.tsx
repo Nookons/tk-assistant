@@ -90,7 +90,7 @@ const UserProfilePage = ({isOwn = false}: { isOwn: boolean }) => {
             </div>
 
             {/* ── Profile content */}
-            <div className={`grid grid-cols-2 gap-2 p-4 backdrop-blur-sm`}>
+            <div className={`grid md:grid-cols-2 gap-2 p-4 backdrop-blur-sm`}>
                 <div className="mx-auto w-full px-4 pb-16">
                     {/* Avatar — overlaps banner */}
                     <div className="relative -mt-14 mb-4 flex items-end justify-between">

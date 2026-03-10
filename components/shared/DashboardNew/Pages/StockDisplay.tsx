@@ -3,8 +3,8 @@ import React, {useEffect, useMemo, useState} from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { Input } from '@/components/ui/input';
 import { getLocationsSummary } from '@/futures/stock/getLocationsSummary';
-import { LocationStock, StockByLocationResponse } from '@/types/stock/SummaryItem';
-import { Loader2, PackageSearch, Search, Warehouse, X } from 'lucide-react';
+import { LocationItem, LocationStock, StockByLocationResponse } from '@/types/stock/SummaryItem';
+import { Download, Loader2, PackageSearch, Search, X } from 'lucide-react';
 import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
@@ -12,17 +12,9 @@ import { Select, SelectContent, SelectGroup, SelectItem, SelectTrigger, SelectVa
 import { usePersistedTab } from '@/hooks/usePersistedTab';
 import LocationSheet from "@/components/shared/DashboardNew/DashboardComponents/Stock/LocationSheet";
 import LocationCard from "@/components/shared/DashboardNew/DashboardComponents/Stock/LocationCard";
-import {
-    Sheet, SheetClose,
-    SheetContent,
-    SheetDescription,
-    SheetFooter,
-    SheetHeader,
-    SheetTitle,
-    SheetTrigger
-} from "@/components/ui/sheet";
+import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
 import InventoryDisplay from "@/components/shared/DashboardNew/DashboardComponents/Stock/InventoryDisplay";
-
+import * as XLSX from 'xlsx';
 
 const WAREHOUSES = ['all', 'GLPC', 'SMALL_P3', 'PNT', 'P3'] as const;
 type Warehouse = typeof WAREHOUSES[number];
@@ -32,7 +24,6 @@ const WAREHOUSE_LABELS: Record<Warehouse, string> = {
 };
 
 const STORAGE_KEY = 'stock_sub_tab';
-
 
 function LoadingState() {
     return (
@@ -63,14 +54,73 @@ function EmptyState({ query }: { query: string }) {
     );
 }
 
+function exportToExcel(data: StockByLocationResponse, warehouse: string) {
+    const rows = data.flatMap(loc =>
+        (loc.items ?? []).map(item => ({
+            'Location':        item.location_key.split('-')[1]?.toUpperCase() ?? '',
+            'Material Number': item.material_number ?? '',
+            'Description':     item.description_eng ?? '',
+            'Warehouse':       item.warehouse ?? '',
+            'Total Quantity':  item.total_quantity ?? 0,
+        }))
+    );
 
-// ─── Page ─────────────────────────────────────────────────────────────────────
+    if (rows.length === 0) return;
+
+    const worksheet = XLSX.utils.json_to_sheet(rows);
+
+    // Авто-ширина колонок
+    const colWidths = Object.keys(rows[0]).map(key => ({
+        wch: Math.max(key.length, ...rows.map(r => String(r[key as keyof typeof r] ?? '').length)) + 2,
+    }));
+    worksheet['!cols'] = colWidths;
+
+    // ── Сетка ─────────────────────────────────────────────────────────────────
+    const borderStyle = {
+        top:    { style: 'thin', color: { rgb: 'D1D5DB' } },
+        bottom: { style: 'thin', color: { rgb: 'D1D5DB' } },
+        left:   { style: 'thin', color: { rgb: 'D1D5DB' } },
+        right:  { style: 'thin', color: { rgb: 'D1D5DB' } },
+    };
+
+    const headerFill = { fgColor: { rgb: 'F3F4F6' }, patternType: 'solid' as const };
+    const headerFont = { bold: true };
+
+    const range = XLSX.utils.decode_range(worksheet['!ref']!);
+
+    for (let R = range.s.r; R <= range.e.r; R++) {
+        for (let C = range.s.c; C <= range.e.c; C++) {
+            const cellAddress = XLSX.utils.encode_cell({ r: R, c: C });
+
+            if (!worksheet[cellAddress]) {
+                worksheet[cellAddress] = { t: 's', v: '' };
+            }
+
+            worksheet[cellAddress].s = {
+                border: borderStyle,
+                ...(R === 0 && { fill: headerFill, font: headerFont }),
+            };
+        }
+    }
+    // ─────────────────────────────────────────────────────────────────────────
+
+    const workbook = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(workbook, worksheet, 'Stock');
+
+    const warehouseLabel = warehouse === 'all' ? 'All' : warehouse;
+    const date = new Date().toISOString().slice(0, 10);
+    XLSX.writeFile(workbook, `stock_${warehouseLabel}_${date}.xlsx`);
+}
+// ─────────────────────────────────────────────────────────────────────────────
 
 const Page = () => {
     const [searchValue, setSearchValue] = useState('');
     const [rowsPerPage, setRowsPerPage] = useState(25);
     const [page, setPage] = useState(1);
-    const [pickedItem, setPickedItem] = useState<LocationStock | null>(null); // ← сюда, не в useMemo
+    const [pickedItem, setPickedItem] = useState<LocationStock | null>(null);
+    const [isExporting, setIsExporting] = useState(false);
+
+    const [stockData, setStockData] = useState<StockByLocationResponse>([]);
 
     const [pickedWarehouse, setPickedWarehouse] = usePersistedTab<Warehouse>(
         STORAGE_KEY, 'all',
@@ -84,12 +134,22 @@ const Page = () => {
     });
 
     useEffect(() => {
-        console.log(locationsSummary);
+        if (locationsSummary) setStockData(locationsSummary);
     }, [locationsSummary]);
 
+    const handleLocationUpdate = (locationKey: string, newItems: LocationItem[]) => {
+        setStockData(prev =>
+            prev.map(loc =>
+                loc.location === locationKey ? { ...loc, items: newItems } : loc
+            )
+        );
+        setPickedItem(prev =>
+            prev?.location === locationKey ? { ...prev, items: newItems } : prev
+        );
+    };
+
     const filteredData = useMemo<StockByLocationResponse>(() => {
-        if (!locationsSummary) return [];
-        let data = [...locationsSummary];
+        let data = [...stockData];
 
         if (pickedWarehouse !== 'all') {
             data = data.filter(loc =>
@@ -112,7 +172,7 @@ const Page = () => {
         }
 
         return data.filter(loc => loc.items?.some(i => i.total_quantity > 0));
-    }, [locationsSummary, pickedWarehouse, searchValue]);
+    }, [stockData, pickedWarehouse, searchValue]);
 
     const totalPages = Math.ceil(filteredData.length / rowsPerPage);
     const paginatedData = useMemo(() =>
@@ -127,12 +187,26 @@ const Page = () => {
         setPage(1);
     };
 
+    // Экспорт текущих отфильтрованных данных
+    const handleExport = () => {
+        setIsExporting(true);
+        try {
+            exportToExcel(filteredData, pickedWarehouse);
+        } finally {
+            setIsExporting(false);
+        }
+    };
+
     if (isLoading) return <LoadingState />;
     if (isError) return <ErrorState />;
 
     return (
         <div className="space-y-5">
-            <LocationSheet el={pickedItem} onClose={() => setPickedItem(null)} />
+            <LocationSheet
+                el={pickedItem}
+                onClose={() => setPickedItem(null)}
+                onUpdate={handleLocationUpdate}
+            />
 
             <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
                 <Tabs value={pickedWarehouse} onValueChange={handleWarehouse}>
@@ -144,6 +218,7 @@ const Page = () => {
                         ))}
                     </TabsList>
                 </Tabs>
+
                 <div className="flex items-center gap-2">
                     <span className="text-xs text-muted-foreground whitespace-nowrap">Rows per page</span>
                     <Select value={String(rowsPerPage)} onValueChange={v => { setRowsPerPage(Number(v)); setPage(1); }}>
@@ -157,22 +232,35 @@ const Page = () => {
                         </SelectContent>
                     </Select>
 
+                    {/* ── Export to Excel ── */}
+                    <Button
+                        variant="outline"
+                        onClick={handleExport}
+                        disabled={isExporting || filteredData.length === 0}
+                        className="gap-1.5 text-xs"
+                        title="Export filtered data to Excel"
+                    >
+                        {isExporting
+                            ? <Loader2 size={14} className="animate-spin" />
+                            : <Download size={14} />
+                        }
+                        Excel
+                    </Button>
+
                     <Sheet>
                         <SheetTrigger asChild>
-                            <Button variant={`outline`}>
-                                <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none"
-                                     stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"
-                                     className="lucide lucide-layers-plus-icon lucide-layers-plus">
-                                    <path
-                                        d="M12.83 2.18a2 2 0 0 0-1.66 0L2.6 6.08a1 1 0 0 0 0 1.83l8.58 3.91a2 2 0 0 0 .83.18 2 2 0 0 0 .83-.18l8.58-3.9a1 1 0 0 0 0-1.831z"/>
-                                    <path d="M16 17h6"/>
-                                    <path d="M19 14v6"/>
+                            <Button variant="outline">
+                                <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24"
+                                     fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round"
+                                     strokeLinejoin="round" className="lucide lucide-layers-plus">
+                                    <path d="M12.83 2.18a2 2 0 0 0-1.66 0L2.6 6.08a1 1 0 0 0 0 1.83l8.58 3.91a2 2 0 0 0 .83.18 2 2 0 0 0 .83-.18l8.58-3.9a1 1 0 0 0 0-1.831z"/>
+                                    <path d="M16 17h6"/><path d="M19 14v6"/>
                                     <path d="M2 12a1 1 0 0 0 .58.91l8.6 3.91a2 2 0 0 0 .825.178"/>
                                     <path d="M2 17a1 1 0 0 0 .58.91l8.6 3.91a2 2 0 0 0 1.65 0l2.116-.962"/>
                                 </svg>
                             </Button>
                         </SheetTrigger>
-                        <SheetContent className={`w-full sm:max-w-[70vw]`}>
+                        <SheetContent className="w-full sm:max-w-[70vw]">
                             <InventoryDisplay />
                         </SheetContent>
                     </Sheet>
@@ -186,8 +274,7 @@ const Page = () => {
             )}
 
             <div className="relative">
-                <Search size={14}
-                        className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground pointer-events-none"/>
+                <Search size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground pointer-events-none"/>
                 <Input
                     value={searchValue}
                     onChange={e => handleSearch(e.target.value)}

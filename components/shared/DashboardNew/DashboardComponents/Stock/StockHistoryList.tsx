@@ -16,11 +16,15 @@ import { getUserWarehouse } from '@/utils/getUserWarehouse';
 import { timeToString } from '@/utils/timeToString';
 import { StockService } from '@/services/stockService';
 import { IHistoryStockItem } from '@/types/stock/HistoryStock';
-
-import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-import { ButtonGroup } from '@/components/ui/button-group';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
+import {ScrollArea} from "@/components/ui/scroll-area";
+import {
+    AlertDialog, AlertDialogAction, AlertDialogCancel,
+    AlertDialogContent, AlertDialogDescription, AlertDialogFooter,
+    AlertDialogHeader,
+    AlertDialogTitle, AlertDialogTrigger
+} from "@/components/ui/alert-dialog";
 
 const SHOW_LIMIT_DEFAULT = 15;
 const SHOW_LIMIT_EXPANDED = 50;
@@ -88,9 +92,7 @@ const StockHistoryList = () => {
         .slice(0, showLimit);
 
     return (
-        <div className="rounded-xl border bg-card overflow-hidden h-full flex flex-col">
-
-            {/* Header */}
+        <div className="overflow-hidden h-full flex flex-col">
             <div className="flex justify-between items-center gap-2 p-2">
                 <p className="px-2 py-2 text-xs font-medium text-muted-foreground">
                     Historical data for your current warehouse only.
@@ -109,76 +111,91 @@ const StockHistoryList = () => {
                 </div>
             </div>
 
-            {/* Table */}
             <div className="overflow-auto flex-1 p-2">
-                <Table>
-                    <TableHeader>
-                        <TableRow className="hover:bg-transparent">
-                            <TableHead className="text-xs">Employee</TableHead>
-                            <TableHead className="text-xs hidden sm:table-cell">Warehouse</TableHead>
-                            <TableHead className="text-xs hidden md:table-cell">Location</TableHead>
-                            <TableHead className="text-xs">Qty</TableHead>
-                            <TableHead className="text-xs">Material</TableHead>
-                            <TableHead className="text-xs hidden sm:table-cell">Robot</TableHead>
-                            <TableHead className="text-xs hidden sm:table-cell">Time</TableHead>
-                            <TableHead className="text-xs w-[80px]">Actions</TableHead>
-                        </TableRow>
-                    </TableHeader>
-                    <TableBody>
-                        {sorted.length === 0
-                            ? <EmptyRow warehouse={warehouse} />
-                            : sorted.map(el => (
-                                <TableRow key={el.id}>
-                                    <TableCell className="text-sm font-medium">
+                <ScrollArea className="h-[75dvh] md:h-[82dvh] w-full rounded-md border">
+                    <Table>
+                        <TableHeader>
+                            <TableRow className="hover:bg-transparent">
+                                <TableHead className="text-xs">Employee</TableHead>
+                                <TableHead className="text-xs hidden sm:table-cell">Warehouse</TableHead>
+                                <TableHead className="text-xs hidden md:table-cell">Location</TableHead>
+                                <TableHead className="text-xs">Qty</TableHead>
+                                <TableHead className="text-xs">Material</TableHead>
+                                <TableHead className="text-xs hidden sm:table-cell">Robot</TableHead>
+                                <TableHead className="text-xs hidden sm:table-cell">Time</TableHead>
+                                <TableHead className="text-xs w-[80px]">Actions</TableHead>
+                            </TableRow>
+                        </TableHeader>
+                        <TableBody>
+                            {sorted.length === 0
+                                ? <EmptyRow warehouse={warehouse} />
+                                : sorted.map(el => (
+                                    <TableRow key={el.id}>
+                                        <TableCell className="text-sm font-medium">
                                         <span className="flex items-center gap-2">
                                             <User size={16} />
                                             {el.user.user_name}
                                         </span>
-                                    </TableCell>
+                                        </TableCell>
 
-                                    <TableCell className="text-sm font-medium hidden sm:table-cell">
+                                        <TableCell className="text-sm font-medium hidden sm:table-cell">
                                         <span className="flex items-center gap-2">
                                             <Warehouse size={16} />
                                             {el.warehouse}
                                         </span>
-                                    </TableCell>
+                                        </TableCell>
 
-                                    <TableCell className="text-sm font-mono hidden md:table-cell">
-                                        {el.location
-                                            ? <p className={`flex items-center gap-2`}><MapPinHouse size={16} /> <LinkCell href="" label={el.location} /></p>
-                                            : <Minus size={16} />
-                                        }
-                                    </TableCell>
+                                        <TableCell className="text-sm font-mono hidden md:table-cell">
+                                            {el.location
+                                                ? <p className={`flex items-center gap-2`}><MapPinHouse size={16} /> <LinkCell href="" label={el.location} /></p>
+                                                : <Minus size={16} />
+                                            }
+                                        </TableCell>
 
-                                    <QuantityCell quantity={el.quantity} />
+                                        <QuantityCell quantity={el.quantity} />
 
-                                    <TableCell className="text-sm font-mono max-w-[100px] truncate">
-                                        <div className={`flex items-center gap-2`}><Wrench size={16} /> <LinkCell href="" label={el.material_number} /></div>
-                                    </TableCell>
+                                        <TableCell className="text-sm font-mono max-w-[100px] truncate">
+                                            <div className={`flex items-center gap-2`}><Wrench size={16} /> <LinkCell href="" label={el.material_number} /></div>
+                                        </TableCell>
 
-                                    <TableCell className="hidden sm:table-cell">
-                                        {el.robot_data
-                                            ? <div className={`flex items-center gap-2`}><Bot size={16} /> <LinkCell href="" label={el.robot_data.robot_number} /></div>
-                                            : <Minus size={16} />
-                                        }
-                                    </TableCell>
+                                        <TableCell className="hidden sm:table-cell">
+                                            {el.robot_data
+                                                ? <div className={`flex items-center gap-2`}><Bot size={16} /> <LinkCell href="" label={el.robot_data.robot_number} /></div>
+                                                : <Minus size={16} />
+                                            }
+                                        </TableCell>
 
-                                    <TableCell className="text-xs text-muted-foreground whitespace-nowrap hidden sm:table-cell">
-                                        {timeToString(dayjs(el.created_at).valueOf())}
-                                    </TableCell>
+                                        <TableCell className="text-xs text-muted-foreground whitespace-nowrap hidden sm:table-cell">
+                                            {timeToString(dayjs(el.created_at).valueOf())}
+                                        </TableCell>
 
-                                    <TableCell>
-                                        <ButtonGroup>
-                                            <Button variant="ghost" size="sm" onClick={() => handleDelete(el)}>
-                                                <Trash2 size={13} />
-                                            </Button>
-                                        </ButtonGroup>
-                                    </TableCell>
-                                </TableRow>
-                            ))
-                        }
-                    </TableBody>
-                </Table>
+                                        <TableCell>
+                                            <AlertDialog>
+                                                <AlertDialogTrigger asChild>
+                                                    <Button variant="ghost" size="sm">
+                                                        <Trash2 size={13} />
+                                                    </Button>
+                                                </AlertDialogTrigger>
+                                                <AlertDialogContent>
+                                                    <AlertDialogHeader>
+                                                        <AlertDialogTitle>Are you absolutely sure?</AlertDialogTitle>
+                                                        <AlertDialogDescription>
+                                                            This action cannot be undone.
+                                                        </AlertDialogDescription>
+                                                    </AlertDialogHeader>
+                                                    <AlertDialogFooter>
+                                                        <AlertDialogCancel>Cancel</AlertDialogCancel>
+                                                        <AlertDialogAction onClick={() => handleDelete(el)}>Continue</AlertDialogAction>
+                                                    </AlertDialogFooter>
+                                                </AlertDialogContent>
+                                            </AlertDialog>
+                                        </TableCell>
+                                    </TableRow>
+                                ))
+                            }
+                        </TableBody>
+                    </Table>
+                </ScrollArea>
             </div>
         </div>
     );

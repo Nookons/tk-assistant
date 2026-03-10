@@ -4,6 +4,7 @@ import {IStockItemTemplate, IStockLocationSlot} from "@/types/stock/StockItem";
 import utc from "dayjs/plugin/utc";
 import {IHistoryStockItem} from "@/types/stock/HistoryStock";
 import {IStockAmountItem} from "@/types/stock/StockAmounts";
+import {LocationItem} from "@/types/stock/SummaryItem";
 
 dayjs.extend(utc);
 
@@ -132,5 +133,16 @@ export class StockService {
         if (error) throw new Error(error.message);
 
         return result;
+    }
+
+    static async removeFromStock(data: LocationItem): Promise<boolean> {
+        const {data: result, error} = await supabase
+            .from('stock')
+            .delete()
+            .eq('location_key', data.location_key)
+            .eq('material_number', data.material_number)
+
+        if (error) throw new Error(error.message);
+        return true;
     }
 }
