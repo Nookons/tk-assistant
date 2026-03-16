@@ -1,7 +1,7 @@
 import {
     BarChart3,
     Bot,
-    ChartBarStacked,
+    ChartBarStacked, FileTerminal,
     FileText,
     LayoutDashboard,
     Package,
@@ -16,8 +16,8 @@ import EmployeesDisplay from "@/components/shared/DashboardNew/Pages/EmployeesDi
 import RobotsDisplay from "@/components/shared/DashboardNew/Pages/RobotsDisplay";
 import SettingsDisplay from "@/components/shared/DashboardNew/Pages/SettingsDisplay";
 import ErrorParseProvider from "@/components/shared/DashboardNew/Pages/ErrorParseProvider";
-import InventoryDisplay from "@/components/shared/DashboardNew/DashboardComponents/Stock/InventoryDisplay";
 import PartsCatalogue from "@/components/shared/DashboardNew/Pages/PartsCatalogue";
+import Docs from "@/components/shared/DashboardNew/Pages/Docs";
 
 interface NavItem {
     id: string;
@@ -34,6 +34,7 @@ export const NAV_ITEMS: NavItem[] = [
     { id: "error_parse", label: "Parsing", icon: <ChartBarStacked  size={18} /> },
     { id: "stock", label: "Stock", icon: <Package size={18} /> },
     { id: "parts_catalogue", label: "Parts Catalogue", icon: <Warehouse   size={18} /> },
+    { id: "docs", label: "Docs", icon: <FileTerminal  size={18} /> },
     { id: "settings", label: "Settings", icon: <Settings size={18} /> },
 ];
 
@@ -45,5 +46,6 @@ export const PAGE_REGISTRY: Record<string, React.ComponentType<any>> = {
     robots:    RobotsDisplay,
     settings:    SettingsDisplay,
     error_parse:    ErrorParseProvider,
+    docs:    Docs,
     parts_catalogue:    PartsCatalogue,
 };

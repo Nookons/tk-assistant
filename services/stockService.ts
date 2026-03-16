@@ -5,6 +5,8 @@ import utc from "dayjs/plugin/utc";
 import {IHistoryStockItem} from "@/types/stock/HistoryStock";
 import {IStockAmountItem} from "@/types/stock/StockAmounts";
 import {LocationItem} from "@/types/stock/SummaryItem";
+import {useUserStore} from "@/store/user";
+import {IUser} from "@/types/user/user";
 
 dayjs.extend(utc);
 
@@ -116,7 +118,6 @@ export class StockService {
     }
 
     static async addStockHistory(data: Partial<IHistoryStockItem>): Promise<IHistoryStockItem> {
-        console.log(data);
         const {data: result, error} = await supabase
             .from('stock_history')
             .insert({
@@ -131,8 +132,83 @@ export class StockService {
             .single();
 
         if (error) throw new Error(error.message);
-
         return result;
+    }
+
+    static async moveItem(item: LocationItem, newLocation: string, user: IUser, quantity?: number): Promise<LocationItem> {
+        const moveQty = quantity ?? item.total_quantity;
+        const remainingQty = item.total_quantity - moveQty;
+        const newLocationKey = `${item.warehouse.toLowerCase()}-${newLocation.toLowerCase()}`;
+
+        const { data: existing } = await supabase
+            .from('stock')
+            .select('*')
+            .eq('location_key', newLocationKey)
+            .eq('material_number', item.material_number)
+            .maybeSingle();
+
+        let resultData: LocationItem;
+
+        if (existing) {
+            const { data: updated, error } = await supabase
+                .from('stock')
+                .update({
+                    quantity: existing.quantity + moveQty,
+                    updated_at: dayjs().toISOString(),
+                    last_update_by: user.card_id,
+                })
+                .eq('location_key', newLocationKey)
+                .eq('material_number', item.material_number)
+                .select('*')
+                .single();
+
+            if (error || !updated) throw new Error(`Failed to update target location: ${error?.message}`);
+            resultData = updated;
+        } else {
+            const { data: inserted, error } = await supabase
+                .from('stock')
+                .insert({
+                    updated_at: dayjs().toISOString(),
+                    quantity: moveQty,
+                    material_number: item.material_number,
+                    last_update_by: user.card_id,
+                    warehouse: item.warehouse,
+                    location: newLocation,
+                    location_key: newLocationKey,
+                })
+                .select('*')
+                .single();
+
+            if (error || !inserted) throw new Error(`Failed to insert into new location: ${error?.message}`);
+            resultData = inserted;
+        }
+
+        if (remainingQty <= 0) {
+            await supabase
+                .from('stock')
+                .delete()
+                .eq('location_key', item.location_key)
+                .eq('material_number', item.material_number);
+        } else {
+            await supabase
+                .from('stock')
+                .update({ quantity: remainingQty, updated_at: dayjs().toISOString() })
+                .eq('location_key', item.location_key)
+                .eq('material_number', item.material_number);
+        }
+
+        return resultData;
+    }
+
+    static async moveLocation(items: LocationItem[], newLocation: string, user: IUser): Promise<LocationItem[]> {
+        const results: LocationItem[] = [];
+
+        for (const item of items) {
+            const moved = await StockService.moveItem(item, newLocation, user);
+            results.push(moved);
+        }
+
+        return results;
     }
 
     static async removeFromStock(data: LocationItem): Promise<boolean> {

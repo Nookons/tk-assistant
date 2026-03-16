@@ -16,6 +16,7 @@ import RobotsHistory from "@/components/shared/DashboardNew/DashboardComponents/
 import SummaryScreen from "@/components/shared/Stock/SummaryScreen";
 import {useUserStore} from "@/store/user";
 import {getUserWarehouse} from "@/utils/getUserWarehouse";
+import Link from "next/link";
 
 
 interface StatCard {
@@ -37,7 +38,7 @@ function DashboardContent({onSelect}: Props) {
     const stock_history = useStockStore(state => state.stock_history);
 
     const stockStats = useMemo(() => {
-        if (!stock_history) return {income: 0, outcome: 0, net: 0, change: "0%", positive: true};
+        if (!stock_history) return {income: 0, outcome: 0, incomeChange: "+0%", outcomeChange: "+0%", incomePositive: true, outcomePositive: true};
 
         const now = dayjs();
         const lastMonthDate = now.subtract(1, "month");
@@ -53,17 +54,23 @@ function DashboardContent({onSelect}: Props) {
 
         const income = thisMonth.filter(i => i.quantity > 0).reduce((sum, i) => sum + i.quantity, 0);
         const outcome = thisMonth.filter(i => i.quantity < 0).reduce((sum, i) => sum + Math.abs(i.quantity), 0);
-        const net = income - outcome;
 
-        const lastNet = lastMonth.reduce((sum, i) => sum + i.quantity, 0);
-        const diff = lastNet === 0 ? 100 : Math.round(((net - lastNet) / Math.abs(lastNet)) * 100);
+        const lastIncome = lastMonth.filter(i => i.quantity > 0).reduce((sum, i) => sum + i.quantity, 0);
+        const lastOutcome = lastMonth.filter(i => i.quantity < 0).reduce((sum, i) => sum + Math.abs(i.quantity), 0);
+
+        const calcDiff = (current: number, last: number) =>
+            last === 0 ? (current > 0 ? 100 : 0) : Math.round(((current - last) / Math.abs(last)) * 100);
+
+        const incomeDiff = calcDiff(income, lastIncome);
+        const outcomeDiff = calcDiff(outcome, lastOutcome);
 
         return {
             income,
             outcome,
-            net,
-            change: `${diff >= 0 ? "+" : ""}${diff}%`,
-            positive: diff >= 0,
+            incomeChange: `${incomeDiff >= 0 ? "+" : ""}${incomeDiff}%`,
+            outcomeChange: `${outcomeDiff >= 0 ? "+" : ""}${outcomeDiff}%`,
+            incomePositive: incomeDiff >= 0,
+            outcomePositive: outcomeDiff >= 0,
         };
     }, [stock_history]);
 
@@ -111,32 +118,35 @@ function DashboardContent({onSelect}: Props) {
         };
     }, [robots_history]);
 
+    // Рост роботов в ремонте — негативный тренд
+    const robotsTrendUp = robots_stats.change.startsWith("+") && robots_stats.change !== "+0%";
+
     const statCards: StatCard[] = useMemo(() => [
         {
             title: "Robots on repair",
             value: String(robots_stats.income),
             change: robots_stats.change,
-            positive: true,
+            positive: !robotsTrendUp, // больше роботов в ремонте = плохо
             icon: <Bot size={20}/>,
+            color: robotsTrendUp ? "text-destructive" : "text-emerald-500",
+        },
+        {
+            title: "Stock in",
+            value: String(stockStats.income),
+            change: stockStats.incomeChange,
+            positive: stockStats.incomePositive,
+            icon: <PackagePlus size={20}/>,
             color: "text-emerald-500",
         },
         {
             title: "Stock out",
             value: String(stockStats.outcome),
-            change: stockStats.change,
-            positive: true,
-            icon: <PackagePlus size={20}/>,
-            color: "text-emerald-500",
-        },
-        {
-            title: "Stock in",
-            value: String(stockStats.income),
-            change: stockStats.change,
-            positive: false,
+            change: stockStats.outcomeChange,
+            positive: !stockStats.outcomePositive, // рост расхода = плохо
             icon: <PackageMinus size={20}/>,
             color: "text-destructive",
         },
-    ], [stockStats, robots_stats]);
+    ], [stockStats, robots_stats, robotsTrendUp]);
 
     return (
         <div className="space-y-6">
@@ -190,9 +200,11 @@ function DashboardContent({onSelect}: Props) {
                             <CardTitle className="text-base">Stock</CardTitle>
                             <CardDescription>Latest additions to history</CardDescription>
                         </div>
-                        <Button onClick={() => onSelect('stock')} variant="ghost" size="sm" className="gap-1 text-xs">
-                            More <ChevronRight size={13}/>
-                        </Button>
+                        <Link href={`/stock/stock-history`}>
+                            <Button variant="ghost" size="sm" className="gap-1 text-xs">
+                                More <ChevronRight size={13}/>
+                            </Button>
+                        </Link>
                     </CardHeader>
                     <CardContent>
                         <StockHistory/>

@@ -198,7 +198,8 @@ const RobotHistory = ({ robot }: { robot: IRobot }) => {
 
                     `• ${part.description_orginall}
 • ${part.description_eng ?? ''}
-• ${part.material_number}`
+• ${part.material_number}
+• ${event.quantity} pcs`
 
                 )
                 .join('\n')
@@ -255,7 +256,6 @@ ${partsText}
     return (
 
         <div className="w-full max-w-2xl mx-auto pl-2">
-
             <div className="relative border-l-2 border-border">
 
                 {events.slice(0, 25).map(event => {
@@ -273,11 +273,8 @@ ${partsText}
                             <RobotHistoryIcon type={event.type} />
 
                             <Card className="p-2">
-
                                 <CardContent className="w-full px-2">
-
                                     <div className="flex items-center justify-between mb-4">
-
                                         <div className="flex items-center gap-2">
 
                                             {event.type === 'parts' &&
@@ -297,20 +294,20 @@ ${partsText}
                                         <span className="text-xs text-muted-foreground">
                                             {event.user?.user_name ?? 'Unknown'}
                                         </span>
-
                                     </div>
 
                                     {event.type === 'parts' && (
-
                                         <div className="flex flex-col gap-1.5">
-
                                             {event.parts.map(part => (
-
                                                 <p
                                                     key={part.id}
                                                     className="flex items-center gap-2"
                                                 >
-                                                    <span className="text-xs font-mono text-muted-foreground">
+                                                    <Badge>
+                                                        {event.quantity || 1}
+                                                    </Badge>
+
+                                                    <span className="text-xs font-mono text-nowrap text-muted-foreground">
                                                         {part.material_number}
                                                     </span>
 
@@ -320,85 +317,54 @@ ${partsText}
                                                             ? ` — ${part.description_eng}`
                                                             : ''}
                                                     </span>
-
                                                 </p>
-
                                             ))}
-
                                         </div>
-
                                     )}
 
                                     {event.type === 'status' && (
-
                                         <div className="space-y-2">
-
-                                            <div className="flex items-center gap-2">
-
-                                                <MoveRight size={14} />
-
-                                                <Activity size={14} />
-
-                                                <span className="text-xs">
+                                            <div className="flex items-start gap-2">
+                                                <span className="text-xs text-nowrap">
                                                     {event.new_status}
                                                 </span>
+                                                {event.problem_note && (
+                                                    <>
+                                                        <p className={`text-xs text-muted-foreground whitespace-pre-wrap ${
+                                                            isExpanded
+                                                                ? ''
+                                                                : 'line-clamp-1 md:line-clamp-2'
+                                                        }`}>
+                                                            {event.problem_note}
+                                                        </p>
 
+                                                        {hasLongNote && (
+                                                            <Button
+                                                                variant="ghost"
+                                                                size="sm"
+                                                                onClick={() => toggleExpand(event.id)}
+                                                            >
+                                                                {isExpanded
+                                                                    ? <ChevronUp size={14} />
+                                                                    : <ChevronDown size={14} />
+                                                                }
+                                                            </Button>
+                                                        )}
+                                                    </>
+                                                )}
                                             </div>
-
-                                            {event.problem_note && (
-
-                                                <>
-                                                    <p className={`text-xs text-muted-foreground whitespace-pre-wrap ${
-                                                        isExpanded
-                                                            ? ''
-                                                            : 'line-clamp-2'
-                                                    }`}>
-
-                                                        {event.problem_note}
-
-                                                    </p>
-
-                                                    {hasLongNote && (
-
-                                                        <Button
-                                                            variant="ghost"
-                                                            size="sm"
-                                                            onClick={() => toggleExpand(event.id)}
-                                                        >
-
-                                                            {isExpanded
-                                                                ? <ChevronUp size={14} />
-                                                                : <ChevronDown size={14} />
-                                                            }
-
-                                                        </Button>
-
-                                                    )}
-
-                                                </>
-
-                                            )}
-
                                         </div>
 
                                     )}
 
                                 </CardContent>
-
                             </Card>
-
                         </div>
-
                     )
-
                 })}
-
             </div>
-
         </div>
-
     )
-
 }
 
 export default RobotHistory

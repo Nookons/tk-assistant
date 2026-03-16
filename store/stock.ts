@@ -1,6 +1,6 @@
 import { create } from 'zustand'
 import { IStockItemTemplate } from "@/types/stock/StockItem"
-import {ISummaryItemStock, LocationItem, StockByLocationResponse} from "@/types/stock/SummaryItem"
+import {ISummaryItemStock, LocationItem, LocationStock, StockByLocationResponse} from "@/types/stock/SummaryItem"
 import {IHistoryStockItem} from "@/types/stock/HistoryStock";
 
 type UserState = {
@@ -66,17 +66,18 @@ export const useStockStore = create<UserState>((set, get) => ({
 
     update_stock_location: (locationKey: string, data: LocationItem[]) =>
         set((state) => {
-            console.log('store locationKey:', locationKey);
-            console.log('store stock_summary:', state.stock_summary);
-            console.log('store stock_summary locations:', state.stock_summary?.map(s => s.location));
-            console.log('store stock_summary is null?:', state.stock_summary === null);
+            const exists = state.stock_summary?.some(s => s.location === locationKey);
 
-            const updated = state.stock_summary?.map((locationStock) => {
-                const isMatch = locationStock.location === locationKey;
-                console.log(`comparing "${locationStock.location}" === "${locationKey}" →`, isMatch);
-                return isMatch ? { ...locationStock, items: data } : locationStock;
-            }) ?? null;
-
-            return { stock_summary: updated };
+            if (exists) {
+                const updated = state.stock_summary!.map((locationStock) =>
+                    locationStock.location === locationKey
+                        ? { ...locationStock, items: data }
+                        : locationStock
+                );
+                return { stock_summary: updated };
+            } else {
+                const newEntry: LocationStock = { location: locationKey, items: data };
+                return { stock_summary: [...(state.stock_summary ?? []), newEntry] };
+            }
         }),
 }))

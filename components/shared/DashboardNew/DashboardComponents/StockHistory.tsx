@@ -5,6 +5,7 @@ import { IHistoryStockItem } from "@/types/stock/HistoryStock";
 import {useUserStore} from "@/store/user";
 import {getUserWarehouse} from "@/utils/getUserWarehouse";
 import {PackageOpen} from "lucide-react";
+import dayjs from "dayjs";
 
 const PREVIEW_LIMIT = 8;
 
@@ -15,7 +16,7 @@ const StockHistory = () => {
 
     const recentItems = useMemo<IHistoryStockItem[]>(() => {
         if (!stock_history) return [];
-        const filtered = stock_history.filter(robot => warehouse.toLowerCase() === 'leader' || robot.warehouse === warehouse)
+        const filtered = stock_history.sort((a, b) => dayjs(a.created_at).valueOf() - dayjs(b.created_at).valueOf());
         return [...filtered].reverse().slice(0, PREVIEW_LIMIT);
     }, [stock_history]);
 

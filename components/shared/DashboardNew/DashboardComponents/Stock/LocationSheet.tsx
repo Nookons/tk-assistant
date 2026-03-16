@@ -1,6 +1,6 @@
 import React from 'react';
 import {Sheet, SheetContent, SheetDescription, SheetHeader, SheetTitle} from "@/components/ui/sheet";
-import {Container, ExternalLink, HandCoins, Trash2, Warehouse} from "lucide-react";
+import {ArrowRightLeft, Container, ExternalLink, HandCoins, Trash2, Warehouse} from "lucide-react";
 import {Table, TableBody, TableCell, TableHead, TableHeader, TableRow} from "@/components/ui/table";
 import Link from "next/link";
 import {Button} from "@/components/ui/button";
@@ -19,18 +19,56 @@ import {
 } from "@/components/ui/alert-dialog";
 import {StockService} from "@/services/stockService";
 import {toast} from "sonner";
-import {useStockStore} from "@/store/stock";
+import MoveItemDialog from "@/components/shared/DashboardNew/DashboardComponents/Stock/MoveItemDialog";
+import {useUserStore} from "@/store/user";
+import {
+    Dialog,
+    DialogContent,
+    DialogDescription,
+    DialogFooter,
+    DialogHeader,
+    DialogTitle,
+    DialogTrigger
+} from "@/components/ui/dialog";
+import {Label} from "@/components/ui/label";
+import {Input} from "@/components/ui/input";
 
-const LocationSheet = ({
-                           el,
-                           onClose,
-                           onUpdate,
-                       }: {
+const LocationSheet = ({el, onClose, onUpdate, stockData}: {
     el: LocationStock | null;
     onClose: () => void;
     onUpdate: (locationKey: string, newItems: LocationItem[]) => void;
+    stockData: LocationStock[];
 }) => {
     if (!el) return null;
+
+    const [movingAll, setMovingAll] = React.useState(false);
+    const [moveAllOpen, setMoveAllOpen] = React.useState(false);
+    const [newLocationAll, setNewLocationAll] = React.useState('');
+    const user = useUserStore(state => state.currentUser);
+
+    const handleMoveAll = async () => {
+        if (!user || !newLocationAll.trim()) return;
+        setMovingAll(true);
+        try {
+            const movedItems = await StockService.moveLocation(visibleItems, newLocationAll, user);
+
+            // Очищаем старую локацию
+            onUpdate(el.location, []);
+
+            // Добавляем в новую
+            const target = stockData.find(s => s.location === newLocationAll);
+            onUpdate(newLocationAll, [...(target?.items ?? []), ...movedItems]);
+
+            toast.success(`Moved ${movedItems.length} items to ${newLocationAll}`);
+            setMoveAllOpen(false);
+            onClose();
+        } catch (err) {
+            toast.error('Failed to move location.');
+        } finally {
+            setMovingAll(false);
+        }
+    };
+
 
     const visibleItems = el.items.filter(i => i.total_quantity > 0);
     const locationLabel = el.location.split('-')[1]?.toUpperCase() ?? el.location;
@@ -76,7 +114,7 @@ const LocationSheet = ({
                                 <TableHead className="text-xs w-[110px]">Material</TableHead>
                                 <TableHead className="text-xs">Description</TableHead>
                                 <TableHead className="text-xs text-right w-[75px]">Qty</TableHead>
-                                <TableHead className="text-xs text-right w-[75px]">Remove</TableHead>
+                                <TableHead className="text-xs text-right w-[125px]">Actions</TableHead>
                             </TableRow>
                         </TableHeader>
                         <TableBody>
@@ -107,13 +145,21 @@ const LocationSheet = ({
                                         <div className="flex items-center justify-end gap-2">
                                             <span
                                                 className="text-sm font-semibold tabular-nums">{item.total_quantity}</span>
-                                            <HandCoins size={11} className="text-muted-foreground/40"/>
                                         </div>
                                     </TableCell>
                                     <TableCell className="flex justify-end gap-2">
+
+                                        <MoveItemDialog
+                                            el={el}
+                                            item={item}
+                                            onClose={onClose}
+                                            onUpdate={onUpdate}
+                                            stockData={stockData}   // ← прокидываем
+                                        />
+
                                         <AlertDialog>
                                             <AlertDialogTrigger asChild>
-                                                <Button variant={`ghost`}>
+                                                <Button size={`sm`} variant={`ghost`}>
                                                     <Trash2 size={16}/>
                                                 </Button>
                                             </AlertDialogTrigger>
@@ -144,12 +190,58 @@ const LocationSheet = ({
                             {visibleItems.reduce((sum, i) => sum + i.total_quantity, 0).toLocaleString()}
                         </span> units
                     </span>
-                    <Button asChild size="sm" variant="outline" className="gap-1.5 text-xs">
-                        <Link href={`/stock/cell?location=${el.location}&warehouse=${warehouseName}`}>
-                            <ExternalLink size={12}/>
-                            Open full page
-                        </Link>
-                    </Button>
+                    <div className={`flex items-center justify-end gap-2`}>
+                        <Dialog open={moveAllOpen} onOpenChange={setMoveAllOpen}>
+                            <DialogTrigger asChild>
+                                <Button variant="outline" size="sm" className="gap-1.5 text-xs">
+                                    <ArrowRightLeft size={12} />
+                                    Move All
+                                </Button>
+                            </DialogTrigger>
+                            <DialogContent className="sm:max-w-sm">
+                                <DialogHeader>
+                                    <DialogTitle>Move Entire Location</DialogTitle>
+                                    <DialogDescription>
+                                        All <strong>{visibleItems.length}</strong> items from{' '}
+                                        <strong>{locationLabel}</strong> will be moved.
+                                    </DialogDescription>
+                                </DialogHeader>
+                                <div className="py-2">
+                                    <Label htmlFor="move_all_location">New Location</Label>
+                                    <Input
+                                        id="move_all_location"
+                                        value={newLocationAll}
+                                        onChange={e => setNewLocationAll(e.target.value)}
+                                        placeholder="e.g. B456"
+                                        disabled={movingAll}
+                                        className="mt-1.5"
+                                    />
+                                </div>
+                                <DialogFooter>
+                                    <Button
+                                        type="button"
+                                        variant="outline"
+                                        onClick={() => setMoveAllOpen(false)}
+                                        disabled={movingAll}
+                                    >
+                                        Cancel
+                                    </Button>
+                                    <Button
+                                        onClick={handleMoveAll}
+                                        disabled={movingAll || !newLocationAll.trim()}
+                                    >
+                                        {movingAll ? 'Moving...' : `Move ${visibleItems.length} items`}
+                                    </Button>
+                                </DialogFooter>
+                            </DialogContent>
+                        </Dialog>
+                        <Button asChild size="sm" variant="outline" className="gap-1.5 text-xs">
+                            <Link href={`/stock/cell?location=${el.location}&warehouse=${warehouseName}`}>
+                                <ExternalLink size={12}/>
+                                Open full page
+                            </Link>
+                        </Button>
+                    </div>
                 </div>
             </SheetContent>
         </Sheet>

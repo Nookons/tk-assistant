@@ -232,7 +232,7 @@ const InventoryDisplay = () => {
                             <StockForm {...formProps} />
                         </TabsContent>
                         <TabsContent value="history" className="mt-0 p-3">
-                            <StockHistoryList />
+                            <StockHistoryList isShort={true} />
                         </TabsContent>
                     </Tabs>
                 </div>
@@ -243,7 +243,7 @@ const InventoryDisplay = () => {
                         <StockForm {...formProps} />
                     </div>
                     <div className="overflow-y-auto p-4">
-                        <StockHistoryList />
+                        <StockHistoryList isShort={true} />
                     </div>
                 </div>
 
