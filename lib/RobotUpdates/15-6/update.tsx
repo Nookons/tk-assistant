@@ -3,7 +3,7 @@ import { Copy } from "lucide-react";
 import { copyToClipboard } from "@/lib/copyToClipboard";
 
 const CmdBlock = ({ cmd }: { cmd: string }) => (
-    <div className="flex items-start gap-2 mt-2 bg-black/40 border border-zinc-700 rounded px-3 py-2 font-mono text-xs text-primary group">
+    <div className="flex items-start gap-2 mt-2  border border-foreground rounded px-3 py-2 font-mono text-xs text-primary group">
         <Copy
             onClick={() => copyToClipboard(cmd)}
             className="shrink-0 mt-0.5 cursor-pointer text-zinc-500 group-hover:text-emerald-400 transition-colors"

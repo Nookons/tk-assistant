@@ -30,6 +30,7 @@ import RobotStatusDialog from '@/components/shared/robot/EditStatus/RobotEditSta
 import RobotHeader from "@/components/shared/RobotNew/RobotHeader";
 import RobotInfo from "@/components/shared/RobotNew/RobotInfo";
 import RobotCommentsProvider from "@/components/shared/RobotNew/RobotCommentsProvider";
+import PagesHeader from "@/components/shared/PagesHeader";
 
 
 function PageSkeleton() {
@@ -83,24 +84,7 @@ export default function RobotPage() {
 
     return (
         <div className="min-h-screen bg-background">
-
-            <div className="sticky top-0 z-10 border-b border-border bg-card/80 backdrop-blur px-6 py-3">
-                <Breadcrumb>
-                    <BreadcrumbList>
-                        <BreadcrumbSeparator className="rotate-180 text-foreground font-bold" />
-                        <BreadcrumbItem>
-                            <BreadcrumbLink asChild>
-                                <Link
-                                    className="text-foreground font-bold"
-                                    href={`/dashboard/${user?.auth_id ?? ''}`}
-                                >
-                                    Back
-                                </Link>
-                            </BreadcrumbLink>
-                        </BreadcrumbItem>
-                    </BreadcrumbList>
-                </Breadcrumb>
-            </div>
+            <PagesHeader />
 
             <div className="max-w-[1600px] mx-auto px-4 lg:px-8 py-6 space-y-6">
                 <RobotHeader robot={robot} />

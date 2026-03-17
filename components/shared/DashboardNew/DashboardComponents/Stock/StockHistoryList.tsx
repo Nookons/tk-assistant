@@ -18,12 +18,6 @@ import {IHistoryStockItem} from '@/types/stock/HistoryStock';
 import {Button} from '@/components/ui/button';
 import {Table, TableBody, TableCell, TableHead, TableHeader, TableRow} from '@/components/ui/table';
 import {ScrollArea} from "@/components/ui/scroll-area";
-import {
-    AlertDialog, AlertDialogAction, AlertDialogCancel,
-    AlertDialogContent, AlertDialogDescription, AlertDialogFooter,
-    AlertDialogHeader,
-    AlertDialogTitle, AlertDialogTrigger
-} from "@/components/ui/alert-dialog";
 import {Switch} from "@/components/ui/switch";
 import {Label} from "@/components/ui/label";
 
@@ -106,10 +100,7 @@ const StockHistoryList = ({isShort}: { isShort: boolean }) => {
 
     return (
         <div className="overflow-hidden h-full flex flex-col">
-            <div className="flex justify-between items-center gap-2 p-2">
-                <p className="px-2 py-2 text-xs font-medium text-muted-foreground">
-                    Historical data for your current warehouse only.
-                </p>
+            <div className="flex justify-end items-center gap-2 p-2">
                 <div className={`flex justify-end gap-2 items-center`}>
                     <div className="flex items-center space-x-2 mr-4">
                         <Switch

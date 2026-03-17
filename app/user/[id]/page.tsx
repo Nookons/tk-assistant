@@ -36,6 +36,7 @@ import {isLeader} from "@/components/shared/DashboardNew/DashboardComponents/Set
 import {Empty, EmptyDescription, EmptyHeader, EmptyMedia, EmptyTitle} from "@/components/ui/empty";
 import {ButtonGroup} from "@/components/ui/button-group";
 import {Button} from "@/components/ui/button";
+import PagesHeader from "@/components/shared/PagesHeader";
 
 dayjs.extend(relativeTime);
 
@@ -58,20 +59,7 @@ const UserProfilePage = ({isOwn = false}: { isOwn: boolean }) => {
 
     return (
         <div className="">
-            {/* ── Top bar ── */}
-            <div className="sticky top-0 z-10 border-b border-border bg-card/80 backdrop-blur px-6 py-3">
-                <Breadcrumb>
-                    <BreadcrumbList>
-                        <BreadcrumbSeparator className={`rotate-180 text-foreground font-bold`}/>
-                        <BreadcrumbItem>
-                            <BreadcrumbLink>
-                                <Link className={`text-foreground font-bold`}
-                                      href={`/dashboard/${user?.auth_id || ""}`}>Back</Link>
-                            </BreadcrumbLink>
-                        </BreadcrumbItem>
-                    </BreadcrumbList>
-                </Breadcrumb>
-            </div>
+            <PagesHeader />
 
             {/* ── Hero banner */}
             <div
