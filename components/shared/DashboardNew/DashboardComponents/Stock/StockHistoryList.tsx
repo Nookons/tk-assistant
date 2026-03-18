@@ -1,174 +1,250 @@
-import React, {useState} from 'react';
+import React, { useState } from 'react';
 import Link from 'next/link';
 import dayjs from 'dayjs';
-import {useMutation} from '@tanstack/react-query';
-import {toast} from 'sonner';
+import { useMutation } from '@tanstack/react-query';
+import { toast } from 'sonner';
 import {
-    Download, Loader2,
-    Minus, Package, SquareArrowOutUpRight,
-    Trash2, User
+    Download, Loader2, Minus,
+    Package, SquareArrowOutUpRight, User,
 } from 'lucide-react';
 
-import {useUserStore} from '@/store/user';
-import {useStockStore} from '@/store/stock';
-import {getUserWarehouse} from '@/utils/getUserWarehouse';
-import {timeToString} from '@/utils/timeToString';
-import {StockService} from '@/services/stockService';
-import {IHistoryStockItem} from '@/types/stock/HistoryStock';
-import {Button} from '@/components/ui/button';
-import {Table, TableBody, TableCell, TableHead, TableHeader, TableRow} from '@/components/ui/table';
-import {ScrollArea} from "@/components/ui/scroll-area";
-import {Switch} from "@/components/ui/switch";
-import {Label} from "@/components/ui/label";
+import { useUserStore } from '@/store/user';
+import { useStockStore } from '@/store/stock';
+import { getUserWarehouse } from '@/utils/getUserWarehouse';
+import { timeToString } from '@/utils/timeToString';
+import { StockService } from '@/services/stockService';
+import { IHistoryStockItem } from '@/types/stock/HistoryStock';
+
+import { Button } from '@/components/ui/button';
+import { Label } from '@/components/ui/label';
+import { ScrollArea } from '@/components/ui/scroll-area';
+import { Switch } from '@/components/ui/switch';
+import {
+    Table, TableBody, TableCell,
+    TableHead, TableHeader, TableRow,
+} from '@/components/ui/table';
+
+// ─── Constants ────────────────────────────────────────────────────────────────
 
 const SHOW_LIMIT_DEFAULT = 25;
-const PAGE_SIZE = 50;
+const PAGE_SIZE          = 50;
 
-function QuantityCell({quantity}: { quantity: number }) {
-    const isNegative = quantity < 0;
-    return (
-        <TableCell
-            className={`text-sm font-semibold tabular-nums ${isNegative ? 'text-destructive' : 'text-emerald-500'}`}>
-            {quantity > 0 ? `+${quantity.toLocaleString()}` : quantity.toLocaleString()}
+const TODAY = dayjs().format('YYYY-MM-DD');
+
+// ─── Types ────────────────────────────────────────────────────────────────────
+
+interface StockHistoryListProps {
+    /** When true: shows a fixed slice of rows with a "show more" link instead of pagination */
+    isShort: boolean;
+}
+
+// ─── Sub-components ───────────────────────────────────────────────────────────
+
+const QuantityCell = ({ quantity }: { quantity: number }) => (
+    <TableCell
+        className={`text-sm font-semibold tabular-nums ${
+            quantity < 0 ? 'text-destructive' : 'text-emerald-500'
+        }`}
+    >
+        {quantity > 0 ? `+${quantity.toLocaleString()}` : quantity.toLocaleString()}
+    </TableCell>
+);
+
+const LinkedCell = ({ href, label }: { href: string; label: string }) => (
+    <Link href={href} className="font-medium text-blue-500 hover:underline">
+        {label}
+    </Link>
+);
+
+const EmptyRow = ({ warehouse }: { warehouse: string }) => (
+    <TableRow>
+        <TableCell colSpan={7} className="py-10 text-center text-sm text-muted-foreground">
+            <Package size={24} className="mx-auto mb-2 opacity-30" aria-hidden="true" />
+            No entries yet for {warehouse}
         </TableCell>
-    );
+    </TableRow>
+);
+
+// ─── Toolbar ──────────────────────────────────────────────────────────────────
+
+interface ToolbarProps {
+    isShort:       boolean;
+    isOnlyUsed:    boolean;
+    isOnlyToday:   boolean;
+    isExporting:   boolean;
+    canExport:     boolean;
+    onUsedChange:  (v: boolean) => void;
+    onTodayChange: (v: boolean) => void;
+    onExport:      () => void;
 }
 
-function LinkCell({href, label}: { href: string; label: string }) {
-    return (
-        <Link href={href} className="hover:underline text-blue-500 font-medium">
-            {label}
-        </Link>
-    );
+const Toolbar = ({
+                     isShort, isOnlyUsed, isOnlyToday,
+                     isExporting, canExport,
+                     onUsedChange, onTodayChange, onExport,
+                 }: ToolbarProps) => (
+    <div className="flex items-center justify-end gap-2 p-2 shrink-0 border-b">
+        <div className="flex items-center gap-1.5 mr-2">
+            <Switch
+                id="filter-used"
+                checked={isOnlyUsed}
+                onCheckedChange={onUsedChange}
+            />
+            <Label htmlFor="filter-used" className="text-xs cursor-pointer">Used</Label>
+        </div>
+
+        <div className="flex items-center gap-1.5 mr-2">
+            <Switch
+                id="filter-today"
+                checked={isOnlyToday}
+                onCheckedChange={onTodayChange}
+            />
+            <Label htmlFor="filter-today" className="text-xs cursor-pointer">Today</Label>
+        </div>
+
+        <Button
+            variant="ghost"
+            size="icon"
+            onClick={onExport}
+            disabled={isExporting || !canExport}
+            title="Export filtered data to Excel"
+            aria-label="Export to Excel"
+        >
+            {isExporting
+                ? <Loader2 size={14} className="animate-spin" aria-hidden="true" />
+                : <Download size={14} aria-hidden="true" />
+            }
+        </Button>
+
+        {isShort && (
+            <Link href="/stock/stock-history">
+                <Button variant="ghost" size="icon" aria-label="Open full history">
+                    <SquareArrowOutUpRight size={16} aria-hidden="true" />
+                </Button>
+            </Link>
+        )}
+    </div>
+);
+
+// ─── Pagination bar ───────────────────────────────────────────────────────────
+
+interface PaginationProps {
+    page:       number;
+    totalPages: number;
+    totalRows:  number;
+    onPrev:     () => void;
+    onNext:     () => void;
 }
 
-function EmptyRow({warehouse}: { warehouse: string }) {
-    return (
-        <TableRow>
-            <TableCell colSpan={8} className="py-10 text-center text-sm text-muted-foreground">
-                <Package size={24} className="mx-auto mb-2 opacity-30"/>
-                No entries yet for {warehouse}
-            </TableCell>
-        </TableRow>
-    );
-}
+const Pagination = ({ page, totalPages, totalRows, onPrev, onNext }: PaginationProps) => (
+    <div className="flex items-center justify-between px-4 py-3 border-t shrink-0">
+        <span className="text-xs text-muted-foreground">
+            Page {page} of {totalPages} · {totalRows} entries
+        </span>
+        <div className="flex gap-2">
+            <Button variant="outline" size="sm" onClick={onPrev} disabled={page === 1}>
+                ← Prev
+            </Button>
+            <Button variant="outline" size="sm" onClick={onNext} disabled={page === totalPages}>
+                Next →
+            </Button>
+        </div>
+    </div>
+);
 
+// ─── Root component ───────────────────────────────────────────────────────────
 
-const StockHistoryList = ({isShort}: { isShort: boolean }) => {
-    const user = useUserStore(state => state.currentUser);
-    const warehouse = getUserWarehouse(user?.warehouse ?? '');
+const StockHistoryList = ({ isShort }: StockHistoryListProps) => {
+    const currentUser  = useUserStore(state => state.currentUser);
+    const warehouse    = getUserWarehouse(currentUser?.warehouse ?? '');
 
-    const stock_history = useStockStore(state => state.stock_history);
-    const addToHistory = useStockStore(state => state.add_item_to_history);
+    const stockHistory    = useStockStore(state => state.stock_history);
+    const addItemToHistory = useStockStore(state => state.add_item_to_history);
 
-    const [showLimit, setShowLimit] = useState(SHOW_LIMIT_DEFAULT);
-    const [page, setPage] = useState(1);
+    const [showLimit,    setShowLimit]    = useState(SHOW_LIMIT_DEFAULT);
+    const [page,         setPage]         = useState(1);
+    const [isExporting,  setIsExporting]  = useState(false);
+    const [isOnlyUsed,   setIsOnlyUsed]   = useState(false);
+    const [isOnlyToday,  setIsOnlyToday]  = useState(false);
 
-    const [isExporting, setIsExporting] = useState<boolean>(false)
-    const [isOnlyUsed, setIsOnlyUsed] = useState<boolean>(false)
-    const [isOnlyToday, setIsOnlyToday] = useState<boolean>(false)
+    // ── Undo / delete via reversal ───────────────────────────────────────────
 
-    const {mutate: handleDelete} = useMutation({
+    const { mutate: handleDelete } = useMutation({
         mutationFn: async (item: IHistoryStockItem) => {
-            const reversed = {...item, quantity: -item.quantity};
+            const reversed = { ...item, quantity: -item.quantity };
             const response = await StockService.addStockHistory(reversed);
-            addToHistory(response);
+            addItemToHistory(response);
             await StockService.addStockRecord(reversed);
         },
-        onSuccess: () => toast.success('Item was successfully added to Stock'),
-        onError: (err: Error) => toast.error(err.message),
+        onSuccess: () => toast.success('Item was successfully reversed in Stock'),
+        onError:   (err: Error) => toast.error(err.message),
     });
 
-    if (!stock_history) return null;
+    const handleExport = async () => {
+        // TODO: implement Excel export
+        setIsExporting(false);
+    };
 
-    const isLeader = warehouse.toLowerCase() === 'leader';
+    // ── Filtering & sorting ──────────────────────────────────────────────────
 
-    const sorted = [...stock_history]
-        //.filter(item => isLeader ? true : item.warehouse === warehouse)
-        .filter(item => isOnlyUsed ? item.quantity < 0 : true)
-        .filter(item => isOnlyToday ? dayjs(item.created_at).format('YYYY-MM-DD') === dayjs().format('YYYY-MM-DD') : true)
+    if (!stockHistory) return null;
+
+    const sorted = [...stockHistory]
+        .filter(item => (isOnlyUsed  ? item.quantity < 0 : true))
+        .filter(item => (isOnlyToday ? dayjs(item.created_at).format('YYYY-MM-DD') === TODAY : true))
         .sort((a, b) => dayjs(b.created_at).valueOf() - dayjs(a.created_at).valueOf());
 
     const totalPages = Math.ceil(sorted.length / PAGE_SIZE);
+
     const paginated = isShort
         ? sorted.slice(0, showLimit)
         : sorted.slice((page - 1) * PAGE_SIZE, page * PAGE_SIZE);
 
-    const onExport = async () => {
+    const handleFilterChange = (setter: (v: boolean) => void) => (v: boolean) => {
+        setter(v);
+        setPage(1);
+    };
 
-    }
-
+    /**
+     * Layout model
+     * ─────────────────────────────────────────────────────────────────────────
+     * When rendered inside InventoryDisplay the parent TabsContent already
+     * provides the scroll context (flex-1 min-h-0 overflow-y-auto), so this
+     * component just needs to fill that space naturally — no magic dvh values.
+     *
+     * When rendered on the full /stock/stock-history page the parent should
+     * wrap this component in a flex column container that stretches to the
+     * page height.
+     *
+     * The inner <ScrollArea> uses h-full to fill whatever height is available
+     * from the parent, rather than a hard-coded viewport fraction.
+     */
     return (
-        <div className="overflow-hidden h-full flex flex-col">
-            <div className="flex justify-end items-center gap-2 p-2">
-                <div className={`flex justify-end gap-2 items-center`}>
-                    <div className="flex items-center space-x-2 mr-4">
-                        <Switch
-                            checked={isOnlyUsed}
-                            onCheckedChange={(value) => { setIsOnlyUsed(value); setPage(1); }}
-                            id="used-mode"
-                        />
-                        <Label htmlFor="used-mode">Used</Label>
-                    </div>
-                    <div className="flex items-center space-x-2 mr-4">
-                        <Switch
-                            checked={isOnlyToday}
-                            onCheckedChange={(value) => { setIsOnlyToday(value); setPage(1); }}
-                            id="today-mode"
-                        />
-                        <Label htmlFor="today-mode">Today</Label>
-                    </div>
-
-                    <Button
-                        variant="ghost"
-                        onClick={onExport}
-                        disabled={isExporting || paginated.length === 0}
-                        className="gap-1.5 text-xs"
-                        title="Export filtered data to Excel"
-                    >
-                        {isExporting ? <Loader2 size={14} className="animate-spin" /> : <Download size={14} />}
-                    </Button>
-
-                    {isShort &&
-                        <div className="flex gap-1">
-                            <Link href={`/stock/stock-history`}>
-                                <Button variant="ghost" size="icon">
-                                    <SquareArrowOutUpRight size={16}/>
-                                </Button>
-                            </Link>
-                        </div>
-                    }
-                </div>
-            </div>
+        <div className="flex flex-col h-full overflow-hidden">
+            <Toolbar
+                isShort={isShort}
+                isOnlyUsed={isOnlyUsed}
+                isOnlyToday={isOnlyToday}
+                isExporting={isExporting}
+                canExport={paginated.length > 0}
+                onUsedChange={handleFilterChange(setIsOnlyUsed)}
+                onTodayChange={handleFilterChange(setIsOnlyToday)}
+                onExport={handleExport}
+            />
 
             {!isShort && totalPages > 1 && (
-                <div className="flex items-center justify-between px-4 py-3 border-t">
-                    <span className="text-xs text-muted-foreground">
-                        Page {page} of {totalPages} · {sorted.length} entries
-                    </span>
-                    <div className="flex gap-2">
-                        <Button
-                            variant="outline"
-                            size="sm"
-                            onClick={() => setPage(p => p - 1)}
-                            disabled={page === 1}
-                        >
-                            ← Prev
-                        </Button>
-                        <Button
-                            variant="outline"
-                            size="sm"
-                            onClick={() => setPage(p => p + 1)}
-                            disabled={page === totalPages}
-                        >
-                            Next →
-                        </Button>
-                    </div>
-                </div>
+                <Pagination
+                    page={page}
+                    totalPages={totalPages}
+                    totalRows={sorted.length}
+                    onPrev={() => setPage(p => p - 1)}
+                    onNext={() => setPage(p => p + 1)}
+                />
             )}
 
-            <div className="overflow-auto flex-1 p-2">
-                <ScrollArea className="h-[75dvh] md:h-[82dvh] w-full rounded-md border">
+            {/* flex-1 min-h-0 so ScrollArea doesn't overflow its flex parent */}
+            <div className="flex-1 min-h-0 p-2">
+                <ScrollArea className="h-full w-full rounded-md border">
                     <Table>
                         <TableHeader>
                             <TableRow className="hover:bg-transparent">
@@ -179,74 +255,60 @@ const StockHistoryList = ({isShort}: { isShort: boolean }) => {
                                 <TableHead className="text-xs">Material</TableHead>
                                 <TableHead className="text-xs hidden sm:table-cell">Robot</TableHead>
                                 <TableHead className="text-xs hidden sm:table-cell">Time</TableHead>
-                                {/*<TableHead className="text-xs w-[80px]">Actions</TableHead>*/}
                             </TableRow>
                         </TableHeader>
+
                         <TableBody>
-                            {paginated.length === 0
-                                ? <EmptyRow warehouse={warehouse}/>
-                                : paginated.map(el => (
+                            {paginated.length === 0 ? (
+                                <EmptyRow warehouse={warehouse} />
+                            ) : (
+                                paginated.map(el => (
                                     <TableRow key={el.id}>
                                         <TableCell className="text-sm font-medium">
                                             <span className="flex items-center gap-2">
-                                                <User size={16}/>
+                                                <User size={16} aria-hidden="true" />
                                                 {el.user.user_name}
                                             </span>
                                         </TableCell>
+
                                         <TableCell className="text-sm font-medium hidden sm:table-cell">
-                                            <span className="flex items-center gap-2">
-                                                {el.warehouse}
-                                            </span>
+                                            {el.warehouse}
                                         </TableCell>
+
                                         <TableCell className="text-sm font-mono hidden md:table-cell">
-                                            {el.location
-                                                ?
-                                                <LinkCell
+                                            {el.location ? (
+                                                <LinkedCell
                                                     href={`/stock/cell?location=${el.warehouse.toLowerCase()}-${el.location.toLowerCase()}&warehouse=${el.warehouse.toUpperCase()}`}
                                                     label={el.location}
                                                 />
-                                                : <Minus size={16}/>
-                                            }
+                                            ) : (
+                                                <Minus size={16} aria-label="No location" />
+                                            )}
                                         </TableCell>
-                                        <QuantityCell quantity={el.quantity}/>
-                                        <TableCell className="text-sm font-mono max-w-[100px] truncate">
-                                            <div className="flex items-center gap-2"><LinkCell href=""
-                                                                                               label={el.material_number}/>
-                                            </div>
+
+                                        <QuantityCell quantity={el.quantity} />
+
+                                        <TableCell className="max-w-[100px] truncate text-sm font-mono">
+                                            <LinkedCell href="" label={el.material_number} />
                                         </TableCell>
+
                                         <TableCell className="hidden sm:table-cell">
-                                            {el.robot_data
-                                                ? <LinkCell href={`/robot/${el.robot_data.id}`}
-                                                            label={el.robot_data.robot_number}/>
-                                                : <Minus size={16}/>
-                                            }
+                                            {el.robot_data ? (
+                                                <LinkedCell
+                                                    href={`/robot/${el.robot_data.id}`}
+                                                    label={el.robot_data.robot_number}
+                                                />
+                                            ) : (
+                                                <Minus size={16} aria-label="No robot" />
+                                            )}
                                         </TableCell>
-                                        <TableCell
-                                            className="text-xs text-muted-foreground whitespace-nowrap hidden sm:table-cell">
+
+                                        <TableCell className="hidden whitespace-nowrap text-xs text-muted-foreground sm:table-cell">
                                             {timeToString(dayjs(el.created_at).valueOf())}
                                         </TableCell>
-                                        {/*<TableCell>
-                                            <AlertDialog>
-                                                <AlertDialogTrigger asChild>
-                                                    <Button variant="ghost" size="sm"><Trash2 size={13}/></Button>
-                                                </AlertDialogTrigger>
-                                                <AlertDialogContent>
-                                                    <AlertDialogHeader>
-                                                        <AlertDialogTitle>Are you absolutely sure?</AlertDialogTitle>
-                                                        <AlertDialogDescription>This action cannot be
-                                                            undone.</AlertDialogDescription>
-                                                    </AlertDialogHeader>
-                                                    <AlertDialogFooter>
-                                                        <AlertDialogCancel>Cancel</AlertDialogCancel>
-                                                        <AlertDialogAction
-                                                            onClick={() => handleDelete(el)}>Continue</AlertDialogAction>
-                                                    </AlertDialogFooter>
-                                                </AlertDialogContent>
-                                            </AlertDialog>
-                                        </TableCell>*/}
                                     </TableRow>
                                 ))
-                            }
+                            )}
                         </TableBody>
                     </Table>
                 </ScrollArea>
