@@ -80,7 +80,6 @@ const RobotHeader = ({robot}: { robot: IRobot }) => {
 
     const buildShiftText = (parts: typeof partsSorted) => {
         if (!parts.length) return '';
-
         let text = `🤖 ${robot.robot_number} (${currentShift.toUpperCase()})\n\n`;
 
         parts.forEach((part) => {

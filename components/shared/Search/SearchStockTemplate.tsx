@@ -1,5 +1,5 @@
 "use client"
-import React, {useMemo, useState} from 'react';
+import React, {useMemo, useRef, useState} from 'react';
 import {Input} from "@/components/ui/input";
 import {IStockItemTemplate} from "@/types/stock/StockItem";
 import {Separator} from "@/components/ui/separator";
@@ -7,13 +7,16 @@ import {useStockStore} from "@/store/stock";
 import StockItemPreview from "@/components/shared/Stock/StockItemPreview";
 import CreateNewStockTemplate from "@/components/shared/Stock/CreateNewStockTemplate";
 import {Badge} from "@/components/ui/badge";
-import {PackageSearch} from "lucide-react";
+import {Button} from "@/components/ui/button";
+import {PackageSearch, ChevronLeft, ChevronRight} from "lucide-react";
 
-const PREVIEW_LIMIT = 15;
+const PAGE_SIZE = 20;
 
 const SearchStockTemplate = () => {
+    const topRef = useRef<HTMLDivElement>(null);
     const stock_store = useStockStore(state => state.items_templates);
     const [value, setValue] = useState<string>("");
+    const [page, setPage] = useState<number>(1);
 
     const filteredData = useMemo<IStockItemTemplate[]>(() => {
         if (!stock_store) return [];
@@ -43,25 +46,38 @@ const SearchStockTemplate = () => {
             .map(r => r.item);
     }, [value, stock_store]);
 
+    // Сбрасываем страницу при изменении поиска
+    const handleSearch = (e: React.ChangeEvent<HTMLInputElement>) => {
+        setValue(e.target.value);
+        setPage(1);
+    };
+
+    const totalPages = Math.max(1, Math.ceil(filteredData.length / PAGE_SIZE));
+    const safePage = Math.min(page, totalPages);
+    const pageData = filteredData.slice((safePage - 1) * PAGE_SIZE, safePage * PAGE_SIZE);
+
+    const scrollToTopAndSetPage = (updater: (p: number) => number) => {
+        topRef.current?.scrollIntoView({behavior: "smooth", block: "start"});
+        setPage(updater);
+    };
+
     if (!stock_store) return null;
 
     return (
-        <div className="rounded-xl space-y-4">
-            <div className="flex items-center justify-between">
-                <div>
-                    <h2 className="text-sm font-semibold">Parts Catalogue</h2>
-                    <p className="text-xs text-muted-foreground mt-0.5">
-                        {stock_store.length} parts available
-                    </p>
+        <div ref={topRef} className="rounded-xl pt-2">
+            <div className={`grid md:grid-cols-[1fr_300px] items-center gap-2 mb-2`}>
+                <div className="flex w-full items-end justify-end gap-2">
+                    <CreateNewStockTemplate/>
                 </div>
-                <CreateNewStockTemplate/>
-            </div>
 
-            <Input
-                value={value}
-                onChange={(e) => setValue(e.target.value)}
-                placeholder="Material number or description..."
-            />
+                <div className={`w-full flex flex-col items-start gap-2`}>
+                    <Input
+                        value={value}
+                        onChange={handleSearch}
+                        placeholder="Material number or description..."
+                    />
+                </div>
+            </div>
 
             {value && (
                 <div className="flex items-center justify-between">
@@ -69,15 +85,14 @@ const SearchStockTemplate = () => {
                         Found <span className="font-medium text-foreground">{filteredData.length}</span> of{" "}
                         <span className="font-medium text-foreground">{stock_store.length}</span>
                     </p>
-                    {filteredData.length > PREVIEW_LIMIT && (
+                    {totalPages > 1 && (
                         <Badge variant="secondary" className="text-[10px]">
-                            Showing top {PREVIEW_LIMIT}
+                            Page {safePage} of {totalPages}
                         </Badge>
                     )}
                 </div>
             )}
 
-            <Separator/>
 
             {filteredData.length === 0 && value ? (
                 <div className="flex flex-col items-center justify-center py-8 gap-2 text-muted-foreground">
@@ -85,11 +100,67 @@ const SearchStockTemplate = () => {
                     <p className="text-xs">No parts found for &quot;{value}&quot;</p>
                 </div>
             ) : (
-                <div className={`grid ${filteredData.length === 1 ? 'grid-cols-1' : `grid-cols-2 md:grid-cols-3`} gap-2`}>
-                    {filteredData.slice(0, PREVIEW_LIMIT).map((part) => (
-                        <StockItemPreview key={part.material_number} data={part}/>
-                    ))}
-                </div>
+                <>
+                    <div className={`grid ${pageData.length === 1 ? 'grid-cols-1' : 'grid-cols-2 md:grid-cols-4'} gap-2`}>
+                        {pageData.map((part) => (
+                            <StockItemPreview key={part.material_number} data={part}/>
+                        ))}
+                    </div>
+
+                    {totalPages > 1 && (
+                        <div className="flex items-center justify-center gap-2 pt-2">
+                            <Button
+                                variant="outline"
+                                size="icon"
+                                className="h-7 w-7"
+                                onClick={() => scrollToTopAndSetPage(p => Math.max(1, p - 1))}
+                                disabled={safePage === 1}
+                            >
+                                <ChevronLeft size={14}/>
+                            </Button>
+
+                            <div className="flex items-center gap-1">
+                                {Array.from({length: totalPages}, (_, i) => i + 1)
+                                    .filter(p =>
+                                        p === 1 ||
+                                        p === totalPages ||
+                                        Math.abs(p - safePage) <= 1
+                                    )
+                                    .reduce<(number | "...")[]>((acc, p, idx, arr) => {
+                                        if (idx > 0 && p - (arr[idx - 1] as number) > 1) acc.push("...");
+                                        acc.push(p);
+                                        return acc;
+                                    }, [])
+                                    .map((p, idx) =>
+                                        p === "..." ? (
+                                            <span key={`ellipsis-${idx}`} className="text-xs text-muted-foreground px-1">…</span>
+                                        ) : (
+                                            <Button
+                                                key={p}
+                                                variant={safePage === p ? "default" : "outline"}
+                                                size="icon"
+                                                className="h-7 w-7 text-xs"
+                                                onClick={() => scrollToTopAndSetPage(() => p)}
+                                            >
+                                                {p}
+                                            </Button>
+                                        )
+                                    )
+                                }
+                            </div>
+
+                            <Button
+                                variant="outline"
+                                size="icon"
+                                className="h-7 w-7"
+                                onClick={() => scrollToTopAndSetPage(p => Math.min(totalPages, p + 1))}
+                                disabled={safePage === totalPages}
+                            >
+                                <ChevronRight size={14}/>
+                            </Button>
+                        </div>
+                    )}
+                </>
             )}
         </div>
     );

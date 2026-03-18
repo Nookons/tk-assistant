@@ -22,6 +22,7 @@ import {
 } from "@/components/ui/dropdown-menu";
 import {robots_types} from "@/utils/RobotsConsts";
 import utc from "dayjs/plugin/utc";
+import {FilePlus, Plus} from "lucide-react";
 
 dayjs.extend(utc);
 
@@ -101,11 +102,9 @@ const CreateNewStockTemplate = () => {
 
     return (
         <div className={`flex gap-4 items-center justify-start`}>
-            <p className={`text-nowrap text-xs text-muted-foreground`}>Not found?</p>
-
             <Dialog open={isOpen} onOpenChange={setIsOpen}>
                 <DialogTrigger asChild>
-                    <Button size={`sm`} >Create New</Button>
+                    <Button variant={`default`} size={`sm`} >New <Plus /></Button>
                 </DialogTrigger>
                 <DialogContent className="sm:max-w-md">
                     <DialogHeader>
