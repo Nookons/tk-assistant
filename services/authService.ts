@@ -3,6 +3,58 @@ import {supabase} from "@/lib/supabaseClient";
 
 export class AuthService {
 
+    static async createUser(
+        cardId: string,
+        password: string,
+        firstName: string,
+        lastName: string
+    ): Promise<IUser | null> {
+        const { data: { user: authUser } } = await supabase.auth.getUser();
+
+        if (!authUser) {
+            throw new Error('No active session found');
+        }
+
+        const auth_id = authUser.id;
+
+        const { data: newEmployee, error: insertError } = await supabase
+            .from('employees')
+            .insert({
+                auth_id,
+                card_id: cardId,
+                warehouse: 'GLPC',
+                score: 0,
+                position: 'basic',
+                email: authUser.email,
+                user_name: `${firstName} ${lastName}`,
+            })
+            .select()
+            .single();
+
+        if (insertError) {
+            throw new Error(insertError.message);
+        }
+
+        const { error: passwordError } = await supabase.auth.updateUser({
+            password,
+            data: {
+                first_name: firstName,
+                last_name: lastName,
+            },
+        });
+
+        if (passwordError) {
+            await supabase
+                .from('employees')
+                .delete()
+                .eq('auth_id', auth_id);
+
+            throw new Error(passwordError.message);
+        }
+
+        return newEmployee;
+    }
+
     static async getUserByCardId(cardId: string): Promise<IUser | null> {
         const { data, error } = await supabase
             .from('employees')

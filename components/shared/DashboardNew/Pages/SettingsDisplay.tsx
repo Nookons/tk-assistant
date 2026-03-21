@@ -408,7 +408,7 @@ const SettingsDisplay = () => {
 
                         {/* Stats */}
                         <div className="grid grid-cols-2 sm:grid-cols-4 gap-2.5 mb-6">
-                            <StatCard icon={Star}         label="Score"  value={user.score.toLocaleString()} accent />
+                            <StatCard icon={Star}         label="Score"  value={user.score?.toLocaleString()} accent />
                             <StatCard icon={CalendarDays} label="Member" value={memberSince} />
                         </div>
 

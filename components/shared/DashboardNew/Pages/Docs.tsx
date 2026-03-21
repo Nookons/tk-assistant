@@ -48,18 +48,8 @@ const Docs = () => {
                                         </h4>
                                         <ul className="my-6 ml-6 list-disc [&>li]:mt-2">
                                             <li>
-                                                <Link className={`text-emerald-500 hover:underline font-medium`} href={`#`}>
+                                                <Link className={`text-emerald-500 hover:underline font-medium`} href={`/docs/k50h`}>
                                                     K50H
-                                                </Link>
-                                            </li>
-                                            <li>
-                                                <Link className={`text-emerald-500 hover:underline font-medium`} href={`#`}>
-                                                    A42T
-                                                </Link>
-                                            </li>
-                                            <li>
-                                                <Link className={`text-emerald-500 hover:underline font-medium`} href={`#`}>
-                                                    A42T E2
                                                 </Link>
                                             </li>
                                         </ul>

@@ -9,11 +9,11 @@ import { IdCardLanyard, Loader, Lock, LogIn, User, UserPen, KeyRound, Mail, Arro
 import { useUserStore } from "@/store/user";
 import UserLoginPreview from "@/components/shared/User/UserLoginPreview";
 import { AuthService } from "@/services/authService";
-import {supabase} from "@/lib/supabaseClient";
+import { supabase } from "@/lib/supabaseClient";
+import SetPasswordView from "@/components/shared/login/SetPasswordView";
 
 const CARD_ID_LENGTH = 8;
-
-type View = 'login' | 'forgot-password' | 'forgot-password-success';
+type View = 'login' | 'forgot-password' | 'forgot-password-success' | 'set-password';
 
 const LoginPage = () => {
     const router = useRouter();
@@ -26,10 +26,37 @@ const LoginPage = () => {
     const [errorMessage, setErrorMessage] = useState<string | null>(null);
 
     useEffect(() => {
+        const hash = window.location.hash;
+
+        console.log(hash);
+
+        if (hash.includes('type=invite')) {
+            const params = new URLSearchParams(hash.substring(1));
+            const accessToken = params.get('access_token');
+            const refreshToken = params.get('refresh_token');
+
+            if (accessToken && refreshToken) {
+                supabase.auth
+                    .setSession({ access_token: accessToken, refresh_token: refreshToken })
+                    .then(({ data, error }) => {
+                        if (error) {
+                            setErrorMessage('Invite link is invalid or has expired.');
+                            return;
+                        }
+                        if (data.session) {
+                            window.history.replaceState(null, '', window.location.pathname);
+                            setView('set-password');
+                        }
+                    });
+            }
+            return;
+        }
+
+        // ── Обычная проверка сессии ──────────────────────────────────────────
         const checkSession = async () => {
             const { data: { session } } = await supabase.auth.getSession();
 
-            if (session?.user && !window.location.hash.includes('type=recovery')) {
+            if (session?.user && !hash.includes('type=recovery')) {
                 const user = await AuthService.getCurrentUser();
                 if (user) {
                     setCurrentUser(user);
@@ -74,6 +101,8 @@ const LoginPage = () => {
         },
     });
 
+
+
     const handleCardChange = (e: React.ChangeEvent<HTMLInputElement>) => {
         const value = e.target.value.replace(/\D/g, '');
         setCardId(value);
@@ -114,7 +143,13 @@ const LoginPage = () => {
 
     const isLoading = isSearching || loginMutation.isPending;
 
-    // ── Forgot Password Form ─────────────────────────────────────────────────
+    if (view === 'set-password') {
+        return (
+            <SetPasswordView
+            />
+        );
+    }
+
     if (view === 'forgot-password') {
         return (
             <div className="fixed inset-0 flex items-center bg-background justify-center z-50">
@@ -176,7 +211,6 @@ const LoginPage = () => {
         );
     }
 
-    // ── Success Screen ───────────────────────────────────────────────────────
     if (view === 'forgot-password-success') {
         return (
             <div className="fixed inset-0 flex items-center bg-background justify-center z-50">
@@ -199,7 +233,6 @@ const LoginPage = () => {
         );
     }
 
-    // ── Main Login Form ──────────────────────────────────────────────────────
     return (
         <div className="fixed inset-0 flex items-center bg-background justify-center z-50">
             <div className="w-full max-w-md p-8 mx-4 rounded-2xl border">

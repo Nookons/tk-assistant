@@ -40,7 +40,7 @@ function DashboardHeader({ onMenuToggle, sidebarOpen, onSelect}: HeaderProps) {
                 <Button onClick={() => onSelect('settings')} className={`p-0`} variant={`ghost`}>
                     <Avatar className="h-8 w-8">
                         <AvatarImage src={user.avatar_url} />
-                        <AvatarFallback className="text-xs bg-primary text-primary-foreground">{user.user_name.toUpperCase().slice(0,2)}</AvatarFallback>
+                        <AvatarFallback className="text-xs bg-primary text-primary-foreground">{user.user_name?.toUpperCase().slice(0,2)}</AvatarFallback>
                     </Avatar>
                 </Button>
             </div>
