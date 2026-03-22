@@ -37,6 +37,7 @@ import {Empty, EmptyDescription, EmptyHeader, EmptyMedia, EmptyTitle} from "@/co
 import {ButtonGroup} from "@/components/ui/button-group";
 import {Button} from "@/components/ui/button";
 import PagesHeader from "@/components/shared/PagesHeader";
+import UserHistory from "@/components/shared/DashboardNew/DashboardComponents/User/UserHistory";
 
 dayjs.extend(relativeTime);
 
@@ -157,17 +158,8 @@ const UserProfilePage = ({isOwn = false}: { isOwn: boolean }) => {
                                  value={dayjs(user.created_at).format("D MMMM YYYY")}/>
                     </div>
                 </div>
-                <Empty className="h-full bg-muted/30">
-                    <EmptyHeader>
-                        <EmptyMedia variant="icon">
-                            <BicepsFlexed/>
-                        </EmptyMedia>
-                        <EmptyTitle>User History</EmptyTitle>
-                        <EmptyDescription className="max-w-xs text-pretty">
-                            Your history is currently in working... soon it will be here
-                        </EmptyDescription>
-                    </EmptyHeader>
-                </Empty>
+
+                <UserHistory user={user} />
             </div>
         </div>
     );

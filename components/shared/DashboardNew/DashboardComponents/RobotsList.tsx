@@ -104,7 +104,6 @@ const RobotsList = ({previewLimit = 5, warehouse = 'GLPC'}: RobotsHistoryProps) 
                 </div>
             ) : (
                 <>
-                    {/* Pagination controls — only rendered when previewLimit > 25 */}
                     {isPaginated && totalPages > 1 && (
                         <div className="flex items-center justify-end gap-2 mt-3">
                             <Button
@@ -186,7 +185,7 @@ const RobotsList = ({previewLimit = 5, warehouse = 'GLPC'}: RobotsHistoryProps) 
                                                     </AvatarFallback>
                                                 </Avatar>
                                                 <span className="text-sm text-muted-foreground truncate max-w-[120px]">
-                                                    <Link href={`/user/${robot.updated_by.id}`} className="hover:underline hover:text-foreground">
+                                                    <Link href={`/user/${robot.updated_by.auth_id}`} className="hover:underline hover:text-foreground">
                                                         {robot.updated_by.user_name}
                                                     </Link>
                                                 </span>

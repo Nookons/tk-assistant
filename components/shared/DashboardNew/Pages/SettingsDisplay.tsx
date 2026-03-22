@@ -26,6 +26,7 @@ import {AuthService} from "@/services/authService";
 import {IUser} from "@/types/user/user";
 import {UserService} from "@/services/userService";
 import {Empty, EmptyContent, EmptyDescription, EmptyHeader, EmptyMedia, EmptyTitle} from "@/components/ui/empty";
+import UserHistory from "@/components/shared/DashboardNew/DashboardComponents/User/UserHistory";
 
 dayjs.extend(relativeTime);
 
@@ -276,7 +277,6 @@ const PasswordChangeForm = ({user}: {user: IUser}) => {
     );
 };
 
-// ─── Main component ───────────────────────────────────────────────────────────
 
 const SettingsDisplay = () => {
     const [isNameChange, setIsNameChange] = useState<boolean>(false);
@@ -286,10 +286,6 @@ const SettingsDisplay = () => {
     const user_update = useUserStore(state => state.updateUser)
 
     if (!user) return null;
-
-    useEffect(() => {
-        console.log(user);
-    }, [user]);
 
     const rank = getScoreRank(user.score);
     const leader = isLeader(user.position);
@@ -450,17 +446,7 @@ const SettingsDisplay = () => {
                         </section>
                     </div>
 
-                    <Empty className="h-full bg-muted/30">
-                        <EmptyHeader>
-                            <EmptyMedia variant="icon">
-                                <BicepsFlexed />
-                            </EmptyMedia>
-                            <EmptyTitle>User History</EmptyTitle>
-                            <EmptyDescription className="max-w-xs text-pretty">
-                                Your history is currently in working... soon it will be here
-                            </EmptyDescription>
-                        </EmptyHeader>
-                    </Empty>
+                    <UserHistory user={user} />
                 </div>
             </div>
         </div>

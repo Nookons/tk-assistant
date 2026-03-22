@@ -1,3 +1,4 @@
+'use client'
 import React, { useState } from 'react';
 import Link from 'next/link';
 import dayjs from 'dayjs';
@@ -24,21 +25,17 @@ import {
     TableHead, TableHeader, TableRow,
 } from '@/components/ui/table';
 
-// ─── Constants ────────────────────────────────────────────────────────────────
 
 const SHOW_LIMIT_DEFAULT = 25;
 const PAGE_SIZE          = 50;
 
 const TODAY = dayjs().format('YYYY-MM-DD');
 
-// ─── Types ────────────────────────────────────────────────────────────────────
 
 interface StockHistoryListProps {
-    /** When true: shows a fixed slice of rows with a "show more" link instead of pagination */
     isShort: boolean;
 }
 
-// ─── Sub-components ───────────────────────────────────────────────────────────
 
 const QuantityCell = ({ quantity }: { quantity: number }) => (
     <TableCell
@@ -65,7 +62,6 @@ const EmptyRow = ({ warehouse }: { warehouse: string }) => (
     </TableRow>
 );
 
-// ─── Toolbar ──────────────────────────────────────────────────────────────────
 
 interface ToolbarProps {
     isShort:       boolean;
@@ -126,7 +122,6 @@ const Toolbar = ({
     </div>
 );
 
-// ─── Pagination bar ───────────────────────────────────────────────────────────
 
 interface PaginationProps {
     page:       number;
@@ -152,7 +147,6 @@ const Pagination = ({ page, totalPages, totalRows, onPrev, onNext }: PaginationP
     </div>
 );
 
-// ─── Root component ───────────────────────────────────────────────────────────
 
 const StockHistoryList = ({ isShort }: StockHistoryListProps) => {
     const currentUser  = useUserStore(state => state.currentUser);
@@ -167,7 +161,6 @@ const StockHistoryList = ({ isShort }: StockHistoryListProps) => {
     const [isOnlyUsed,   setIsOnlyUsed]   = useState(false);
     const [isOnlyToday,  setIsOnlyToday]  = useState(false);
 
-    // ── Undo / delete via reversal ───────────────────────────────────────────
 
     const { mutate: handleDelete } = useMutation({
         mutationFn: async (item: IHistoryStockItem) => {
@@ -205,20 +198,6 @@ const StockHistoryList = ({ isShort }: StockHistoryListProps) => {
         setPage(1);
     };
 
-    /**
-     * Layout model
-     * ─────────────────────────────────────────────────────────────────────────
-     * When rendered inside InventoryDisplay the parent TabsContent already
-     * provides the scroll context (flex-1 min-h-0 overflow-y-auto), so this
-     * component just needs to fill that space naturally — no magic dvh values.
-     *
-     * When rendered on the full /stock/stock-history page the parent should
-     * wrap this component in a flex column container that stretches to the
-     * page height.
-     *
-     * The inner <ScrollArea> uses h-full to fill whatever height is available
-     * from the parent, rather than a hard-coded viewport fraction.
-     */
     return (
         <div className="flex flex-col h-full overflow-hidden">
             <Toolbar
@@ -242,7 +221,6 @@ const StockHistoryList = ({ isShort }: StockHistoryListProps) => {
                 />
             )}
 
-            {/* flex-1 min-h-0 so ScrollArea doesn't overflow its flex parent */}
             <div className="flex-1 min-h-0 p-2">
                 <ScrollArea className="h-full w-full rounded-md border">
                     <Table>
