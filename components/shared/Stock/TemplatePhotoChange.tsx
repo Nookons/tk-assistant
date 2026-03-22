@@ -119,7 +119,7 @@ const TemplatePhotoChange: React.FC<props> = ({part}) => {
                 ) : (
                     <>
                         <Upload className="w-4 h-4 mr-2" />
-                        Choose new image
+                        Choose
                     </>
                 )}
             </Button>

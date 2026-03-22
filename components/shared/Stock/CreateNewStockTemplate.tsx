@@ -20,7 +20,7 @@ import {
     DropdownMenuContent,
     DropdownMenuTrigger
 } from "@/components/ui/dropdown-menu";
-import {robots_types} from "@/utils/RobotsConsts";
+import {parts_types} from "@/utils/RobotsConsts";
 import utc from "dayjs/plugin/utc";
 import {FilePlus, Plus} from "lucide-react";
 
@@ -153,7 +153,7 @@ const CreateNewStockTemplate = () => {
                                 </DropdownMenuTrigger>
 
                                 <DropdownMenuContent className="w-full">
-                                    {robots_types.map(robot => (
+                                    {parts_types.map(robot => (
                                         <DropdownMenuCheckboxItem
                                             key={robot}
                                             checked={data.robot_match.includes(robot)}

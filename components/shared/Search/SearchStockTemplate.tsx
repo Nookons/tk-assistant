@@ -2,7 +2,6 @@
 import React, {useMemo, useRef, useState} from 'react';
 import {Input} from "@/components/ui/input";
 import {IStockItemTemplate} from "@/types/stock/StockItem";
-import {Separator} from "@/components/ui/separator";
 import {useStockStore} from "@/store/stock";
 import StockItemPreview from "@/components/shared/Stock/StockItemPreview";
 import CreateNewStockTemplate from "@/components/shared/Stock/CreateNewStockTemplate";
@@ -64,51 +63,23 @@ const SearchStockTemplate = () => {
     if (!stock_store) return null;
 
     return (
-        <div ref={topRef} className="rounded-xl pt-2">
-            <div className={`grid md:grid-cols-[1fr_300px] items-center gap-2 mb-2`}>
+        <div ref={topRef} className="rounded-xl">
+            <div className={`grid md:grid-cols-[1fr_500px] items-center gap-2 mb-2`}>
                 <div className="flex w-full items-end justify-end gap-2">
                     <CreateNewStockTemplate/>
                 </div>
 
-                <div className={`w-full flex flex-col items-start gap-2`}>
-                    <Input
-                        value={value}
-                        onChange={handleSearch}
-                        placeholder="Material number or description..."
-                    />
-                </div>
-            </div>
-
-            {value && (
-                <div className="flex items-center justify-between">
-                    <p className="text-xs text-muted-foreground">
-                        Found <span className="font-medium text-foreground">{filteredData.length}</span> of{" "}
-                        <span className="font-medium text-foreground">{stock_store.length}</span>
-                    </p>
-                    {totalPages > 1 && (
-                        <Badge variant="secondary" className="text-[10px]">
-                            Page {safePage} of {totalPages}
-                        </Badge>
-                    )}
-                </div>
-            )}
-
-
-            {filteredData.length === 0 && value ? (
-                <div className="flex flex-col items-center justify-center py-8 gap-2 text-muted-foreground">
-                    <PackageSearch size={28} className="opacity-30"/>
-                    <p className="text-xs">No parts found for &quot;{value}&quot;</p>
-                </div>
-            ) : (
-                <>
-                    <div className={`grid ${pageData.length === 1 ? 'grid-cols-1' : 'grid-cols-2 md:grid-cols-4'} gap-2`}>
-                        {pageData.map((part) => (
-                            <StockItemPreview key={part.material_number} data={part}/>
-                        ))}
+                <div className={`flex flex-col items-end md:flex-row md:items-center justify-end gap-4`}>
+                    <div className={`w-full flex flex-col items-start gap-2`}>
+                        <Input
+                            value={value}
+                            onChange={handleSearch}
+                            placeholder="Material number or description..."
+                        />
                     </div>
 
                     {totalPages > 1 && (
-                        <div className="flex items-center justify-center gap-2 pt-2">
+                        <div className="flex items-center justify-center gap-2">
                             <Button
                                 variant="outline"
                                 size="icon"
@@ -160,6 +131,36 @@ const SearchStockTemplate = () => {
                             </Button>
                         </div>
                     )}
+                </div>
+            </div>
+
+            {value && (
+                <div className="flex items-center justify-between">
+                    <p className="text-xs text-muted-foreground">
+                        Found <span className="font-medium text-foreground">{filteredData.length}</span> of{" "}
+                        <span className="font-medium text-foreground">{stock_store.length}</span>
+                    </p>
+                    {totalPages > 1 && (
+                        <Badge variant="secondary" className="text-[10px]">
+                            Page {safePage} of {totalPages}
+                        </Badge>
+                    )}
+                </div>
+            )}
+
+
+            {filteredData.length === 0 && value ? (
+                <div className="flex flex-col items-center justify-center py-8 gap-2 text-muted-foreground">
+                    <PackageSearch size={28} className="opacity-30"/>
+                    <p className="text-xs">No parts found for &quot;{value}&quot;</p>
+                </div>
+            ) : (
+                <>
+                    <div className={`grid ${pageData.length === 1 ? 'grid-cols-1' : 'grid-cols-2 md:grid-cols-4'} gap-2`}>
+                        {pageData.map((part) => (
+                            <StockItemPreview key={part.material_number} data={part}/>
+                        ))}
+                    </div>
                 </>
             )}
         </div>

@@ -13,7 +13,7 @@ import { supabase } from "@/lib/supabaseClient";
 import SetPasswordView from "@/components/shared/login/SetPasswordView";
 
 const CARD_ID_LENGTH = 8;
-type View = 'login' | 'forgot-password' | 'forgot-password-success' | 'set-password';
+type View = 'login' | 'forgot-password' | 'forgot-password-success' | 'set-password' | 'invite-expired';
 
 const LoginPage = () => {
     const router = useRouter();
@@ -28,8 +28,24 @@ const LoginPage = () => {
     useEffect(() => {
         const hash = window.location.hash;
 
-        console.log(hash);
+        // ── Сначала проверяем ошибки от Supabase ────────────────────────────
+        if (hash.includes('error=')) {
+            const params = new URLSearchParams(hash.substring(1));
+            const errorCode = params.get('error_code');
 
+            window.history.replaceState(null, '', window.location.pathname);
+
+            if (errorCode === 'otp_expired') {
+                setView('invite-expired');
+                return;
+            }
+
+            // Любая другая ошибка
+            setErrorMessage(params.get('error_description')?.replace(/\+/g, ' ') ?? 'Something went wrong.');
+            return;
+        }
+
+        // ── Инвайт ──────────────────────────────────────────────────────────
         if (hash.includes('type=invite')) {
             const params = new URLSearchParams(hash.substring(1));
             const accessToken = params.get('access_token');
@@ -40,7 +56,7 @@ const LoginPage = () => {
                     .setSession({ access_token: accessToken, refresh_token: refreshToken })
                     .then(({ data, error }) => {
                         if (error) {
-                            setErrorMessage('Invite link is invalid or has expired.');
+                            setView('invite-expired');
                             return;
                         }
                         if (data.session) {
@@ -55,7 +71,6 @@ const LoginPage = () => {
         // ── Обычная проверка сессии ──────────────────────────────────────────
         const checkSession = async () => {
             const { data: { session } } = await supabase.auth.getSession();
-
             if (session?.user && !hash.includes('type=recovery')) {
                 const user = await AuthService.getCurrentUser();
                 if (user) {
@@ -143,10 +158,32 @@ const LoginPage = () => {
 
     const isLoading = isSearching || loginMutation.isPending;
 
+
     if (view === 'set-password') {
         return (
             <SetPasswordView
             />
+        );
+    }
+
+    if (view === 'invite-expired') {
+        return (
+            <div className="fixed inset-0 flex items-center bg-background justify-center z-50">
+                <div className="w-full max-w-md p-8 mx-4 rounded-2xl border text-center">
+                    <div className="inline-flex items-center justify-center w-16 h-16 rounded-full mb-4">
+                        <KeyRound className="w-8 h-8 text-red-500" />
+                    </div>
+                    <h1 className="text-2xl font-bold mb-2">Link expired</h1>
+                    <p className="text-sm text-muted-foreground mb-6">
+                        This invite link has already been used or has expired.
+                        Contact your administrator to get a new one.
+                    </p>
+                    <Button onClick={handleBackToLogin} variant="outline" className="w-full">
+                        <ArrowLeft className="w-4 h-4 mr-2" />
+                        Back to login
+                    </Button>
+                </div>
+            </div>
         );
     }
 
@@ -210,6 +247,7 @@ const LoginPage = () => {
             </div>
         );
     }
+
 
     if (view === 'forgot-password-success') {
         return (

@@ -8,10 +8,8 @@ import {TransformWrapper, TransformComponent} from "react-zoom-pan-pinch";
 import Image from "next/image";
 import {ZoomIn, ZoomOut, RotateCcw} from "lucide-react";
 import {cn} from "@/lib/utils";
-import TemplatePhotoChange from "@/components/shared/Stock/TemplatePhotoChange";
-import {IStockItemTemplate} from "@/types/stock/StockItem";
 
-const ImageDisplay = ({avatar_url, data}: {avatar_url: string; data: IStockItemTemplate}) => {
+const StockPartImage = ({avatar_url}: {avatar_url: string}) => {
     const [isLoading, setIsLoading] = useState(true);
     const [open, setOpen] = useState(false);
 
@@ -36,7 +34,7 @@ const ImageDisplay = ({avatar_url, data}: {avatar_url: string; data: IStockItemT
                         {!isLoading && (
                             <div
                                 onClick={() => setOpen(true)}
-                                className="absolute inset-0 opacity-0 group-hover:opacity-100 transition-opacity backdrop-blur-sm flex items-center justify-center cursor-pointer rounded"
+                                className="absolute inset-0 opacity-0 hover:opacity-100 transition-opacity backdrop-blur-sm flex items-center justify-center cursor-pointer rounded"
                             >
                                 <ZoomIn className="w-6 h-6"/>
                             </div>
@@ -75,7 +73,6 @@ const ImageDisplay = ({avatar_url, data}: {avatar_url: string; data: IStockItemT
                                             <RotateCcw className="w-4 h-4"/>
                                         </Button>
                                     </ButtonGroup>
-                                    <TemplatePhotoChange part={data}/>
                                 </div>
 
                                 <TransformComponent
@@ -102,4 +99,4 @@ const ImageDisplay = ({avatar_url, data}: {avatar_url: string; data: IStockItemT
     );
 };
 
-export default ImageDisplay;
+export default StockPartImage;

@@ -20,7 +20,11 @@ import {useMutation} from "@tanstack/react-query";
 import {StockService} from "@/services/stockService";
 import {toast} from "sonner";
 import {useStockStore} from "@/store/stock";
-import {robots_types} from "@/utils/RobotsConsts";
+import {parts_types} from "@/utils/RobotsConsts";
+import TemplatePhotoChange from "@/components/shared/Stock/TemplatePhotoChange";
+import StockPartImage from "@/components/shared/StockPart/StockPartImage";
+import {Label} from "@/components/ui/label";
+import {Badge} from "@/components/ui/badge";
 
 interface props {
     part: IStockItemTemplate;
@@ -82,7 +86,7 @@ const TemplateEditDialog: React.FC<props> = ({part}) => {
     return (
         <AlertDialog>
             <AlertDialogTrigger asChild>
-                <Button className={`p-0`} variant="ghost"><Pencil /></Button>
+                <Button className={`p-0 m-0`} variant="ghost"><Pencil/></Button>
             </AlertDialogTrigger>
             <AlertDialogContent>
                 <AlertDialogHeader>
@@ -91,41 +95,63 @@ const TemplateEditDialog: React.FC<props> = ({part}) => {
                         If you want to change picture for item, please click directly on picture of part
                     </AlertDialogDescription>
                 </AlertDialogHeader>
-                <div className={`flex flex-col gap-2`}>
-                    <Input
-                        value={data.description_eng}
-                        onChange={(e) => handleInput(e)}
-                        name={`description_eng`}
-                        type="text" placeholder={part.description_eng}
-                    />
-                    <Input
-                        value={data.description_orginall}
-                        onChange={(e) => handleInput(e)}
-                        name={`description_orginall`}
-                        type="text" placeholder={part.description_orginall}
-                    />
+                <div className={`grid md:grid-cols-[125px_1fr] gap-2`}>
+                    <div className={``}>
+                        <StockPartImage avatar_url={part.avatar_url}/>
+                        <TemplatePhotoChange part={part}/>
+                    </div>
+                    <div className={`flex flex-col gap-2`}>
+                        <div className={`flex items-center md:grid md:grid-cols-[1fr_75px] gap-2`}>
+                            <Input
+                                value={data.description_eng}
+                                onChange={(e) => handleInput(e)}
+                                name={`description_eng`}
+                                type="text" placeholder={part.description_eng}
+                            />
+                            <Label>English</Label>
+                        </div>
+                        <div className={`flex items-center md:grid md:grid-cols-[1fr_75px] gap-2`}>
+                            <Input
+                                value={data.description_orginall}
+                                onChange={(e) => handleInput(e)}
+                                name={`description_orginall`}
+                                type="text" placeholder={part.description_orginall}
+                            />
+                            <Label>Chinese</Label>
+                        </div>
 
-                    <DropdownMenu>
-                        <DropdownMenuTrigger asChild>
-                            <Button variant="outline" className="w-full text-left">
-                                {data.robot_match.length
-                                    ? data.robot_match.join(", ")
-                                    : "Select robot types"}
-                            </Button>
-                        </DropdownMenuTrigger>
+                        <div className={`relative flex items-center md:grid md:grid-cols-[1fr_75px] gap-2`}>
+                            <DropdownMenu>
+                                <DropdownMenuTrigger asChild>
+                                    <div className="w-full rounded-md">
+                                        {data.robot_match.length
+                                            ?
+                                            <div className={`flex gap-1 p-1.5 border-2 rounded-md cursor-pointer`}>
+                                                {data.robot_match.map((type) => (
+                                                    <Badge>{type}</Badge>
+                                                ))}
+                                            </div>
+                                            :
+                                            <Button className={`w-full`}>Select robot types</Button>
+                                        }
+                                    </div>
+                                </DropdownMenuTrigger>
 
-                        <DropdownMenuContent className="w-full">
-                            {robots_types.map(robot => (
-                                <DropdownMenuCheckboxItem
-                                    key={robot}
-                                    checked={data.robot_match.includes(robot)}
-                                    onCheckedChange={() => setRobotMatch(robot)}
-                                >
-                                    {robot}
-                                </DropdownMenuCheckboxItem>
-                            ))}
-                        </DropdownMenuContent>
-                    </DropdownMenu>
+                                <DropdownMenuContent className="w-full">
+                                    {parts_types.map(robot => (
+                                        <DropdownMenuCheckboxItem
+                                            key={robot}
+                                            checked={data.robot_match.includes(robot)}
+                                            onCheckedChange={() => setRobotMatch(robot)}
+                                        >
+                                            {robot}
+                                        </DropdownMenuCheckboxItem>
+                                    ))}
+                                </DropdownMenuContent>
+                            </DropdownMenu>
+                            <Label>Types</Label>
+                        </div>
+                    </div>
                 </div>
                 <AlertDialogFooter>
                     <AlertDialogCancel>Cancel</AlertDialogCancel>
