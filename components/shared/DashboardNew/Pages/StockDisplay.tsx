@@ -45,7 +45,7 @@ const Page = () => {
                 onExport={handleExport}
             />
 
-            {pickedWarehouse === 'all' &&
+            {pickedWarehouse === 'All' &&
                 <p className="text-xs text-amber-500 bg-amber-500/8 border border-amber-500/20 rounded-lg px-3 py-2.5">
                     ⚠ Showing all warehouses — filter by warehouse for better performance.
                 </p>

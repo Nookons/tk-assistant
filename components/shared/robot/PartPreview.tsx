@@ -10,13 +10,14 @@ import {useRobotsStore} from "@/store/robotsStore";
 import {useUserStore} from "@/store/user";
 import {StockService} from "@/services/stockService";
 import ItemLocation from "@/components/shared/RobotNew/ItemLocation";
-import {Annoyed} from "lucide-react";
+import {Annoyed, Save} from "lucide-react";
 import {Empty, EmptyHeader, EmptyMedia, EmptyTitle} from "@/components/ui/empty";
 import {Checkbox} from "@/components/ui/checkbox";
 import {Field} from "@/components/ui/field";
 import Image from "next/image";
 import {Skeleton} from "@/components/ui/skeleton";
 import {cn} from "@/lib/utils";
+import StockPartImage from "@/components/shared/StockPart/StockPartImage";
 
 interface Props {
     selectedPart: IStockItemTemplate;
@@ -122,42 +123,35 @@ const PartPreview: React.FC<Props> = ({selectedPart, robot, onSuccess, setSelect
 
     return (
         <div>
-            <div className="relative w-full aspect-square rounded-md overflow-hidden mb-2">
-                {isLoading && (
-                    <Skeleton className="absolute anim-pulse inset-0 w-full h-full" />
-                )}
-                <>
-                    {selectedPart.avatar_url
-                    ?
-                        <Image
-                            key={selectedPart.avatar_url}
-                            src={selectedPart.avatar_url}
-                            alt="item image"
-                            fill
-                            className={cn("object-cover transition-opacity", isLoading ? "opacity-0" : "opacity-100")}
-                            onLoad={() => setIsLoading(false)}
-                        />
-                    :
-                        <div className={`flex h-full justify-center items-center`}>NO IMG</div>
-                    }
-                </>
-            </div>
-            <div>
-                <p className="text-xs text-muted-foreground uppercase tracking-widest">Selected part</p>
-                <p className="text-base font-semibold mt-1">{selectedPart.description_eng}</p>
-                <p className="text-xs font-mono text-muted-foreground mt-0.5">{selectedPart.material_number}</p>
+            <div className={`grid grid-cols-[125px_1fr] gap-4`}>
+                <StockPartImage avatar_url={selectedPart.avatar_url}/>
+                <div className={`flex flex-col gap-2`}>
+                    <p className="text-xs text-muted-foreground">{selectedPart.description_eng}</p>
+                    <p className="text-xs text-muted-foreground">{selectedPart.description_orginall}</p>
+                    <p className="text-xs font-medium">{selectedPart.material_number}</p>
+                </div>
             </div>
             {
                 !locations_data.length
-                ?
-                    <Empty className="bg-muted/30  my-2">
-                        <EmptyHeader>
-                            <EmptyMedia variant="icon">
-                                <Annoyed />
-                            </EmptyMedia>
-                            <EmptyTitle>No Parts on stock</EmptyTitle>
-                        </EmptyHeader>
-                    </Empty>
+                    ?
+                    <div className={`flex flex-col items-end mb-4 w-full`}>
+                        <div
+                            className={`border-2 w-full border-dashed my-4 flex items-center justify-between p-4 rounded-md bg-linear-to-r from-background to-red-400/50`}>
+                            <Annoyed/>
+                            <p className={`font-medium`}>No Parts on stock</p>
+                        </div>
+                        <div className={`pr-1`}>
+                            <Field orientation="horizontal">
+                                <p className={`text-xs text-muted-foreground`}>Without Stock</p>
+                                <Checkbox
+                                    checked={isEmptyAdd}
+                                    onCheckedChange={() => setIsEmptyAdd(!isEmptyAdd)}
+                                    id="terms-checkbox"
+                                    name="terms-checkbox"
+                                />
+                            </Field>
+                        </div>
+                    </div>
                     :
                     <div className="grid grid-cols-2 gap-2 my-2">
                         {locations_data.map((item, i) => (
@@ -201,19 +195,8 @@ const PartPreview: React.FC<Props> = ({selectedPart, robot, onSuccess, setSelect
                         +
                     </Button>
                     <Button onClick={handleSubmit}>
-                        Save
+                        <Save /> Save
                     </Button>
-                </div>
-                <div className={`mt-2`}>
-                    <Field orientation="horizontal">
-                        <Checkbox
-                            checked={isEmptyAdd}
-                            onCheckedChange={() => setIsEmptyAdd(!isEmptyAdd)}
-                            id="terms-checkbox"
-                            name="terms-checkbox"
-                        />
-                        <Label htmlFor="terms-checkbox">Add without stock</Label>
-                    </Field>
                 </div>
             </div>
         </div>

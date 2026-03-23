@@ -36,13 +36,11 @@ import PagesHeader from "@/components/shared/PagesHeader";
 function PageSkeleton() {
     return (
         <div className="min-h-screen bg-background">
-            {/* Top bar */}
             <div className="sticky top-0 z-10 border-b border-border bg-card/80 backdrop-blur px-6 py-3">
                 <Skeleton className="h-4 w-16" />
             </div>
 
             <div className="max-w-[1600px] mx-auto px-4 lg:px-8 py-6 space-y-6">
-                {/* Hero */}
                 <div className="flex items-center gap-4">
                     <Skeleton className="h-14 w-14 rounded-xl" />
                     <div className="space-y-2">
@@ -51,7 +49,6 @@ function PageSkeleton() {
                     </div>
                 </div>
 
-                {/* Grid */}
                 <div className="grid grid-cols-1 lg:grid-cols-[1fr_640px] gap-6">
                     <div className="space-y-4">
                         <Skeleton className="h-40 w-full rounded-lg" />

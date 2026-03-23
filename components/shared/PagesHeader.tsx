@@ -12,6 +12,7 @@ import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import { useUserStore } from "@/store/user";
 import {ThemeToggle} from "@/components/shared/theme/theme-toggle";
+import {Dot} from "lucide-react";
 
 const PagesHeader = () => {
     const route = useRouter();
@@ -40,9 +41,11 @@ const PagesHeader = () => {
             </Breadcrumb>
 
             <div className={`flex items-center gap-2`}>
-                <p className="text-xs text-muted-foreground">
-                    {user?.user_name} {user?.warehouse}
-                </p>
+                <div className="text-xs text-muted-foreground flex items-center gap-1">
+                    <p className={`text-nowrap`}>{user?.user_name}</p>
+                    <Dot />
+                    <p className={`line-clamp-1`}>{user?.position_title}</p>
+                </div>
                 <ThemeToggle />
             </div>
         </div>

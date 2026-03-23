@@ -44,26 +44,26 @@ const UserHistory = ({user}:{user: IUser}) => {
     }
 
     return (
-        <div>
+        <div className={`overflow-hidden`}>
             <Table>
                 <TableHeader>
                     <TableRow>
-                        <TableHead>Date</TableHead>
                         <TableHead>Warehouse</TableHead>
                         <TableHead>Location</TableHead>
                         <TableHead>Robot</TableHead>
                         <TableHead>Amount</TableHead>
+                        <TableHead>Date</TableHead>
                     </TableRow>
                 </TableHeader>
                 <TableBody>
                     {combined_data.slice(0, 20).map((item, i) => {
                         return (
                             <TableRow key={item.id}>
-                                <TableCell className="font-medium">{timeToString(item.created_at.valueOf())}</TableCell>
                                 <TableCell className="font-medium">{item.warehouse}</TableCell>
-                                <TableCell className="font-medium">{item.location}</TableCell>
+                                <TableCell className="font-medium">{item.location ?? "-"}</TableCell>
                                 <TableCell className="font-medium">{item?.robot_data?.robot_number || "-"}</TableCell>
                                 <TableCell className={`font-medium ${item.quantity > 0 ? "text-green-500" : "text-red-500"}`}>{item.quantity}</TableCell>
+                                <TableCell className="font-medium">{timeToString(item.created_at.valueOf())}</TableCell>
                             </TableRow>
                         )
                     })}

@@ -30,7 +30,6 @@ interface props {
     part: IStockItemTemplate;
 }
 
-
 const TemplateEditDialog: React.FC<props> = ({part}) => {
     const update_store = useStockStore(state => state.update_item_template)
 
@@ -49,13 +48,9 @@ const TemplateEditDialog: React.FC<props> = ({part}) => {
 
     const setRobotMatch = (robot: string) => {
         if (data.robot_match.includes(robot)) {
-            const newData = data.robot_match.filter(el => el !== robot)
-            setData((prev) => ({...prev, robot_match: newData}))
+            setData((prev) => ({...prev, robot_match: prev.robot_match.filter(el => el !== robot)}))
         } else {
-            setData((prev) => ({
-                ...prev,
-                robot_match: [...prev.robot_match, robot]
-            }))
+            setData((prev) => ({...prev, robot_match: [...prev.robot_match, robot]}))
         }
     }
 
@@ -63,7 +58,6 @@ const TemplateEditDialog: React.FC<props> = ({part}) => {
         mutationFn: (data: Partial<IStockItemTemplate> & { id: number }) =>
             StockService.updateItemTemplate(data),
         onSuccess: (data) => {
-            console.log(data);
             update_store(data.id.toString(), data)
             toast.success("Template updated successfully!")
         },
@@ -71,7 +65,6 @@ const TemplateEditDialog: React.FC<props> = ({part}) => {
             toast.error(error.message)
         },
     })
-
 
     useEffect(() => {
         if (part) {
@@ -86,58 +79,62 @@ const TemplateEditDialog: React.FC<props> = ({part}) => {
     return (
         <AlertDialog>
             <AlertDialogTrigger asChild>
-                <Button className={`p-0 m-0`} variant="ghost"><Pencil/></Button>
+                <Button className="p-0 m-0" variant="ghost"><Pencil/></Button>
             </AlertDialogTrigger>
-            <AlertDialogContent>
+            <AlertDialogContent className="max-w-[95%] p-4">
                 <AlertDialogHeader>
-                    <AlertDialogTitle>This is edit dialog for part</AlertDialogTitle>
+                    <AlertDialogTitle>Edit part template</AlertDialogTitle>
                     <AlertDialogDescription>
-                        If you want to change picture for item, please click directly on picture of part
+                        Click on the image to preview or change it.
                     </AlertDialogDescription>
                 </AlertDialogHeader>
-                <div className={`grid md:grid-cols-[125px_1fr] gap-2`}>
-                    <div className={``}>
+
+                <div className="grid grid-cols-[120px_1fr] gap-4 items-start">
+                    <div className="flex flex-col gap-1">
                         <StockPartImage avatar_url={part.avatar_url}/>
                         <TemplatePhotoChange part={part}/>
                     </div>
-                    <div className={`flex flex-col gap-2`}>
-                        <div className={`flex items-center md:grid md:grid-cols-[1fr_75px] gap-2`}>
+
+                    <div className="grid grid-rows-[auto_auto_1fr] gap-3">
+                        <div className="grid gap-1">
+                            <Label className="text-muted-foreground text-xs">English</Label>
                             <Input
                                 value={data.description_eng}
-                                onChange={(e) => handleInput(e)}
-                                name={`description_eng`}
-                                type="text" placeholder={part.description_eng}
+                                onChange={handleInput}
+                                name="description_eng"
+                                placeholder={part.description_eng}
                             />
-                            <Label>English</Label>
                         </div>
-                        <div className={`flex items-center md:grid md:grid-cols-[1fr_75px] gap-2`}>
+
+                        {/* Chinese */}
+                        <div className="grid gap-1">
+                            <Label className="text-muted-foreground text-xs">Chinese</Label>
                             <Input
                                 value={data.description_orginall}
-                                onChange={(e) => handleInput(e)}
-                                name={`description_orginall`}
-                                type="text" placeholder={part.description_orginall}
+                                onChange={handleInput}
+                                name="description_orginall"
+                                placeholder={part.description_orginall}
                             />
-                            <Label>Chinese</Label>
                         </div>
 
-                        <div className={`relative flex items-center md:grid md:grid-cols-[1fr_75px] gap-2`}>
+                        {/* Robot types */}
+                        <div className="grid gap-1">
+                            <Label className="text-muted-foreground text-xs">Robot types</Label>
                             <DropdownMenu>
                                 <DropdownMenuTrigger asChild>
-                                    <div className="w-full rounded-md">
-                                        {data.robot_match.length
-                                            ?
-                                            <div className={`flex gap-1 p-1.5 border-2 rounded-md cursor-pointer`}>
-                                                {data.robot_match.map((type) => (
-                                                    <Badge>{type}</Badge>
-                                                ))}
-                                            </div>
-                                            :
-                                            <Button className={`w-full`}>Select robot types</Button>
-                                        }
-                                    </div>
+                                    {data.robot_match.length ? (
+                                        <div className="flex flex-wrap gap-1 min-h-9 px-2 py-1.5 border rounded-md cursor-pointer hover:bg-muted/50 transition-colors">
+                                            {data.robot_match.map((type, index) => (
+                                                <Badge key={`${type}-${index}`} variant="secondary">{type}</Badge>
+                                            ))}
+                                        </div>
+                                    ) : (
+                                        <Button variant="outline" className="w-full justify-start text-muted-foreground font-normal">
+                                            Select robot types…
+                                        </Button>
+                                    )}
                                 </DropdownMenuTrigger>
-
-                                <DropdownMenuContent className="w-full">
+                                <DropdownMenuContent className="w-56">
                                     {parts_types.map(robot => (
                                         <DropdownMenuCheckboxItem
                                             key={robot}
@@ -149,21 +146,18 @@ const TemplateEditDialog: React.FC<props> = ({part}) => {
                                     ))}
                                 </DropdownMenuContent>
                             </DropdownMenu>
-                            <Label>Types</Label>
                         </div>
+
                     </div>
                 </div>
+
                 <AlertDialogFooter>
                     <AlertDialogCancel>Cancel</AlertDialogCancel>
                     <AlertDialogAction
-                        onClick={() =>
-                            handleSubmit.mutate({
-                                id: part.id,
-                                ...data
-                            })
-                        }
+                        onClick={() => handleSubmit.mutate({id: part.id, ...data})}
+                        disabled={handleSubmit.isPending}
                     >
-                        Save
+                        {handleSubmit.isPending ? 'Saving…' : 'Save'}
                     </AlertDialogAction>
                 </AlertDialogFooter>
             </AlertDialogContent>

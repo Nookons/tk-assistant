@@ -20,21 +20,12 @@ import { useStockStore } from '@/store/stock';
 import { useUserStore } from '@/store/user';
 import { IStockItemTemplate } from '@/types/stock/StockItem';
 import { toast } from 'sonner';
+import {WAREHOUSES} from "@/lib/Warehouses";
 
-// ─── Constants ────────────────────────────────────────────────────────────────
 
-const WAREHOUSES = [
-    { value: 'GLPC',     label: 'GLPC'     },
-    { value: 'SMALL_P3', label: 'SMALL P3' },
-    { value: 'PNT',      label: 'PNT'      },
-    { value: 'P3',       label: 'BIG P3'   },
-] as const;
-
-type WarehouseValue = typeof WAREHOUSES[number]['value'];
-
+type WarehouseValue = typeof WAREHOUSES[number];
 const TEMPLATE_DEBOUNCE_MS = 100;
 
-// ─── Types ────────────────────────────────────────────────────────────────────
 
 interface StockFormValues {
     location:  string;
@@ -236,9 +227,9 @@ const StockForm = ({
                             <SelectContent>
                                 <SelectGroup>
                                     <SelectLabel>Available</SelectLabel>
-                                    {WAREHOUSES.map(w => (
-                                        <SelectItem key={w.value} value={w.value}>
-                                            {w.label}
+                                    {WAREHOUSES.slice(1).map(w => (
+                                        <SelectItem key={w} value={w}>
+                                            {w}
                                         </SelectItem>
                                     ))}
                                 </SelectGroup>

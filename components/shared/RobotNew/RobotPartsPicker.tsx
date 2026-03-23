@@ -16,9 +16,11 @@ import {useStockStore} from "@/store/stock";
 import {ScrollArea} from "@/components/ui/scroll-area";
 import {IStockItemTemplate} from "@/types/stock/StockItem";
 import {cn} from "@/lib/utils";
-import {ArrowLeft, Search} from "lucide-react";
+import {ArrowLeft, MousePointerClick, MoveLeft, Search} from "lucide-react";
 import PartPreview from "@/components/shared/robot/PartPreview";
 import {Avatar, AvatarFallback, AvatarImage} from "@/components/ui/avatar";
+import {Table, TableBody, TableCell, TableHeader, TableRow} from "@/components/ui/table";
+import {Badge} from "@/components/ui/badge";
 
 const PartsPicker = ({robot}: { robot: IRobot }) => {
     const stock_templates = useStockStore(state => state.items_templates);
@@ -59,28 +61,19 @@ const PartsPicker = ({robot}: { robot: IRobot }) => {
     };
 
     return (
-        <Sheet open={isOpen} onOpenChange={(open) => { if (!open) handleClose(); else setIsOpen(true); }}>
+        <Sheet open={isOpen} onOpenChange={(open) => {
+            if (!open) handleClose(); else setIsOpen(true);
+        }}>
             <SheetTrigger asChild>
                 <p>Add new part</p>
             </SheetTrigger>
 
             <SheetContent
                 side="bottom"
-                className="h-[100dvh] flex flex-col p-0 rounded-t-2xl"
+                className="h-dvh flex flex-col p-0 rounded-t-2xl"
             >
                 <SheetHeader className="px-4 pt-4 pb-3 border-b shrink-0">
-                    {/* Мобильный хедер: назад к списку если выбрана деталь */}
                     <div className="flex items-center gap-2">
-                        {selectedPart && (
-                            <Button
-                                variant="ghost"
-                                size="icon"
-                                className="h-8 w-8 shrink-0 md:hidden -ml-1"
-                                onClick={() => setSelectedPart(null)}
-                            >
-                                <ArrowLeft className="h-4 w-4" />
-                            </Button>
-                        )}
                         <div className="min-w-0">
                             <SheetTitle className="text-base leading-tight">
                                 {selectedPart
@@ -95,19 +88,15 @@ const PartsPicker = ({robot}: { robot: IRobot }) => {
                     </div>
                 </SheetHeader>
 
-                {/* === DESKTOP: side-by-side | MOBILE: stack с переключением === */}
                 <div className="flex flex-1 overflow-hidden">
-
-                    {/* СПИСОК — на мобиле скрывается когда выбрана деталь */}
                     <div className={cn(
                         "flex flex-col flex-1 border-r overflow-hidden",
-                        // На мобиле: скрываем список если выбрана деталь
                         selectedPart ? "hidden md:flex" : "flex"
                     )}>
-                        {/* Поиск */}
                         <div className="px-3 py-2.5 border-b shrink-0">
                             <div className="relative">
-                                <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground pointer-events-none" />
+                                <Search
+                                    className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground pointer-events-none"/>
                                 <Input
                                     value={search}
                                     onChange={(e) => setSearch(e.target.value)}
@@ -120,56 +109,41 @@ const PartsPicker = ({robot}: { robot: IRobot }) => {
                             </p>
                         </div>
 
-                        <ScrollArea className="flex-1 h-20">
-                            <div className={cn(
-                                "gap-2 p-3",
-                                // Адаптивная сетка: 2 колонки на мобиле, 4 на десктопе
-                                "grid grid-cols-2 md:grid-cols-4"
-                            )}>
-                                {filteredParts.length === 0 ? (
-                                    <div className="col-span-full flex items-center justify-center py-16 text-sm text-muted-foreground">
-                                        No parts found for &quot;{search}&quot;
-                                    </div>
-                                ) : filteredParts.map((item) => (
-                                    <div
-                                        key={item.material_number}
-                                        onClick={() => handleSelect(item)}
-                                        className={cn(
-                                            "p-2.5 rounded-lg border cursor-pointer transition-colors active:scale-[0.98]",
-                                            selectedPart?.material_number === item.material_number
-                                                ? "border-primary bg-primary/10"
-                                                : "border-border hover:border-primary/50 hover:bg-muted"
-                                        )}
-                                    >
-                                        {/* Превью картинки — всегда показываем на мобиле 2-кол */}
-                                        {/*<Avatar className="w-full h-20 aspect-square rounded-md mb-2">
-                                            <AvatarImage
-                                                src={item.avatar_url}
-                                                alt="part image"
-                                                className="object-cover"
-                                            />
-                                            <AvatarFallback className="rounded-md text-xs text-muted-foreground aspect-square">
-                                                No img
-                                            </AvatarFallback>
-                                        </Avatar>*/}
-                                        <p className="text-[10px] font-mono text-muted-foreground leading-tight">{item.material_number}</p>
-                                        <p className="text-xs font-medium mt-0.5 line-clamp-2 leading-snug">{item.description_eng}</p>
-                                    </div>
-                                ))}
+                        <ScrollArea className="flex-1 h-0">
+                            <div className={`overflow-x-hidden w-100vw`}>
+                                <Table>
+                                    <TableBody>
+                                        {filteredParts.length === 0 ? (
+                                            <div
+                                                className="col-span-full flex items-center justify-center py-16 text-sm text-muted-foreground">
+                                                No parts found for &quot;{search}&quot;
+                                            </div>
+                                        ) : filteredParts.map((item) => (
+                                            <TableRow className={`cursor-pointer ${selectedPart?.material_number === item.material_number && "bg-linear-to-l from-background to-teal-500/65"}`} onClick={() => setSelectedPart(item)} key={item.id}>
+                                                <TableCell className="font-medium">{item.material_number}</TableCell>
+                                                <TableCell className="font-medium text-muted-foreground">{item.description_eng}</TableCell>
+                                                <TableCell className="font-medium text-muted-foreground">{item.description_orginall ?? "-"}</TableCell>
+                                            </TableRow>
+                                        ))}
+                                    </TableBody>
+                                </Table>
                             </div>
                         </ScrollArea>
                     </div>
 
-                    {/* ПРЕВЬЮ — на мобиле занимает весь экран когда выбрана деталь */}
                     <div className={cn(
-                        "md:w-[380px] shrink-0 overflow-y-auto",
-                        // На мобиле: показываем только когда выбрана деталь, и на весь экран
+                        "md:w-[580px] shrink-0 overflow-y-auto",
                         selectedPart
                             ? "flex flex-col w-full"
                             : "hidden md:flex md:flex-col"
                     )}>
                         {selectedPart ? (
                             <div className="p-4">
+                                {selectedPart &&
+                                    <Button variant={`ghost`} onClick={() => setSelectedPart(null)} className={`md:hidden mb-2`}>
+                                        <MoveLeft /> Back
+                                    </Button>
+                                }
                                 <PartPreview
                                     setSelectedPart={setSelectedPart}
                                     onSuccess={handleClose}
@@ -178,7 +152,8 @@ const PartsPicker = ({robot}: { robot: IRobot }) => {
                                 />
                             </div>
                         ) : (
-                            <div className="flex items-center justify-center h-full p-8 text-sm text-muted-foreground text-center">
+                            <div
+                                className="flex items-center justify-center h-full p-8 text-sm text-muted-foreground text-center">
                                 Select a part from the list to see details
                             </div>
                         )}

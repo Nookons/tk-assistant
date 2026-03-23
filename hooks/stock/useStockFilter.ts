@@ -12,7 +12,7 @@ export function useStockFilter({ stockData, pickedWarehouse, searchValue }: Para
     return useMemo<StockByLocationResponse>(() => {
         let data = [...stockData];
 
-        if (pickedWarehouse !== 'all') {
+        if (pickedWarehouse !== 'All') {
             data = data.filter(loc =>
                 loc.items?.some(item => item?.warehouse?.toUpperCase() === pickedWarehouse)
             );

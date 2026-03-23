@@ -4,11 +4,13 @@ import { useSearchParams } from "next/navigation";
 import { useStockStore } from "@/store/stock";
 import { LocationItem, LocationStock } from "@/types/stock/SummaryItem";
 import Link from "next/link";
-import Image from "next/image";
+import StockPartImage from "@/components/shared/StockPart/StockPartImage";
+import PagesHeader from "@/components/shared/PagesHeader";
+import {ButtonGroup} from "@/components/ui/button-group";
+import { Button } from "@/components/ui/button";
+import {ArrowLeftIcon, ArrowLeftRight, Trash2} from "lucide-react";
 
 function StockItemCard({ item, index }: { item: LocationItem; index: number }) {
-    const [imgError, setImgError] = useState(false);
-
     const stockStatus =
         item.total_quantity >= 10 ? 'in_stock' :
             item.total_quantity >= 5  ? 'limited'  : 'low';
@@ -21,49 +23,49 @@ function StockItemCard({ item, index }: { item: LocationItem; index: number }) {
 
     return (
         <div
-            className="group relative  border border-white/8 rounded-xl overflow-hidden transition-all duration-200"
+            className="group relative overflow-hidden transition-all duration-200"
             style={{ animationDelay: `${index * 40}ms` }}
         >
-            {/* Photo */}
-            <div className="relative w-full aspect-square border-b border-white/8 overflow-hidden">
-                {item.avatar_url && !imgError ? (
-                    <Image
-                        src={item.avatar_url}
-                        alt={item.description_eng}
-                        fill
-                        className="object-cover transition-transform duration-300 group-hover:scale-105"
-                        onError={() => setImgError(true)}
-                    />
-                ) : (
-                    <div className="w-full h-full flex items-center justify-center">
-                        <svg className="w-10 h-10 text-white/10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1">
-                            <rect x="2" y="2" width="20" height="20" rx="3"/>
-                            <path d="M9 9h.01M15 15l-5-5 3-3 3 3 2-2 2 2"/>
-                        </svg>
-                    </div>
-                )}
+            <div className={`relative`}>
+                <StockPartImage avatar_url={item.avatar_url}/>
             </div>
 
-            {/* Info */}
-            <div className="p-3 relative">
-                <div className={`absolute top-2 right-2 flex items-center justify-center min-w-8 h-7 px-2 rounded-md text-sm font-bold ${statusStyles.badge}`}>
-                    {item.total_quantity}
-                </div>
+            <div className={`absolute top-2 backdrop-blur-3xl bg-background/50  right-2 flex items-center justify-center min-w-8 h-7 px-2 rounded-md text-sm font-bold`}>
+                {item.total_quantity}
+            </div>
 
-                <p className="text-xs text-muted-foreground uppercase tracking-widest leading-none mb-1 truncate">
-                    {item.material_number}
-                </p>
-                <p className="text-xs font-medium leading-snug transition-colors line-clamp-2 mt-2">
-                    {item.description_eng}
-                </p>
+            <div className="absolute flex justify-start items-end z-99 py-2 top-0 left-0 backdrop-blur-xs right-0 bottom-0 bg-background/50 opacity-0 group-hover:opacity-100">
+                <div className={`w-full`}>
 
-                {/* Stock bar */}
-                <div className="mt-3">
-                    <div className="h-0.5 bg-white/5 rounded-full overflow-hidden">
-                        <div
-                            className={`h-full rounded-full transition-all duration-500 ${statusStyles.bar}`}
-                            style={{ width: `${Math.min((item.total_quantity / 15) * 100, 100)}%` }}
-                        />
+                    <div className={`absolute backdrop-blur-3xl bg-background/50 top-2 right-2 flex items-center justify-center min-w-8 h-7 px-2 rounded-md text-sm font-bold ${statusStyles.badge}`}>
+                        {item.total_quantity}
+                    </div>
+
+                    <div className={`px-2`}>
+                        <Link href={`#`} className="text-xs hover:underline hover:text-foreground text-muted-foreground uppercase tracking-widest leading-none mb-1 truncate">
+                            {item.material_number}
+                        </Link>
+                        <p className="text-md font-medium leading-snug transition-colors line-clamp-2 mt-2">
+                            {item.description_eng}
+                        </p>
+                    </div>
+
+                    <div className={`p-2`}>
+                        <ButtonGroup>
+                            <ButtonGroup>
+                                <Button variant="outline"><ArrowLeftRight /> Move</Button>
+                                <Button variant="destructive"><Trash2 /> Remove</Button>
+                            </ButtonGroup>
+                        </ButtonGroup>
+                    </div>
+
+                    <div className="mt-3">
+                        <div className="h-1 bg-white/5 overflow-hidden">
+                            <div
+                                className={`h-full transition-all duration-500 ${statusStyles.bar}`}
+                                style={{ width: `${Math.min((item.total_quantity / 15) * 100, 100)}%` }}
+                            />
+                        </div>
                     </div>
                 </div>
             </div>
@@ -92,27 +94,7 @@ const CellPage = () => {
 
     return (
         <div className="min-h-screen backdrop-blur-md">
-            <div className="border-b backdrop-blur-sm border-white/10 px-6 py-4">
-                <div className="flex items-center justify-between max-w-7xl mx-auto">
-                    <Link href="/" className="text-xs text-white/40 hover:text-white/70 uppercase tracking-widest transition-colors">
-                        ← Back
-                    </Link>
-                    <div className="flex items-center gap-3">
-                        <div className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse" />
-                        <span className="text-xs text-white/40 uppercase tracking-widest">
-                            {warehouse ?? 'Warehouse'}
-                        </span>
-                        <span className="text-white/20">/</span>
-                        <span className="text-sm text-white/80 uppercase tracking-widest font-bold">
-                            {location ?? '—'}
-                        </span>
-                    </div>
-                    <div className="flex gap-6 text-xs text-white/40">
-                        <span><span className="text-white/70 font-bold">{uniqueParts}</span> SKUs</span>
-                        <span><span className="text-white/70 font-bold">{totalItems}</span> Units</span>
-                    </div>
-                </div>
-            </div>
+            <PagesHeader />
 
             <div className="max-w-7xl mx-auto px-6 py-8">
                 {!cell_data ? (
@@ -124,7 +106,7 @@ const CellPage = () => {
                         <p className="text-sm uppercase tracking-widest">No data for this location</p>
                     </div>
                 ) : (
-                    <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-3">
+                    <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-2">
                         {cell_data.items.map((item, index) => (
                             <StockItemCard key={item.material_number} item={item} index={index} />
                         ))}

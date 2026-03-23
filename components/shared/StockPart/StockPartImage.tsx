@@ -11,7 +11,13 @@ import {cn} from "@/lib/utils";
 
 const StockPartImage = ({avatar_url}: {avatar_url: string}) => {
     const [isLoading, setIsLoading] = useState(true);
+    const [isDialogLoading, setIsDialogLoading] = useState(true);
     const [open, setOpen] = useState(false);
+
+    const handleOpenChange = (val: boolean) => {
+        if (val) setIsDialogLoading(true);
+        setOpen(val);
+    };
 
     return (
         <>
@@ -33,8 +39,8 @@ const StockPartImage = ({avatar_url}: {avatar_url: string}) => {
                         />
                         {!isLoading && (
                             <div
-                                onClick={() => setOpen(true)}
-                                className="absolute inset-0 opacity-0 hover:opacity-100 transition-opacity backdrop-blur-sm flex items-center justify-center cursor-pointer rounded"
+                                onClick={() => handleOpenChange(true)}
+                                className="absolute bg-background/25 inset-0 opacity-0 hover:opacity-100 transition-opacity backdrop-blur-xs flex items-center justify-center cursor-pointer rounded"
                             >
                                 <ZoomIn className="w-6 h-6"/>
                             </div>
@@ -42,7 +48,7 @@ const StockPartImage = ({avatar_url}: {avatar_url: string}) => {
                     </>
                 ) : (
                     <div
-                        onClick={() => setOpen(true)}
+                        onClick={() => handleOpenChange(true)}
                         className="flex h-full bg-muted justify-center items-center cursor-pointer"
                     >
                         NO IMG
@@ -50,7 +56,7 @@ const StockPartImage = ({avatar_url}: {avatar_url: string}) => {
                 )}
             </div>
 
-            <Dialog open={open} onOpenChange={setOpen}>
+            <Dialog open={open} onOpenChange={handleOpenChange}>
                 <DialogContent className="max-h-[90vh]">
                     <DialogTitle className="sr-only">Image preview</DialogTitle>
                     <TransformWrapper
@@ -75,17 +81,26 @@ const StockPartImage = ({avatar_url}: {avatar_url: string}) => {
                                     </ButtonGroup>
                                 </div>
 
-                                <TransformComponent
-                                    wrapperClass="w-full max-h-[70vh] rounded-lg overflow-hidden"
-                                    contentClass="w-full h-full"
-                                >
-                                    <img
-                                        src={avatar_url || "/img/img_none.svg"}
-                                        alt="Part Avatar"
-                                        className="w-full h-full object-contain"
-                                        draggable={false}
-                                    />
-                                </TransformComponent>
+                                <div className="relative cursor-grab w-full max-h-[70vh] rounded-lg overflow-hidden">
+                                    {isDialogLoading && avatar_url && (
+                                        <Skeleton className="absolute inset-0 w-full h-full min-h-64"/>
+                                    )}
+                                    <TransformComponent
+                                        wrapperClass="w-full max-h-[70vh] rounded-lg overflow-hidden"
+                                        contentClass="w-full h-full"
+                                    >
+                                        <img
+                                            src={avatar_url || "/img/img_none.svg"}
+                                            alt="Part Avatar"
+                                            className={cn(
+                                                "w-full h-full object-contain transition-opacity",
+                                                isDialogLoading ? "opacity-0" : "opacity-100"
+                                            )}
+                                            draggable={false}
+                                            onLoad={() => setIsDialogLoading(false)}
+                                        />
+                                    </TransformComponent>
+                                </div>
 
                                 <p className="text-xs text-muted-foreground text-center">
                                     Use mouse wheel for zoom.

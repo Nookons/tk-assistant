@@ -5,8 +5,8 @@ const STORAGE_KEY = 'stock_sub_tab';
 
 export function useWarehouseFilter() {
     const [pickedWarehouse, setPickedWarehouse] = usePersistedTab<Warehouse>(
-        STORAGE_KEY, 'all',
-        (v) => (WAREHOUSES as readonly string[]).includes(v) ? v as Warehouse : 'all'
+        STORAGE_KEY, 'All',
+        (v) => (WAREHOUSES as readonly string[]).includes(v) ? v as Warehouse : 'All'
     );
 
     const handleWarehouse = (v: string) => {

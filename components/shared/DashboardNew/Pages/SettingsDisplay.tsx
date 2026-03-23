@@ -320,7 +320,6 @@ const SettingsDisplay = () => {
 
     return (
         <div>
-            {/* ── Hero banner */}
             <div className="relative h-16 bg-linear-to-br from-emerald-500/20 to-background border-b border-border/30 overflow-hidden">
                 <div
                     className="absolute inset-0 opacity-[0.04]"
@@ -334,7 +333,6 @@ const SettingsDisplay = () => {
             </div>
 
             <div className="mx-auto px-4 pb-16">
-                {/* Avatar row */}
                 <div className="relative -mt-14 mb-4 flex items-end justify-between">
                     <div className="relative">
                         <div className="w-24 h-24 rounded-2xl border-4 border-background overflow-hidden bg-muted shadow-xl">

@@ -59,13 +59,11 @@ const UserProfilePage = ({isOwn = false}: { isOwn: boolean }) => {
     const lastSeen = dayjs(user.last_login_at).fromNow();
 
     return (
-        <div className="">
+        <div className="bg-background">
             <PagesHeader />
 
-            {/* ── Hero banner */}
             <div
-                className="relative h-36 bg-gradient-to-br from-primary/15 via-primary/5 to-background border-b border-border/30 overflow-hidden">
-                {/* Decorative grid */}
+                className="relative h-16 bg-linear-to-br from-emerald-500/20 to-background border-b border-border/30 overflow-hidden">
                 <div
                     className="absolute inset-0 opacity-[0.04]"
                     style={{
@@ -74,7 +72,6 @@ const UserProfilePage = ({isOwn = false}: { isOwn: boolean }) => {
                         backgroundSize: "32px 32px",
                     }}
                 />
-                {/* Glow */}
                 <div className="absolute -top-12 -left-12 w-48 h-48 rounded-full bg-primary/10 blur-3xl"/>
             </div>
 

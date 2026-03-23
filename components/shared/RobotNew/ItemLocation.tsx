@@ -3,10 +3,15 @@ import {IStockLocationSlot} from "@/types/stock/StockItem";
 import {Item} from "@/components/ui/item";
 import {timeToString} from "@/utils/timeToString";
 import {Checkbox} from "@/components/ui/checkbox";
+import {MapPinHouse} from "lucide-react";
 
 const ItemLocation = (
     {item, selectedLocation, setSelectedLocation}:
-    {item: IStockLocationSlot, selectedLocation: IStockLocationSlot | null, setSelectedLocation: (data: IStockLocationSlot) => void}) => {
+    {
+        item: IStockLocationSlot,
+        selectedLocation: IStockLocationSlot | null,
+        setSelectedLocation: (data: IStockLocationSlot) => void
+    }) => {
 
 
     const handleChange = () => {
@@ -14,8 +19,8 @@ const ItemLocation = (
     }
 
     return (
-        <Item variant={`muted`} className={`${item.quantity < 1 && "bg-muted"}`}>
-            <div className={`flex justify-between gap-2 w-full text-right`}>
+        <div className={`flex border p-2 rounded-md items-center justify-between gap-2`}>
+            <div className={`flex items-center gap-2`}>
                 <Checkbox
                     checked={item.location_key === selectedLocation?.location_key}
                     onCheckedChange={handleChange}
@@ -23,13 +28,13 @@ const ItemLocation = (
                     id="terms-checkbox"
                     name="terms-checkbox"
                 />
-                <p className={`text-xs text-muted-foreground`}>{timeToString(item.updated_at)}</p>
+                <p className={`font-medium`}>{item.quantity.toLocaleString()}</p>
             </div>
-            <div className={`flex justify-between gap-2 w-full text-right`}>
-                <p>{item.quantity.toLocaleString()}</p>
+            <div className={`flex gap-2 items-center`}>
+                <MapPinHouse size={16} />
                 <p className={`font-medium`}>{item.location}</p>
             </div>
-        </Item>
+        </div>
     );
 };
 

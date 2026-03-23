@@ -11,6 +11,7 @@ export interface IUser {
     updated_at: Timestamp;
     score: number;
     position: string;
+    position_title: string;
     avatar_url: string;
     auth_id: string;
     last_login_at: Timestamp;

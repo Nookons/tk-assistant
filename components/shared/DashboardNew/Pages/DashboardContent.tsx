@@ -152,8 +152,8 @@ function DashboardContent({onSelect}: Props) {
         <div className="space-y-6">
             <div className="flex flex-wrap items-center justify-between gap-3">
                 <div>
-                    <h1 className="text-2xl font-bold tracking-tight">Dashboard for {getUserWarehouse(user?.warehouse || "")}</h1>
-                    <p className="text-sm text-muted-foreground mt-0.5">Welcome {user?.user_name}! Have a good day.</p>
+                    <h1 className="text-2xl font-bold tracking-tight">Dashboard for {user?.user_name}</h1>
+                    <p className="text-sm text-muted-foreground mt-0.5">Welcome! Have a good day.</p>
                 </div>
             </div>
 
