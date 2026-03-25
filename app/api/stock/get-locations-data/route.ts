@@ -10,8 +10,9 @@ interface StockRow {
     material_number: string;
     item: {
         description_eng: string;
+        description_orginall: string;
         avatar_url: string;
-    } | Array<{ description_eng: string; avatar_url: string }>;
+    } | Array<{ description_eng: string; description_orginall: string; avatar_url: string }>;
 }
 
 const UNKNOWN_LOCATION = 'unknown';
@@ -21,6 +22,12 @@ function extractDescription(item: StockRow['item']): string {
         return item[0]?.description_eng ?? '';
     }
     return (item as { description_eng: string })?.description_eng ?? '';
+}
+function extractDescriptionOriginal(item: StockRow['item']): string {
+    if (Array.isArray(item) && item.length > 0) {
+        return item[0]?.description_orginall ?? '';
+    }
+    return (item as { description_orginall: string })?.description_orginall ?? '';
 }
 
 function extractAvatarUrl(item: StockRow['item']): string {
@@ -47,6 +54,7 @@ function groupStockByLocation(data: StockRow[]): StockByLocationResponse {
             itemsMap.set(materialNumber, {
                 material_number: materialNumber,
                 description_eng: extractDescription(row.item),
+                description_orginall: extractDescriptionOriginal(row.item),
                 avatar_url: extractAvatarUrl(row.item), // ✅ теперь берётся отдельно
                 warehouse: row.warehouse,
                 location_key: locationKey,
@@ -76,6 +84,7 @@ export async function GET() {
         material_number,
         item:stock_items_template!material_number(
           description_eng,
+          description_orginall,
           avatar_url
         )
       `);

@@ -20,7 +20,8 @@ const StockItemPreview: React.FC<props> = ({data}) => {
                 </div>
 
                 <div className={`flex flex-col gap-2 min-w-0`}>
-                    <p className="line-clamp-2 text-sm">{data.description_eng}</p>
+                    <p className="line-clamp-1 text-sm">{data.description_eng}</p>
+                    <p className="line-clamp-1 text-sm">{data.description_orginall ?? "-"}</p>
                     <Label className="cursor-pointer truncate">{data.material_number}</Label>
                     <Label className="text-xs text-muted-foreground">{timeToString(data.updated_at)}</Label>
                     <div className="text-xs flex items-center gap-1">

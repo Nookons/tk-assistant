@@ -16,7 +16,7 @@ import {useStockStore} from "@/store/stock";
 import {ScrollArea} from "@/components/ui/scroll-area";
 import {IStockItemTemplate} from "@/types/stock/StockItem";
 import {cn} from "@/lib/utils";
-import {ArrowLeft, MousePointerClick, MoveLeft, Search} from "lucide-react";
+import {ArrowLeft, ClipboardList, ListPlus, MousePointerClick, MoveLeft, Search} from "lucide-react";
 import PartPreview from "@/components/shared/robot/PartPreview";
 import {Avatar, AvatarFallback, AvatarImage} from "@/components/ui/avatar";
 import {Table, TableBody, TableCell, TableHeader, TableRow} from "@/components/ui/table";
@@ -65,12 +65,15 @@ const PartsPicker = ({robot}: { robot: IRobot }) => {
             if (!open) handleClose(); else setIsOpen(true);
         }}>
             <SheetTrigger asChild>
-                <p>Add new part</p>
+                <div className={`flex gap-2 items-center w-full cursor-pointer`}>
+                    <ListPlus/>
+                    <p>Add new part</p>
+                </div>
             </SheetTrigger>
 
             <SheetContent
                 side="bottom"
-                className="h-dvh flex flex-col p-0 rounded-t-2xl"
+                className="h-[95dvh] flex flex-col p-0 rounded-t-2xl"
             >
                 <SheetHeader className="px-4 pt-4 pb-3 border-b shrink-0">
                     <div className="flex items-center gap-2">
@@ -119,7 +122,7 @@ const PartsPicker = ({robot}: { robot: IRobot }) => {
                                                 No parts found for &quot;{search}&quot;
                                             </div>
                                         ) : filteredParts.map((item) => (
-                                            <TableRow className={`cursor-pointer ${selectedPart?.material_number === item.material_number && "bg-linear-to-l from-background to-teal-500/65"}`} onClick={() => setSelectedPart(item)} key={item.id}>
+                                            <TableRow className={`cursor-pointer ${selectedPart?.material_number === item.material_number && "bg-linear-to-l from-background to-foreground/5"}`} onClick={() => setSelectedPart(item)} key={item.id}>
                                                 <TableCell className="font-medium">{item.material_number}</TableCell>
                                                 <TableCell className="font-medium text-muted-foreground">{item.description_eng}</TableCell>
                                                 <TableCell className="font-medium text-muted-foreground">{item.description_orginall ?? "-"}</TableCell>

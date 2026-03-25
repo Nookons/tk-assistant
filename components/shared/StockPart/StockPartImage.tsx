@@ -57,8 +57,7 @@ const StockPartImage = ({avatar_url}: {avatar_url: string}) => {
             </div>
 
             <Dialog open={open} onOpenChange={handleOpenChange}>
-                <DialogContent className="max-h-[90vh]">
-                    <DialogTitle className="sr-only">Image preview</DialogTitle>
+                <DialogContent showCloseButton={false} className="max-h-[90vh] border-none p-0 m-0 bg-background box-shadow">
                     <TransformWrapper
                         initialScale={1}
                         minScale={0.5}
@@ -66,8 +65,8 @@ const StockPartImage = ({avatar_url}: {avatar_url: string}) => {
                         centerOnInit={true}
                     >
                         {({zoomIn, zoomOut, resetTransform}) => (
-                            <div className="flex flex-col gap-2 mt-4">
-                                <div className="flex items-center justify-between flex-wrap gap-2">
+                            <div className="flex flex-col gap-2">
+                                <div className="flex items-center justify-between flex-wrap gap-2 absolute z-55 top-2 left-2 backdrop-blur-md bg-background/50 rounded-md">
                                     <ButtonGroup className="flex">
                                         <Button variant="ghost" size="sm" onClick={() => zoomIn()}>
                                             <ZoomIn className="w-4 h-4"/>
@@ -86,7 +85,7 @@ const StockPartImage = ({avatar_url}: {avatar_url: string}) => {
                                         <Skeleton className="absolute inset-0 w-full h-full min-h-64"/>
                                     )}
                                     <TransformComponent
-                                        wrapperClass="w-full max-h-[70vh] rounded-lg overflow-hidden"
+                                        wrapperClass="w-full max-h-[70vh] overflow-hidden"
                                         contentClass="w-full h-full"
                                     >
                                         <img
@@ -101,10 +100,6 @@ const StockPartImage = ({avatar_url}: {avatar_url: string}) => {
                                         />
                                     </TransformComponent>
                                 </div>
-
-                                <p className="text-xs text-muted-foreground text-center">
-                                    Use mouse wheel for zoom.
-                                </p>
                             </div>
                         )}
                     </TransformWrapper>

@@ -18,9 +18,6 @@ const RobotInfo = ({robot}: {robot: IRobot}) => {
                     <CardTitle className="text-sm font-medium text-muted-foreground uppercase tracking-wider">
                         Current Issue
                     </CardTitle>
-                    {isProblem && (
-                        <RobotStatusDialog currentRobot={robot} actionType="edit" />
-                    )}
                 </div>
             </CardHeader>
             <CardContent>

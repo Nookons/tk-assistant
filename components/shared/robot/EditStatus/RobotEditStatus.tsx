@@ -10,7 +10,7 @@ import {
     DialogTrigger
 } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
-import { Construction, Loader, Pencil, SmilePlus, LucideIcon } from "lucide-react";
+import {Construction, Loader, Pencil, SmilePlus, LucideIcon, ClipboardList} from "lucide-react";
 import { Label } from "@/components/ui/label";
 import {
     Select,
@@ -30,6 +30,7 @@ import { useUserStore } from "@/store/user";
 import { useRobotsStore } from "@/store/robotsStore";
 import { IRobot } from "@/types/robot/robot";
 import dayjs from "dayjs";
+import {isOffline} from "@/utils/Robot/isOffline";
 
 // Константы статусов
 const STATUS = {
@@ -164,6 +165,7 @@ const RobotStatusDialog: React.FC<RobotStatusDialogProps> = ({currentRobot, acti
     );
 
     const currentUser = useUserStore(state => state.currentUser);
+    const offline = isOffline(currentRobot.status)
 
     const setNewStatus = useRobotsStore(state => state.updateRobotStatus);
     const updateRobot = useRobotsStore(state => state.updateRobot);
@@ -257,7 +259,10 @@ const RobotStatusDialog: React.FC<RobotStatusDialogProps> = ({currentRobot, acti
     return (
         <Dialog open={isOpen} onOpenChange={setIsOpen}>
             <DialogTrigger asChild>
-                <p>{config.buttonFullWidth && config.buttonText}</p>
+                <div className={`flex gap-2 items-center w-full cursor-pointer`}>
+                    {offline ? <Construction/> : <Construction/>}
+                    {config.buttonFullWidth && config.buttonText}
+                </div>
             </DialogTrigger>
 
             <DialogContent className="sm:max-w-[425px]">

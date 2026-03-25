@@ -159,7 +159,6 @@ const RobotHeader = ({robot}: { robot: IRobot }) => {
 
                             <CommandGroup heading="Suggestions">
                                 <CommandItem>
-                                    {offline ? <Construction/> : <Construction/>}
                                     <RobotStatusDialog
                                         currentRobot={robot}
                                         actionType={offline ? "sendToMap" : "sendToMaintenance"}
@@ -167,7 +166,6 @@ const RobotHeader = ({robot}: { robot: IRobot }) => {
                                 </CommandItem>
 
                                 <CommandItem>
-                                    <ListPlus/>
                                     <PartsPicker robot={robot}/>
                                 </CommandItem>
 

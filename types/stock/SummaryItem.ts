@@ -17,6 +17,7 @@ export interface ISummaryItemStock {
 export interface LocationItem {
     material_number: string;
     description_eng: string;
+    description_orginall: string;
     total_quantity: number;
     warehouse: string;
     location_key: string;

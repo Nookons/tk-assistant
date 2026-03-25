@@ -69,7 +69,7 @@ const SearchStockTemplate = () => {
                     <CreateNewStockTemplate/>
                 </div>
 
-                <div className={`flex flex-col items-end md:flex-row md:items-center justify-end gap-4`}>
+                <div className={`flex flex-col items-end md:flex-row md:items-center justify-end gap-2`}>
                     <div className={`w-full flex flex-col items-start gap-2`}>
                         <Input
                             value={value}
@@ -136,7 +136,7 @@ const SearchStockTemplate = () => {
 
             {value && (
                 <div className="flex items-center justify-between">
-                    <p className="text-xs text-muted-foreground">
+                    <p className="text-xs text-muted-foreground mb-2">
                         Found <span className="font-medium text-foreground">{filteredData.length}</span> of{" "}
                         <span className="font-medium text-foreground">{stock_store.length}</span>
                     </p>

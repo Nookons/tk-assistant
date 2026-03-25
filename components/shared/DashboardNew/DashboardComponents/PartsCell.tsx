@@ -37,7 +37,6 @@ function PartsCell({parts_history}: PartsCellProps) {
 
                     return (
                         <div key={index} className="flex items-center gap-2">
-                            <Wrench size={12} className="text-muted-foreground shrink-0"/>
                             <Link href="#" className="text-sm font-mono hover:underline">
                                 {parts.join(", ")}
                             </Link>

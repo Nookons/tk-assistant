@@ -11,6 +11,7 @@ import PartsCell from "./PartsCell";
 import {Input} from "@/components/ui/input";
 import {Toggle} from "@/components/ui/toggle";
 import {Button} from "@/components/ui/button";
+import {timeToString} from "@/utils/timeToString";
 
 const PAGE_SIZE = 25;
 
@@ -135,6 +136,7 @@ const RobotsList = ({previewLimit = 5, warehouse = 'GLPC'}: RobotsHistoryProps) 
                                 <TableHead className="text-xs">Type</TableHead>
                                 <TableHead className="text-xs">Warehouse</TableHead>
                                 <TableHead className="text-xs">Status</TableHead>
+                                <TableHead className="text-xs">Updated</TableHead>
                                 <TableHead className="text-xs">Last Part</TableHead>
                                 <TableHead className="text-xs">Last changed by</TableHead>
                             </TableRow>
@@ -172,7 +174,11 @@ const RobotsList = ({previewLimit = 5, warehouse = 'GLPC'}: RobotsHistoryProps) 
                                     </TableCell>
 
                                     <TableCell>
-                                        <PartsCell parts_history={robot.parts_history}/>
+                                        <p>{timeToString(robot.updated_at)}</p>
+                                    </TableCell>
+
+                                    <TableCell>
+                                        <PartsCell parts_history={robot.parts_history?.sort((a, b) => dayjs(b.created_at).valueOf() - dayjs(a.created_at).valueOf())}/>
                                     </TableCell>
 
                                     <TableCell>
