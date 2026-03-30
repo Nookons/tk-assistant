@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { supabase } from '@/lib/supabaseClient';
+import { supabase } from '@/lib/supabase/client';
 
 export async function GET(request: NextRequest) {
     try {
@@ -7,8 +7,8 @@ export async function GET(request: NextRequest) {
             .from('stock')
             .select(`
             *,
-            part_info:stock_items_template!material_number(*),
-            user_updated:employees!last_update_by(user_name, card_id, email, phone, warehouse, position)
+                part_info:stock_items_template!material_number(*),
+                user_updated:employees!last_update_by(*)
             `)
 
         const { data, error } = await query;

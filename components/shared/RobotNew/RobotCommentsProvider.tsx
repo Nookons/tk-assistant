@@ -7,18 +7,18 @@ import {IRobot} from "@/types/robot/robot";
 
 const RobotCommentsProvider = ({robot}: {robot: IRobot}) => {
     return (
-        <Card className={``}>
-            <CardHeader className="pb-3">
-                <CardTitle className="text-sm font-medium text-muted-foreground uppercase tracking-wider">
+        <div className={``}>
+            <div className="py-3">
+                <div className="text-sm font-medium text-muted-foreground uppercase tracking-wider">
                     Comments
-                </CardTitle>
-            </CardHeader>
-            <CardContent className="space-y-4">
+                </div>
+            </div>
+            <div className="space-y-4">
                 <AddCommentRobot robot_data={robot} />
-                <Separator />
+                    <Separator />
                 <CommentsList robot_id={robot.id} />
-            </CardContent>
-        </Card>
+            </div>
+        </div>
     );
 };
 

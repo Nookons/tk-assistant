@@ -1,4 +1,4 @@
-import { supabase } from "@/lib/supabaseClient";
+import { supabase } from "@/lib/supabase/client";
 import dayjs from "dayjs";
 import utc from 'dayjs/plugin/utc';
 

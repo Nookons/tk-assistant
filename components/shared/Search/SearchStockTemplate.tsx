@@ -45,7 +45,6 @@ const SearchStockTemplate = () => {
             .map(r => r.item);
     }, [value, stock_store]);
 
-    // Сбрасываем страницу при изменении поиска
     const handleSearch = (e: React.ChangeEvent<HTMLInputElement>) => {
         setValue(e.target.value);
         setPage(1);

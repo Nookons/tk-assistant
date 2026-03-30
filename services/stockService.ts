@@ -1,4 +1,4 @@
-import {supabase} from "@/lib/supabaseClient";
+import {supabase} from "@/lib/supabase/client";
 import dayjs from "dayjs";
 import {IStockItemTemplate, IStockLocationSlot} from "@/types/stock/StockItem";
 import utc from "dayjs/plugin/utc";
@@ -11,6 +11,20 @@ import {IUser} from "@/types/user/user";
 dayjs.extend(utc);
 
 export class StockService {
+
+    static async getStockHistory(warehouse: string): Promise<IHistoryStockItem[] | null> {
+        const threeMonthsAgo = dayjs().subtract(3, 'month').startOf('month').toISOString();
+
+        const { data, error } = await supabase
+            .from('stock_history')
+            .select()
+            .gte('created_at', threeMonthsAgo)
+            .eq('warehouse', warehouse);
+
+        if (error) throw new Error(`${error.message}`);
+        return data;
+    }
+
     static async updateItemTemplate(data: Partial<IStockItemTemplate> & { id: number }): Promise<IStockItemTemplate> {
 
         const { data: updatedItem, error } = await supabase

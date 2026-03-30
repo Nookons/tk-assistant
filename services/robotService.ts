@@ -1,16 +1,12 @@
-import {supabase} from "@/lib/supabaseClient";
+import {supabase} from "@/lib/supabase/client";
 import {IStockItemTemplate} from "@/types/stock/StockItem";
 import {useUserStore} from "@/store/user";
-import {IHistoryParts, IRobot} from "@/types/robot/robot";
+import {IHistoryParts, IHistoryStatus, IRobot} from "@/types/robot/robot";
+import dayjs from "dayjs";
 
 export class robotService {
 
-    static async addNewPart({part, quantity, robot,}: {
-        part: IStockItemTemplate;
-        quantity: number;
-        robot: IRobot;
-    }): Promise<IHistoryParts | null> {
-
+    static async addNewPart({part, quantity, robot,}: { part: IStockItemTemplate; quantity: number; robot: IRobot; }): Promise<IHistoryParts | null> {
         const user = useUserStore.getState().currentUser;
 
         const { data, error } = await supabase
@@ -31,5 +27,18 @@ export class robotService {
         }
 
         return data as IHistoryParts;
+    }
+
+    static async getStatusesHistory(warehouse: string): Promise<IHistoryStatus[] | null> {
+        const threeMonthsAgo = dayjs().subtract(3, 'month').startOf('month').toISOString();
+
+        const { data, error } = await supabase
+            .from('change_status_robots')
+            .select('*')
+            .gte('created_at', threeMonthsAgo)
+            .eq('warehouse', warehouse)
+
+        if (error) throw new Error('Error getting statuses history');
+        return data;
     }
 }

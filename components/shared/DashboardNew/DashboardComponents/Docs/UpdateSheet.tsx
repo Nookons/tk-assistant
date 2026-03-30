@@ -3,6 +3,9 @@ import {AlertTriangle, Download} from "lucide-react";
 import {Accordion, AccordionContent, AccordionItem, AccordionTrigger} from "@/components/ui/accordion";
 import {version_15_6} from "@/lib/RobotUpdates/15-6/update";
 import FileLink from "@/components/shared/FileLink";
+import {version_23_5_k50h} from "@/lib/RobotUpdates/23-5-k50h/update";
+import {Badge} from "@/components/ui/badge";
+import {version_23_5_a42t} from "@/lib/RobotUpdates/23-5-a42t/update";
 
 const SectionLabel = ({children}: { children: React.ReactNode }) => (
     <div className="flex items-center gap-2 mb-3">
@@ -19,12 +22,12 @@ const rkdev_links = [
 ];
 
 const updates_version = [
-    {version: '11.5 | D', steps: version_15_6},
-    {version: '11.6 | D', steps: version_15_6},
-    {version: '15.6 | E', steps: version_15_6},
-    {version: '16.9 | E', steps: version_15_6},
-    {version: '23.5 | GLPC K50H', steps: version_15_6},
-    {version: '23.5 | GLPC A42T', steps: version_15_6},
+    {version: '11.5 | A42T D', steps: version_15_6},
+    {version: '11.6 | A42T D', steps: version_15_6},
+    {version: '15.6 | A42T E', steps: version_15_6},
+    {version: '16.9 | A42T E', steps: version_15_6},
+    {version: '23.5 | K50H', steps: version_23_5_k50h},
+    {version: '23.5 | A42T', steps: version_23_5_a42t},
 ];
 
 const update_links = [
@@ -117,10 +120,10 @@ const UpdateSheet = () => {
                             <AccordionTrigger
                                 className="px-4 py-3 hover:no-underline group">
                                 <div className="flex items-center gap-3">
-                                    <span
-                                        className="text-xs px-2 py-0.5 rounded bg-emerald-500/10 text-emerald-400 border border-emerald-800/50 font-mono font-bold">
-                                        v{version}
-                                    </span>
+                                    <Badge
+                                        className="text-xs px-2 py-0.5 rounded font-mono font-bold">
+                                        {version}
+                                    </Badge>
                                     <span className="text-xs ">{steps.length} steps</span>
                                 </div>
                             </AccordionTrigger>

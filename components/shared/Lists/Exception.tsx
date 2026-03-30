@@ -2,7 +2,7 @@ import React from 'react';
 import { IRobotException } from "@/types/Exception/Exception";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
-import {Clock, AlertCircle, CheckCircle2, User, Trash2} from "lucide-react";
+import {Clock, AlertCircle, CheckCircle2, User, Trash2, MoveRight} from "lucide-react";
 import dayjs from "dayjs";
 import Image from "next/image";
 import {Avatar, AvatarFallback, AvatarImage} from "@/components/ui/avatar";
@@ -87,11 +87,11 @@ const Exception = ({ data }: { data: IRobotException[] }) => {
                                         <div className="flex items-start gap-2">
                                             <AlertCircle className="w-4 h-4 text-red-500 mt-0.5 shrink-0" />
                                             <div>
-                                                <p className="font-medium max-w-[200px] line-clamp-1 text-sm leading-tight">
+                                                <p className="font-medium">
                                                     {exception.first_column}
                                                 </p>
                                                 {exception.second_column && (
-                                                    <p className="text-xs max-w-[200px] line-clamp-1 text-muted-foreground mt-1 leading-relaxed">
+                                                    <p className="text-xs ">
                                                         {exception.second_column}
                                                     </p>
                                                 )}
@@ -102,15 +102,14 @@ const Exception = ({ data }: { data: IRobotException[] }) => {
 
                                 {/* Timeline Cell */}
                                 <TableCell>
-                                    <div className="space-y-1">
+                                    <div className="flex items-center gap-2">
                                         <div className="flex items-center gap-2">
-                                            <span className="text-xs font-medium text-muted-foreground">Start:</span>
                                             <span className="text-sm font-mono font-semibold">
                                                 {dayjs(exception.error_start_time).format("HH:mm")}
                                             </span>
                                         </div>
+                                        <MoveRight size={14} />
                                         <div className="flex items-center gap-2">
-                                            <span className="text-xs font-medium text-muted-foreground">End:</span>
                                             <span className="text-sm font-mono font-semibold">
                                                 {dayjs(exception.error_end_time).format("HH:mm")}
                                             </span>
@@ -122,6 +121,7 @@ const Exception = ({ data }: { data: IRobotException[] }) => {
                                 <TableCell>
                                     <div className="flex justify-center">
                                         <Badge
+                                            variant={`secondary`}
                                             className="font-mono font-bold px-3 py-1"
                                         >
                                             {exception.solving_time} min
@@ -132,17 +132,6 @@ const Exception = ({ data }: { data: IRobotException[] }) => {
                                 {/* Operator Cell */}
                                 <TableCell>
                                     <div className="flex items-center gap-2">
-                                        <div className="w-8 h-8 rounded-full bg-primary/10 flex items-center justify-center">
-                                            <Avatar className="h-10 w-10 border-2 border-primary/10">
-                                                <AvatarImage
-                                                    src={exception.user?.avatar_url}
-                                                    alt={exception.user?.user_name || 'User'}
-                                                />
-                                                <AvatarFallback className="bg-gradient-to-br from-primary/20 to-primary/10 text-primary font-semibold">
-                                                    {exception.user?.user_name.slice(0, 2) || 'NA'}
-                                                </AvatarFallback>
-                                            </Avatar>
-                                        </div>
                                         <span className="font-medium text-sm">
                                             {exception.employee || "—"}
                                         </span>

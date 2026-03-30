@@ -13,26 +13,44 @@ import {Popover, PopoverContent, PopoverTrigger} from "@/components/ui/popover";
 import {Button} from "@/components/ui/button";
 import {Badge} from "@/components/ui/badge";
 import {Skeleton} from "@/components/ui/skeleton";
-import {Card, CardContent, CardHeader, CardTitle} from "@/components/ui/card";
 import {Select, SelectContent, SelectGroup, SelectItem, SelectTrigger, SelectValue} from "@/components/ui/select";
 import {ButtonGroup} from "@/components/ui/button-group";
 import {Calendar} from "@/components/ui/calendar";
 import {format} from "date-fns";
 import {ChevronDownIcon, FileDown, Loader2, Moon, Sun} from "lucide-react";
-import ExceptionDashboard from "@/components/shared/StatsDisplay/ExceptionDashboard";
 import ChangedPartsList from "@/components/shared/Lists/ChangedParts";
 import ChangedStatus from "@/components/shared/Lists/ChangedStatus";
-import {IStatusHistory} from "@/app/reports/shein/page";
+import Exception from "@/components/shared/Lists/Exception";
+import {Separator} from "@/components/ui/separator";
+import {useRobotsStore} from "@/store/robotsStore";
+import {useUserStore} from "@/store/user";
+import {useStockStore} from "@/store/stock";
+import {IUser} from "@/types/user/user";
+
+export interface IStatusHistory {
+    id: number;
+    user: IUser;
+    add_by: number;
+    robot_id: number;
+    created_at: string;
+    new_status: string;
+    old_status: string;
+    robot_number: number;
+}
 
 const ShiftReportGlpc = () => {
+    const robots = useRobotsStore(state => state.robots);
+    const user = useUserStore(state => state.currentUser)
     const set_exception_store = useExceptionStore(state => state.set_today_exception);
+    const exception_data = useExceptionStore(state => state.today_exception)
+    const parts_templates = useStockStore(state => state.items_templates)
 
-    const [isLoading,     setIsLoading]     = useState<boolean>(false);
-    const [shift_type,    setShift_type]    = useState<"day" | "night">(getInitialShift());
-    const [date,          setDate]          = useState<Date | undefined>(getWorkDate(dayjs().toDate()));
-    const [exception,     setException]     = useState<IRobotException[]>([]);
+    const [isLoading, setIsLoading] = useState<boolean>(false);
+    const [shift_type, setShift_type] = useState<"day" | "night">(getInitialShift());
+    const [date, setDate] = useState<Date | undefined>(getWorkDate(dayjs().toDate()));
+    const [exception, setException] = useState<IRobotException[]>([]);
     const [changed_parts, setChanged_parts] = useState<IChangeRecord[]>([]);
-    const [changed_status,setChanged_status]= useState<IStatusHistory[]>([]);
+    const [changed_status, setChanged_status] = useState<IStatusHistory[]>([]);
 
     const getData = useMutation({
         mutationFn: async (params: { date: Date; shift_type: "day" | "night" }) =>
@@ -62,38 +80,59 @@ const ShiftReportGlpc = () => {
         const employee_stats = exception.reduce((acc, curr) => {
             if (!acc[curr.employee]) acc[curr.employee] = {total_solving_time: 0, task_count: 0};
             acc[curr.employee].total_solving_time += curr.solving_time;
-            acc[curr.employee].task_count         += 1;
+            acc[curr.employee].task_count += 1;
             return acc;
-        }, {} as Record<string, {total_solving_time: number; task_count: number}>);
+        }, {} as Record<string, { total_solving_time: number; task_count: number }>);
 
         const error_stats = exception.reduce((acc, curr) => {
             if (!acc[curr.first_column]) acc[curr.first_column] = {error_count: 0};
             acc[curr.first_column].error_count += 1;
             return acc;
-        }, {} as Record<string, {error_count: number}>);
+        }, {} as Record<string, { error_count: number }>);
 
         const ArrayEmployee = Object.keys(employee_stats).map(key => ({employee: key, ...employee_stats[key]}));
-        const ArrayError    = Object.keys(error_stats).map(key => ({first_column: key, ...error_stats[key]}));
+        const ArrayError = Object.keys(error_stats).map(key => ({first_column: key, ...error_stats[key]}));
 
-        await generateShiftReport({exception, changed_parts, changed_status, ArrayEmployee, ArrayError, date});
+        if (!robots) {
+            throw new Error("Could not find robots...");
+        }
+        if (!user) {
+            throw new Error("Could not find user state...");
+        }
+        if (!parts_templates) {
+            throw new Error("Could not find parts state...");
+        }
+
+        const warehouse_robots = robots.filter(robot => robot.warehouse === user.warehouse)
+        const offline_robots = warehouse_robots.filter(robot => robot.status === '离线 | Offline')
+        const online_robots = warehouse_robots.filter(robot => robot.status === '在线 | Online')
+
+        await generateShiftReport({exception, changed_parts, changed_status, ArrayEmployee, ArrayError, date, offline_robots, online_robots, parts_templates});
     };
 
     return (
         <div className="space-y-4">
-            <div className="flex flex-wrap items-center justify-between gap-3 rounded-xl border border-border bg-card p-3">
+            <div className="flex flex-wrap items-center justify-between gap-3 rounded-xl">
                 <div className="flex items-center gap-2">
-                    <Badge variant="outline" className="gap-1.5 text-xs">
+                    <div className="gap-1.5 text-xs flex items-center gap-2">
                         {shift_type === "day"
-                            ? <><Sun size={12} className="text-amber-500"/> Day Shift</>
-                            : <><Moon size={12} className="text-blue-400"/> Night Shift</>
+                            ? <><Sun size={20} className="text-amber-500"/> Day Shift</>
+                            : <><Moon size={20} className="text-blue-400"/> Night Shift</>
                         }
-                    </Badge>
+                    </div>
                     {date && (
                         <span className="text-xs text-muted-foreground">
                             {format(date, "PPP")}
                         </span>
                     )}
                     {isLoading && <Loader2 size={14} className="animate-spin text-muted-foreground"/>}
+                    <div className="flex items-center justify-between">
+                        {!isLoading && (
+                            <Badge variant="secondary" className="text-xs text-muted-foreground">
+                                {exception.length} records
+                            </Badge>
+                        )}
+                    </div>
                 </div>
 
                 <div className="flex flex-wrap items-center gap-2">
@@ -149,75 +188,32 @@ const ShiftReportGlpc = () => {
                 </div>
             </div>
 
-            {/* ── Main grid ── */}
             <div className="grid grid-cols-1 lg:grid-cols-[1fr_680px] items-start gap-4">
+                <div>
+                    {isLoading
+                        ? <Skeleton className="w-full h-[60vh]"/>
+                        : <Exception data={exception_data}/>
+                    }
+                </div>
 
-                {/* Left: Exceptions */}
-                <Card>
-                    <CardHeader className="pb-3">
-                        <div className="flex items-center justify-between">
-                            <CardTitle className="text-sm font-medium text-muted-foreground uppercase tracking-wider">
-                                Exceptions
-                            </CardTitle>
-                            {!isLoading && (
-                                <Badge variant="secondary" className="text-xs">
-                                    {exception.length} records
-                                </Badge>
-                            )}
-                        </div>
-                    </CardHeader>
-                    <CardContent>
-                        {/* ✅ Правильное условие скелетона — только isLoading */}
-                        {isLoading
-                            ? <Skeleton className="w-full h-[60vh]"/>
-                            : <ExceptionDashboard/>
-                        }
-                    </CardContent>
-                </Card>
-
-                {/* Right: Parts + Status */}
-                <div className="space-y-4">
-                    <Card>
-                        <CardHeader className="pb-3">
-                            <div className="flex items-center justify-between">
-                                <CardTitle className="text-sm font-medium text-muted-foreground uppercase tracking-wider">
-                                    Maintenance
-                                </CardTitle>
-                                {!isLoading && (
-                                    <Badge variant="secondary" className="text-xs">
-                                        {changed_parts.length} records
-                                    </Badge>
-                                )}
-                            </div>
-                        </CardHeader>
-                        <CardContent>
+                <div className="flex flex-col gap-8">
+                    <div className={``}>
+                        <div>
                             {isLoading
                                 ? <Skeleton className="w-full h-[35vh]"/>
                                 : <ChangedPartsList data={changed_parts}/>
                             }
-                        </CardContent>
-                    </Card>
-
-                    <Card>
-                        <CardHeader className="pb-3">
-                            <div className="flex items-center justify-between">
-                                <CardTitle className="text-sm font-medium text-muted-foreground uppercase tracking-wider">
-                                    Status Changes
-                                </CardTitle>
-                                {!isLoading && (
-                                    <Badge variant="secondary" className="text-xs">
-                                        {changed_status.length} records
-                                    </Badge>
-                                )}
-                            </div>
-                        </CardHeader>
-                        <CardContent>
+                        </div>
+                    </div>
+                    <Separator />
+                    <div className={``}>
+                        <div>
                             {isLoading
                                 ? <Skeleton className="w-full h-[35vh]"/>
                                 : <ChangedStatus data={changed_status}/>
                             }
-                        </CardContent>
-                    </Card>
+                        </div>
+                    </div>
                 </div>
             </div>
         </div>

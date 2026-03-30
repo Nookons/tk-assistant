@@ -44,12 +44,17 @@ const Docs = () => {
                                     </div>
                                     <div className={``}>
                                         <h4 className="scroll-m-20 text-xl font-semibold tracking-tight">
-                                            Inspection rules
+                                            Robots DOCS
                                         </h4>
                                         <ul className="my-6 ml-6 list-disc [&>li]:mt-2">
                                             <li>
                                                 <Link className={`text-emerald-500 hover:underline font-medium`} href={`/docs/k50h`}>
                                                     K50H
+                                                </Link>
+                                            </li>
+                                            <li>
+                                                <Link className={`text-emerald-500 hover:underline font-medium`} href={`/docs/a42t`}>
+                                                    A42T
                                                 </Link>
                                             </li>
                                         </ul>

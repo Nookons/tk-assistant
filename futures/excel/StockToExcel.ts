@@ -211,8 +211,7 @@ function buildStockSheet(data: StockByLocationResponse): XLSX.WorkSheet {
         const items = loc.items ?? [];
         if (items.length === 0) continue;
 
-        const locationLabel =
-            loc.location.split("-")[1]?.toUpperCase() ?? loc.location;
+        const locationLabel = loc.location.split("-").pop()?.toUpperCase() ?? loc.location;
 
         // Строка группы — merged по всей ширине
         writeCell(ws, currentRow, 0, `📦  ${locationLabel}`, STYLES.locationGroup);

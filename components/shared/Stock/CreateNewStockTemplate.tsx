@@ -78,6 +78,7 @@ const CreateNewStockTemplate = () => {
                 description_eng: data.description_english,
                 part_type: data.robot_type,
                 robot_match: data.robot_match,
+                assigned_company: "HAI",
                 avatar_url: '',
             }
 

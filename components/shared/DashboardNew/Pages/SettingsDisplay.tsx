@@ -128,7 +128,7 @@ const EmailChangeForm = ({ user }: { user: IUser}) => {
                         Current email
                     </Label>
                     <Input
-                        value={user.email}
+                        value={user.email ?? ""}
                         disabled
                         className="h-10 bg-muted/20 border-border/30 text-muted-foreground"
                     />
@@ -287,8 +287,8 @@ const SettingsDisplay = () => {
 
     if (!user) return null;
 
-    const rank = getScoreRank(user.score);
-    const leader = isLeader(user.position);
+    const rank = getScoreRank(user.score ?? 0);
+    const leader = isLeader(user.position ?? "");
     const memberSince = dayjs(user.created_at).format("MMM YYYY");
     const lastSeen = dayjs(user.last_login_at).fromNow();
 
@@ -414,14 +414,14 @@ const SettingsDisplay = () => {
                                     Score progress
                                 </span>
                             </div>
-                            <ScoreBar score={user.score} />
+                            <ScoreBar score={user.score ?? 0} />
                         </div>
 
                         {/* Info rows */}
                         <div className="rounded-xl border border-border/40 bg-card/60 px-4 divide-y divide-border/30 mb-8">
-                            <InfoRow icon={Mail}         label="Email"        value={user.email} />
+                            <InfoRow icon={Mail}         label="Email"        value={user.email ?? ""} />
                             <InfoRow icon={Phone}        label="Phone"        value={String(user.phone)} />
-                            <InfoRow icon={Building2}    label="Warehouse"    value={user.warehouse} />
+                            <InfoRow icon={Building2}    label="Warehouse"    value={user.warehouse ?? ""} />
                             <InfoRow icon={CalendarDays} label="Member since" value={dayjs(user.created_at).format("D MMMM YYYY")} />
                         </div>
 

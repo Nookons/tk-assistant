@@ -9,7 +9,7 @@ const LocationCard = ({ el, onClick }: { el: LocationStock; onClick: () => void 
     const visibleItems = el.items.filter(i => i.total_quantity > 0);
     if (!visibleItems.length) return null;
 
-    const locationLabel = el.location.split('-')[1]?.toUpperCase() ?? el.location;
+    const locationLabel = el.location.split('-').pop()?.toUpperCase() ?? el.location;
     const warehouseName = el.items[0]?.warehouse ?? '';
     const overflow = visibleItems.length - ITEMS_PER_CARD;
 

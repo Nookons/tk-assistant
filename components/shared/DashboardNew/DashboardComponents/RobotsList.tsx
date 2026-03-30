@@ -6,7 +6,7 @@ import {Avatar, AvatarFallback, AvatarImage} from "@/components/ui/avatar";
 import dayjs from "dayjs";
 import {IRobot} from "@/types/robot/robot";
 import Link from "next/link";
-import {ArrowRight, Bot, Minus, CircleAlert, CircleCheck, ChevronLeft, ChevronRight} from "lucide-react";
+import {ArrowRight, Bot, Minus, CircleAlert, CircleCheck, ChevronLeft, ChevronRight, SearchX} from "lucide-react";
 import PartsCell from "./PartsCell";
 import {Input} from "@/components/ui/input";
 import {Toggle} from "@/components/ui/toggle";
@@ -28,21 +28,53 @@ interface RobotsHistoryProps {
     warehouse?: string;
 }
 
-const RobotsList = ({previewLimit = 5, warehouse = 'GLPC'}: RobotsHistoryProps) => {
+// --- Empty state variants ---
+function EmptyNoRobots() {
+    return (
+        <div className="flex flex-col items-center justify-center py-16 gap-3 text-muted-foreground">
+            <div className="flex h-14 w-14 items-center justify-center rounded-full bg-muted">
+                <Bot size={28} className="opacity-40"/>
+            </div>
+            <div className="text-center">
+                <p className="text-sm font-medium">No robots yet</p>
+                <p className="text-xs opacity-60 mt-0.5">Robots will appear here once added</p>
+            </div>
+        </div>
+    );
+}
+
+function EmptyNoResults({hasFilters}: { hasFilters: boolean }) {
+    return (
+        <div className="flex flex-col items-center justify-center py-16 gap-3 text-muted-foreground">
+            <div className="flex h-14 w-14 items-center justify-center rounded-full bg-muted">
+                <SearchX size={28} className="opacity-40"/>
+            </div>
+            <div className="text-center">
+                <p className="text-sm font-medium">
+                    {hasFilters ? "No robots match your filters" : "No robots here"}
+                </p>
+                <p className="text-xs opacity-60 mt-0.5">
+                    {hasFilters ? "Try adjusting the search or toggle" : "Nothing to display"}
+                </p>
+            </div>
+        </div>
+    );
+}
+
+const RobotsList = ({previewLimit = 5}: RobotsHistoryProps) => {
     const robots = useRobotsStore(state => state.robots);
     const [search_value, setSearch_value] = useState<string>("")
     const [isBrokenSearch, setIsBrokenSearch] = useState<boolean>(false);
     const [page, setPage] = useState<number>(1);
 
     const isPaginated = previewLimit > PAGE_SIZE;
+    const hasFilters = search_value.trim() !== "" || isBrokenSearch;
 
-    // Filtered + sorted list (without slicing)
     const filteredData = useMemo<IRobot[]>(() => {
         if (!robots) return [];
         const query = search_value.trim().toLowerCase();
 
         return robots
-            .filter(robot => warehouse.toLowerCase() === 'leader' || robot.warehouse === warehouse)
             .filter(robot =>
                 query === "" || robot.robot_number.toString().toLowerCase().includes(query)
             )
@@ -52,9 +84,8 @@ const RobotsList = ({previewLimit = 5, warehouse = 'GLPC'}: RobotsHistoryProps) 
             })
             .sort((a, b) => dayjs(b.updated_at).valueOf() - dayjs(a.updated_at).valueOf())
             .slice(0, previewLimit);
-    }, [robots, warehouse, search_value, isBrokenSearch, previewLimit]);
+    }, [robots, search_value, isBrokenSearch, previewLimit]);
 
-    // Paginated slice (only when pagination is active)
     const displayData = useMemo<IRobot[]>(() => {
         if (!isPaginated) return filteredData;
         const start = (page - 1) * PAGE_SIZE;
@@ -63,7 +94,6 @@ const RobotsList = ({previewLimit = 5, warehouse = 'GLPC'}: RobotsHistoryProps) 
 
     const totalPages = Math.ceil(filteredData.length / PAGE_SIZE);
 
-    // Reset to page 1 when filters change
     const handleSearchChange = (value: string) => {
         setSearch_value(value);
         setPage(1);
@@ -74,7 +104,24 @@ const RobotsList = ({previewLimit = 5, warehouse = 'GLPC'}: RobotsHistoryProps) 
         setPage(1);
     };
 
-    if (!robots) return null;
+    // No data at all — don't show filters, just empty state
+    if (!robots || robots.length === 0) {
+        return <EmptyNoRobots/>;
+    }
+
+    const Pagination = () => (
+        isPaginated && totalPages > 1 ? (
+            <div className="flex items-center justify-end gap-2 mt-3">
+                <Button variant="outline" size="sm" onClick={() => setPage(p => p - 1)} disabled={page === 1}>
+                    <ChevronLeft size={14}/>
+                </Button>
+                <span className="text-xs text-muted-foreground">{page} / {totalPages}</span>
+                <Button variant="outline" size="sm" onClick={() => setPage(p => p + 1)} disabled={page === totalPages}>
+                    <ChevronRight size={14}/>
+                </Button>
+            </div>
+        ) : null
+    );
 
     return (
         <div>
@@ -86,7 +133,7 @@ const RobotsList = ({previewLimit = 5, warehouse = 'GLPC'}: RobotsHistoryProps) 
                 <Input
                     value={search_value}
                     onChange={(e) => handleSearchChange(e.target.value)}
-                    placeholder={'Robot number'}
+                    placeholder="Robot number"
                 />
                 <Toggle
                     aria-label="Toggle broken"
@@ -99,36 +146,10 @@ const RobotsList = ({previewLimit = 5, warehouse = 'GLPC'}: RobotsHistoryProps) 
             </div>
 
             {displayData.length === 0 ? (
-                <div className="flex flex-col items-center justify-center py-10 gap-2 text-muted-foreground">
-                    <Bot size={32} className="opacity-30"/>
-                    <p className="text-sm">No robots here</p>
-                </div>
+                <EmptyNoResults hasFilters={hasFilters}/>
             ) : (
                 <>
-                    {isPaginated && totalPages > 1 && (
-                        <div className="flex items-center justify-end gap-2 mt-3">
-                            <Button
-                                variant="outline"
-                                size="sm"
-                                onClick={() => setPage(p => p - 1)}
-                                disabled={page === 1}
-                            >
-                                <ChevronLeft size={14}/>
-                            </Button>
-                            <span className="text-xs text-muted-foreground">
-                                {page} / {totalPages}
-                            </span>
-                            <Button
-                                variant="outline"
-                                size="sm"
-                                onClick={() => setPage(p => p + 1)}
-                                disabled={page === totalPages}
-                            >
-                                <ChevronRight size={14}/>
-                            </Button>
-                        </div>
-                    )}
-
+                    <Pagination/>
                     <Table>
                         <TableHeader>
                             <TableRow className="hover:bg-transparent">
@@ -155,15 +176,12 @@ const RobotsList = ({previewLimit = 5, warehouse = 'GLPC'}: RobotsHistoryProps) 
                                             {robot.robot_number}
                                         </Link>
                                     </TableCell>
-
                                     <TableCell className="text-sm text-muted-foreground">
                                         {robot.robot_type}
                                     </TableCell>
-
                                     <TableCell className="text-sm text-muted-foreground">
                                         {robot.warehouse || <Minus size={14} className="text-muted-foreground/40"/>}
                                     </TableCell>
-
                                     <TableCell>
                                         <div className="flex items-center gap-1.5">
                                             <ArrowRight size={12} className="text-muted-foreground shrink-0"/>
@@ -172,20 +190,17 @@ const RobotsList = ({previewLimit = 5, warehouse = 'GLPC'}: RobotsHistoryProps) 
                                             </Badge>
                                         </div>
                                     </TableCell>
-
                                     <TableCell>
                                         <p>{timeToString(robot.updated_at)}</p>
                                     </TableCell>
-
                                     <TableCell>
                                         <PartsCell parts_history={robot.parts_history?.sort((a, b) => dayjs(b.created_at).valueOf() - dayjs(a.created_at).valueOf())}/>
                                     </TableCell>
-
                                     <TableCell>
                                         {robot.updated_by ? (
                                             <div className="flex items-center gap-2">
                                                 <Avatar className="h-6 w-6">
-                                                    <AvatarImage src={robot.updated_by.avatar_url}/>
+                                                    <AvatarImage src={robot.updated_by.avatar_url ?? ""}/>
                                                     <AvatarFallback className="text-xs bg-primary text-primary-foreground">
                                                         {robot.updated_by.user_name.toUpperCase().slice(0, 2)}
                                                     </AvatarFallback>
@@ -204,31 +219,7 @@ const RobotsList = ({previewLimit = 5, warehouse = 'GLPC'}: RobotsHistoryProps) 
                             ))}
                         </TableBody>
                     </Table>
-
-                    {/* Pagination controls — only rendered when previewLimit > 25 */}
-                    {isPaginated && totalPages > 1 && (
-                        <div className="flex items-center justify-end gap-2 mt-3">
-                            <Button
-                                variant="outline"
-                                size="sm"
-                                onClick={() => setPage(p => p - 1)}
-                                disabled={page === 1}
-                            >
-                                <ChevronLeft size={14}/>
-                            </Button>
-                            <span className="text-xs text-muted-foreground">
-                                {page} / {totalPages}
-                            </span>
-                            <Button
-                                variant="outline"
-                                size="sm"
-                                onClick={() => setPage(p => p + 1)}
-                                disabled={page === totalPages}
-                            >
-                                <ChevronRight size={14}/>
-                            </Button>
-                        </div>
-                    )}
+                    <Pagination/>
                 </>
             )}
         </div>

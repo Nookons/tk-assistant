@@ -1,15 +1,22 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { supabase } from '@/lib/supabaseClient';
+import { supabase } from '@/lib/supabase/client';
 
 export async function GET(request: NextRequest) {
+    const { searchParams } = new URL(request.url)
+    const warehouse = searchParams.get('warehouse')
+
     try {
         let query = supabase
             .from('stock_history')
             .select(`
-            *,
-            user:employees!card_id(*),
-            robot_data:robots_maintenance_list!id(*)
+                *,
+                user:employees!card_id(*),
+                robot_data:robots_maintenance_list!id(*)
             `)
+
+        if (warehouse) {
+            query = query.eq('warehouse', warehouse)
+        }
 
         const { data, error } = await query;
 

@@ -45,7 +45,7 @@ const EmployeesDisplay = () => {
         return data.filter(e =>
             e.user_name.toLowerCase().includes(q) ||
             e.card_id.toString().includes(q) ||
-            getUserWarehouse(e.warehouse)?.toLowerCase().includes(q) ||
+            getUserWarehouse(e.warehouse ?? "")?.toLowerCase().includes(q) ||
             e.email?.toLowerCase().includes(q)
         );
 
@@ -53,7 +53,7 @@ const EmployeesDisplay = () => {
 
     // Stats
     const totalEmployees = filtered?.length ?? 0;
-    const warehouses = filtered ? new Set(filtered.map(e => getUserWarehouse(e.warehouse)).filter(Boolean)).size : 0;
+    const warehouses = filtered ? new Set(filtered.map(e => getUserWarehouse(e.warehouse ?? "")).filter(Boolean)).size : 0;
 
     const avgScore = filtered?.length
         ? Math.round(filtered.reduce((s, e) => s + (e.score || 0), 0) / filtered.length)
@@ -66,7 +66,7 @@ const EmployeesDisplay = () => {
             <div className="grid md:grid-cols-3 gap-3">
                 {[
                     {icon: Users, label: "Total Employees", value: isLoading ? "—" : totalEmployees},
-                    {icon: Warehouse, label: "Warehouses", value: isLoading ? "—" : warehouses},
+                    {icon: Warehouse, label: "Warehouse", value: isLoading ? "—" : warehouses},
                     {icon: Trophy, label: "Avg Score", value: isLoading ? "—" : `${avgScore}%`},
                 ].map(({icon: Icon, label, value}) => (
                     <div key={label} className="rounded-lg border bg-card px-4 py-3 flex items-center gap-3">
@@ -132,7 +132,7 @@ const EmployeesDisplay = () => {
                                 <TableRow key={employee.auth_id}>
                                     <TableCell>
                                         <Avatar className="h-8 w-8">
-                                            <AvatarImage src={employee.avatar_url}/>
+                                            <AvatarImage src={employee.avatar_url ?? ""}/>
                                             <AvatarFallback className="text-xs bg-primary text-primary-foreground">
                                                 {employee.user_name.toUpperCase().slice(0, 2)}
                                             </AvatarFallback>
@@ -170,7 +170,7 @@ const EmployeesDisplay = () => {
                                         {employee.email || <span className="text-muted-foreground/40">—</span>}
                                     </TableCell>
                                     <TableCell className="hidden sm:table-cell">
-                                        <ScoreBar score={employee.score}/>
+                                        <ScoreBar score={employee.score ?? 0}/>
                                     </TableCell>
                                     <TableCell className="text-right">
                                         <DropdownMenu>

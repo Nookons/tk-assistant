@@ -12,7 +12,8 @@ import {
 } from "lucide-react";
 import dayjs from "dayjs";
 import relativeTime from "dayjs/plugin/relativeTime";
-import {IStatusHistory} from "@/app/reports/shein/page";
+import Link from "next/link";
+import {IStatusHistory} from "@/components/shared/DashboardNew/DashboardComponents/Reports/ShiftReportGLPC";
 
 dayjs.extend(relativeTime);
 
@@ -53,7 +54,6 @@ const ChangedStatus = ({ data, groupByRobot = false }: ChangedStatusProps) => {
         return configs[status.includes('Online') ? "Online" : "Offline"] || configs['Online'];
     };
 
-    // Группировка по роботам если нужно
     const groupedData = groupByRobot
         ? data.reduce((acc, item) => {
             const robotId = item.robot_id;
@@ -96,17 +96,12 @@ const ChangedStatus = ({ data, groupByRobot = false }: ChangedStatusProps) => {
                         </div>
                     )}
 
-                    {/* Timeline */}
                     <div className="relative space-y-6">
-                        {/* Timeline line */}
-                        <div className="absolute left-[45px] top-8 bottom-8 w-0.5 bg-gradient-to-b from-primary/20 via-primary/10 to-primary/20" />
+                        <div className="absolute left-[45px] top-8 bottom-8 w-0.5 bg-linear-to-b from-primary/20 via-primary/10 to-primary/20" />
 
                         {items.map((item, index) => {
                             const oldConfig = getStatusConfig(item.old_status);
                             const newConfig = getStatusConfig(item.new_status);
-
-                            const isFirst = index === 0;
-                            const isLast = index === items.length - 1;
 
                             return (
                                 <Card
@@ -126,8 +121,8 @@ const ChangedStatus = ({ data, groupByRobot = false }: ChangedStatusProps) => {
                                             </div>
 
                                             <div className="flex-1 min-w-0">
-                                                <div className="flex items-center justify-between gap-4 mb-3">
-                                                    <div className="flex-1">
+                                                <div className="flex items-center justify-between gap-4">
+                                                    <div className="">
                                                         <div className="flex items-center gap-2">
                                                             <Badge
                                                                 variant={oldConfig.variant}
@@ -146,51 +141,21 @@ const ChangedStatus = ({ data, groupByRobot = false }: ChangedStatusProps) => {
                                                     </div>
 
                                                     <div className="flex items-center gap-2">
-                                                        <Avatar className="h-8 w-8 border-2 border-primary/10">
-                                                            <AvatarImage
-                                                                src={item.user?.avatar_url}
-                                                                alt={item.user?.user_name || 'User'}
-                                                            />
-                                                            <AvatarFallback className="bg-gradient-to-br from-primary/20 to-primary/10 text-primary font-semibold text-xs">
-                                                                {getInitials(item.user?.user_name || 'NA')}
-                                                            </AvatarFallback>
-                                                        </Avatar>
                                                         <div className="text-sm">
                                                             <div className="font-medium">
                                                                 {item.user?.user_name || 'Unknown'}
                                                             </div>
-                                                            {item.user?.position && (
-                                                                <div className="text-xs max-w-[150px] line-clamp-1 text-muted-foreground">
-                                                                    {item.user.warehouse}
-                                                                </div>
-                                                            )}
                                                         </div>
+                                                        {!groupByRobot && (
+                                                            <div className="flex items-center gap-2 pr-2">
+                                                                <span className="text-xs text-muted-foreground">Robot:</span>
+                                                                <Link href={`/robot/${item.robot_id}`} className="text-sm hover:underline font-bold font-mono">
+                                                                    {item.robot_number}
+                                                                </Link>
+                                                            </div>
+                                                        )}
                                                     </div>
                                                 </div>
-
-                                                {/* Robot number (if not grouped) */}
-                                                {!groupByRobot && (
-                                                    <div className="flex items-center gap-2 mt-2 pt-2 border-t">
-                                                        <div className="flex items-center gap-2 text-sm text-muted-foreground">
-                                                            <Clock className="w-3.5 h-3.5" />
-                                                            <span className="font-medium">
-                                                                {dayjs(item.created_at).format("MMM D, YYYY")}
-                                                            </span>
-                                                            <span className="text-xs">•</span>
-                                                            <span className="font-mono text-xs">
-                                                                {dayjs(item.created_at).format("HH:mm:ss")}
-                                                            </span>
-                                                            <span className="text-xs">•</span>
-                                                            <span className="text-xs">
-                                                                {dayjs(item.created_at).fromNow()}
-                                                            </span>
-                                                        </div>
-                                                        <span className="text-xs text-muted-foreground">Robot:</span>
-                                                        <span className="text-sm font-bold font-mono">
-                                                            #{item.robot_number}
-                                                        </span>
-                                                    </div>
-                                                )}
                                             </div>
                                         </div>
                                     </div>

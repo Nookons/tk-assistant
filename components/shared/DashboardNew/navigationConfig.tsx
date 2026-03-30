@@ -35,7 +35,6 @@ export const NAV_ITEMS: NavItem[] = [
     { id: "stock", label: "Stock", icon: <Package size={18} /> },
     { id: "parts_catalogue", label: "Parts Catalogue", icon: <Warehouse   size={18} /> },
     { id: "docs", label: "Docs", icon: <FileTerminal  size={18} /> },
-    { id: "settings", label: "Settings", icon: <Settings size={18} /> },
 ];
 
 export const PAGE_REGISTRY: Record<string, React.ComponentType<any>> = {

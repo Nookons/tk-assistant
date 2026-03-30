@@ -7,6 +7,7 @@ export interface IStockItemTemplate {
     updated_at: Timestamp | string;
     add_by: number;
     material_number: string;
+    assigned_company: string;
     description_orginall: string;
     description_eng: string;
     part_type: string;

@@ -1,7 +1,7 @@
 // File: /app/api/comments/get-comments/route.ts
 // Alternative approach WITHOUT RPC function
 
-import { supabase } from '@/lib/supabaseClient';
+import { supabase } from '@/lib/supabase/client';
 import { NextRequest, NextResponse } from 'next/server';
 
 export async function GET(request: NextRequest) {

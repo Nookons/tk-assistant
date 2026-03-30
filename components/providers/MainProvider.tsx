@@ -6,14 +6,13 @@ import {useRobotsStore} from "@/store/robotsStore";
 import {useStockStore} from "@/store/stock";
 import {getAllParts} from "@/futures/stock/getAllParts";
 import {getLocationsSummary} from "@/futures/stock/getLocationsSummary";
-import {AuthService} from "@/services/authService";
-import {useRouter} from "next/navigation";
 import {Toaster} from "@/components/ui/sonner";
 import Snow from "@/app/snow";
 import {getAllStockHistory} from "@/futures/stock/getAllStockHistory";
-import {toast} from "sonner";
+import {useSessionStore} from "@/store/session";
 
 const MainProvider = () => {
+    const session = useSessionStore(state => state.currentSession)
     const [isClient, setIsClient] = React.useState(false);
 
     React.useEffect(() => {
@@ -26,24 +25,27 @@ const MainProvider = () => {
     const setStockHistory = useStockStore(state => state.set_stock_history)
 
     const { data, error, isLoading } = useQuery({
-        queryKey: ['robots-list'], // better name than 'todos'
-        queryFn: () => getRobotsList(),
+        queryKey: ['robots-list'],
+        queryFn: () => getRobotsList(session),
+        enabled: !!session
     });
 
     const { data: StockTemplates } = useQuery({
         queryKey: ['stock_items_template'], // better name than 'todos'
         queryFn: () => getAllParts(),
+        enabled: !!session
     });
 
     const { data: StockSummary } = useQuery({
         queryKey: ['stock_cells_summary'], // better name than 'todos'
         queryFn: () => getLocationsSummary(),
+        enabled: !!session
     });
 
     const {data: IStockHistory} = useQuery({
         queryKey: ['stockHistory-full'],
-        queryFn: async () => getAllStockHistory(),
-        retry: 3
+        queryFn: async () => getAllStockHistory(session),
+        enabled: !!session,
     });
 
     useEffect(() => {
@@ -70,18 +72,6 @@ const MainProvider = () => {
             setStockHistory(IStockHistory);
         }
     }, [IStockHistory]);
-
-    const handleOffline = () => {
-        toast.error(`It's seems what you lost you network connection. Please check it`)
-    }
-
-    useEffect(() => {
-        window.addEventListener('offline', handleOffline)
-
-        return () => {
-            window.removeEventListener('offline', handleOffline)
-        }
-    }, [])
 
 
     return (

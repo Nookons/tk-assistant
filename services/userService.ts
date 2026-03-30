@@ -1,5 +1,5 @@
 import { IUser } from "@/types/user/user";
-import { supabase } from "@/lib/supabaseClient";
+import { supabase } from "@/lib/supabase/client";
 import {IHistoryStockItem} from "@/types/stock/HistoryStock";
 
 export class UserService {

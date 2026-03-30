@@ -4,9 +4,10 @@ import { IChangeRecord } from "@/types/Parts/ChangeRecord";
 import jsPDF from "jspdf";
 import dayjs from "dayjs";
 import autoTable from "jspdf-autotable";
-import {IStatusHistory} from "@/app/reports/shein/page";
-
-// ── Types ─────────────────────────────────────────────────────────────────────
+import {IRobot} from "@/types/robot/robot";
+import {useStockStore} from "@/store/stock";
+import {IStockItemTemplate} from "@/types/stock/StockItem";
+import {IStatusHistory} from "@/components/shared/DashboardNew/DashboardComponents/Reports/ShiftReportGLPC";
 
 interface EmployeeStat {
     employee: string;
@@ -24,10 +25,10 @@ interface IReportData {
     ArrayEmployee: EmployeeStat[];
     ArrayError: ErrorStat[];
     date: Date;
+    offline_robots: IRobot[];
+    online_robots: IRobot[];
+    parts_templates: IStockItemTemplate[];
 }
-
-// ── Palette — Amazon internal report style ────────────────────────────────────
-// Refs: Amazon Business Review docs, 6-pager style, FC ops reports
 
 type RGB = [number, number, number];
 
@@ -48,7 +49,6 @@ const C = {
 
 const FONT = "NotoSansSC-Regular";
 
-// ── Helpers ───────────────────────────────────────────────────────────────────
 
 const f = (doc: jsPDF, size: number, style: "normal"|"bold" = "normal", color: RGB = C.ink) => {
     doc.setFont(FONT, style);
@@ -75,7 +75,6 @@ const hline = (doc: jsPDF, x1: number, y: number, x2: number, color: RGB = C.bor
     doc.line(x1, y, x2, y);
 };
 
-// Amazon-style table config
 const amzTable = (headFill: RGB = C.headerBg) => ({
     theme: "grid" as const,
     headStyles: {
@@ -107,7 +106,7 @@ const amzTable = (headFill: RGB = C.headerBg) => ({
 
 export const generateShiftReport = async ({
                                               exception, changed_parts, changed_status,
-                                              ArrayEmployee, ArrayError, date,
+                                              ArrayEmployee, ArrayError, date, offline_robots, online_robots, parts_templates
                                           }: IReportData) => {
 
     const doc = new jsPDF({ orientation: "portrait", unit: "mm", format: "a4" });
@@ -128,7 +127,6 @@ export const generateShiftReport = async ({
 
     const sortedErrors = [...ArrayError].sort((a, b) => b.error_count - a.error_count);
 
-    // Parts grouped
     const partsMap: Record<string, { count: number; robots: Set<string> }> = {};
     changed_parts.forEach(p => {
         const key = p.parts_numbers ?? "Unknown";
@@ -137,9 +135,9 @@ export const generateShiftReport = async ({
     });
     const sortedParts = Object.entries(partsMap).sort((a, b) => b[1].count - a[1].count);
 
-    // Robot status
     const wentOffline: { robot: string; time: string; from: string }[] = [];
     const wentOnline:  { robot: string; time: string; from: string }[] = [];
+
     changed_status.forEach(s => {
         const newStatus = (s.new_status ?? "").toLowerCase();
         const robot     = s.robot_number.toString() ?? "—";
@@ -154,23 +152,17 @@ export const generateShiftReport = async ({
 
     let y = 0;
 
-    // ═════════════════════════════════════════════════════════════════════════
-    // TOP HEADER BAR
-    // ═════════════════════════════════════════════════════════════════════════
 
     fillRect(doc, C.headerBg, 0, 0, PW, 30);
 
-    // Amazon-style: warehouse/site name top-left
     f(doc, 14, "bold", C.white);
     doc.text("GLPC", ML, 13);
 
     f(doc, 7, "normal", [160, 170, 180] as RGB);
     doc.text("SHIFT OPERATIONS ·  REPORT", ML, 20);
 
-    // Orange accent line under title
     fillRect(doc, C.orange, ML, 22, 28, 1);
 
-    // Right: shift type + date
     f(doc, 11, "bold", C.white);
     doc.text(`${shiftType.toUpperCase()} SHIFT`, PW - MR, 14, { align: "right" });
     f(doc, 7.5, "normal", [160, 170, 180] as RGB);
@@ -183,12 +175,12 @@ export const generateShiftReport = async ({
     y += 4;
 
     const METRICS = [
-        { label: "Total Exceptions",   value: totalExceptions,           sub: "this shift"   },
-        { label: "Avg. Solve Time",     value: `${avgSolveTime} min`,    sub: "per exception" },
-        { label: "Parts Replaced",      value: changed_parts.length,     sub: "components"   },
-        { label: "Status Changes",      value: changed_status.length,    sub: "robots"       },
-        { label: "Robots Offline",      value: wentOffline.length,       sub: "events"       },
-        { label: "Robots Online",       value: wentOnline.length,        sub: "recoveries"   },
+        { label: "Total Exceptions",    value: totalExceptions,             sub: "this shift"   },
+        { label: "Avg. Solve Time",     value: `${avgSolveTime} min`,       sub: "per exception" },
+        { label: "Parts Replaced",      value: changed_parts.length,        sub: "components"   },
+        { label: "Status Changes",      value: changed_status.length,       sub: "robots"       },
+        { label: "Robots Offline",      value: offline_robots.length,       sub: "events"       },
+        { label: "Robots Online",       value: online_robots.length,        sub: "recoveries"   },
     ];
 
     const MET_W = (CW - 5 * 2) / 6;
@@ -232,38 +224,32 @@ export const generateShiftReport = async ({
         y += 7;
     };
 
-    // ═════════════════════════════════════════════════════════════════════════
-    // 1. EXCEPTION SUMMARY BY TYPE
-    // ═════════════════════════════════════════════════════════════════════════
-
     if (sortedErrors.length) {
-        section("Exception Summary by Type", `${totalExceptions} total`);
+        section("Offline robots list", `${offline_robots.length} total`);
 
         autoTable(doc, {
             ...amzTable(),
             startY: y,
-            head: [["#", "Error Type", "Count", "% of Total"]],
-            body: sortedErrors.map((e, i) => [
+            head: [["#", "Updated", "Number", "Type", "Issue"]],
+            body: offline_robots.map((robot, i) => [
                 i + 1,
-                e.first_column,
-                e.error_count,
-                `${Math.round((e.error_count / Math.max(totalExceptions, 1)) * 100)}%`,
+                dayjs(robot.updated_at).format('MM/DD HH:mm'),
+                robot.robot_number,
+                robot.robot_type,
+                robot.problem_note,
             ]),
             columnStyles: {
                 0: { halign: "center", cellWidth: 10 },
-                1: { cellWidth: "auto" },
-                2: { halign: "center", cellWidth: 22 },
-                3: { halign: "center", cellWidth: 28 },
+                1: { halign: "center", cellWidth: 30 },
+                2: { cellWidth: 20 },
+                3: { halign: "center", cellWidth: 20 },
+                4: { halign: "left", cellWidth: 'auto' },
             },
             margin: { left: ML, right: MR },
         });
 
         y = (doc as any).lastAutoTable.finalY + 8;
     }
-
-    // ═════════════════════════════════════════════════════════════════════════
-    // 2. EMPLOYEE PERFORMANCE
-    // ═════════════════════════════════════════════════════════════════════════
 
     if (ArrayEmployee.length) {
         section("Employee Performance", `${ArrayEmployee.length} technicians`);
@@ -302,16 +288,25 @@ export const generateShiftReport = async ({
         autoTable(doc, {
             ...amzTable(),
             startY: y,
-            head: [["Part Number", "Qty Replaced", "Part Description"]],
-            body: sortedParts.map(([part, { count, robots }]) => [
-                part,
-                count,
-                [...robots].join(", ") || "—",
-            ]),
+            head: [["Part Number", "Qty", "English", "Original"]],
+            body: sortedParts.map(([part, { count }]) => {
+                const partNumbers = JSON.parse(part);
+                return [
+                    partNumbers.join(' | '),
+                    count,
+                    parts_templates?.find(
+                        item => item.material_number === partNumbers[0]
+                    )?.description_eng ?? "—",
+                    parts_templates?.find(
+                        item => item.material_number === partNumbers[0]
+                    )?.description_orginall ?? "—",
+                ];
+            }),
             columnStyles: {
-                0: { cellWidth: 55 },
-                1: { halign: "center", cellWidth: 28 },
-                2: { cellWidth: "auto", textColor: C.subhead },
+                0: { cellWidth: 30 },
+                1: { halign: "center", cellWidth: 20 },
+                2: { cellWidth: "auto" },
+                3: { cellWidth: "auto" },
             },
             margin: { left: ML, right: MR },
         });
@@ -345,12 +340,11 @@ export const generateShiftReport = async ({
             autoTable(doc, {
                 ...amzTable(C.red),
                 startY: saveY,
-                head: [["Robot", "Time", "Previous Status"]],
+                head: [["Robot", "Time"]],
                 body: wentOffline.map(r => [r.robot, r.time, r.from]),
                 columnStyles: {
-                    0: { cellWidth: 30 },
-                    1: { halign: "center", cellWidth: 18 },
-                    2: { cellWidth: "auto", textColor: C.subhead },
+                    0: { cellWidth: 'auto' },
+                    1: { halign: "center", cellWidth: 'auto' },
                 },
                 margin: { left: ML, right: PW - ML - COL_W },
             });
@@ -365,12 +359,11 @@ export const generateShiftReport = async ({
             autoTable(doc, {
                 ...amzTable(C.green),
                 startY: saveY,
-                head: [["Robot", "Time", "Previous Status"]],
+                head: [["Robot", "Time"]],
                 body: wentOnline.map(r => [r.robot, r.time, r.from]),
                 columnStyles: {
-                    0: { cellWidth: 30 },
-                    1: { halign: "center", cellWidth: 18 },
-                    2: { cellWidth: "auto", textColor: C.subhead },
+                    0: { cellWidth: 'auto' },
+                    1: { halign: "center", cellWidth: 'auto' },
                 },
                 margin: { left: COL_R, right: MR },
             });

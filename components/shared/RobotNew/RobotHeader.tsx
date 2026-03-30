@@ -210,7 +210,7 @@ const RobotHeader = ({robot}: { robot: IRobot }) => {
                                                                         <div className="flex items-center gap-2">
                                                                             <Avatar className="h-8 w-8 hidden md:block">
                                                                                 <AvatarImage
-                                                                                    src={part.user.avatar_url}
+                                                                                    src={part.user.avatar_url ?? ""}
                                                                                     alt={part.user.user_name.substring(0, 2).toUpperCase()}
                                                                                     className="grayscale"
                                                                                 />
@@ -271,19 +271,6 @@ const RobotHeader = ({robot}: { robot: IRobot }) => {
                     </Command>
                 </CommandDialog>
             </div>
-
-            {hasParts &&
-                <Alert className="max-w-full">
-                    <CheckCircle2Icon/>
-                    <AlertTitle>Changed parts</AlertTitle>
-                    <AlertDescription>
-                        <div className={`flex flex-wrap gap-2 items-center`}>
-                            <p>Please don't forget to add this parts in list WeCom</p>
-                            <Badge>GLP-C Spare Parts Inventory 备件管理</Badge>
-                        </div>
-                    </AlertDescription>
-                </Alert>
-            }
         </div>
     );
 };

@@ -149,7 +149,7 @@ export const useErrorParser = () => {
             if (current_user) {
                 console.log(current_user);
                 currentEmployee = line;
-                user_warehouse = getUserWarehouse(current_user.warehouse);
+                user_warehouse = getUserWarehouse(current_user.warehouse ?? "");
                 return;
             }
 

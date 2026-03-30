@@ -1,5 +1,9 @@
-export const getRobotsList = async () => {
-    const res = await fetch(`/api/robots/get-robots-list`, {
+import {IUserSession} from "@/types/Session/Session";
+
+export const getRobotsList = async (session: IUserSession | null) => {
+    if (!session) throw new Error("Session not found");
+
+    const res = await fetch(`/api/robots/get-robots-list?warehouse=${session.warehouse.title}`, {
         method: 'GET',
         headers: {
             "Content-Type": "application/json"
@@ -10,6 +14,5 @@ export const getRobotsList = async () => {
         throw new Error(`Could not get all shifts (status: ${res.status})`);
     }
 
-    const response = await res.json();
-    return response; // optional but usually useful
+    return await res.json();
 };

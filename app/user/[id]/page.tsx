@@ -75,10 +75,8 @@ const UserProfilePage = ({isOwn = false}: { isOwn: boolean }) => {
                 <div className="absolute -top-12 -left-12 w-48 h-48 rounded-full bg-primary/10 blur-3xl"/>
             </div>
 
-            {/* ── Profile content */}
-            <div className={`grid md:grid-cols-2 gap-2 p-4 backdrop-blur-sm`}>
+            <div className={`grid md:grid-cols-2 gap-2 backdrop-blur-sm mt-2`}>
                 <div className="mx-auto w-full px-4 pb-16">
-                    {/* Avatar — overlaps banner */}
                     <div className="relative -mt-14 mb-4 flex items-end justify-between">
                         <div className="relative">
                             <div
@@ -156,7 +154,9 @@ const UserProfilePage = ({isOwn = false}: { isOwn: boolean }) => {
                     </div>
                 </div>
 
-                <UserHistory user={user} />
+                <div className={`p-4 overflow-hidden`}>
+                    <UserHistory user={user} />
+                </div>
             </div>
         </div>
     );

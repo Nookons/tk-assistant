@@ -3,7 +3,7 @@ import {Eye, EyeOff, IdCardLanyard, InfoIcon, KeyRound, Loader, Lock, User} from
 import {Input} from "@/components/ui/input";
 import {Button} from "@/components/ui/button";
 import {useMutation} from "@tanstack/react-query";
-import {supabase} from "@/lib/supabaseClient";
+import {supabase} from "@/lib/supabase/client";
 import {AuthService} from "@/services/authService";
 import {useUserStore} from "@/store/user";
 import {useRouter} from "next/navigation";

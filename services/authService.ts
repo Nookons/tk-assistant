@@ -1,5 +1,5 @@
 import {IUser} from "@/types/user/user";
-import {supabase} from "@/lib/supabaseClient";
+import {supabase} from "@/lib/supabase/client";
 
 export class AuthService {
 
@@ -70,38 +70,32 @@ export class AuthService {
     }
 
     static async loginWithCard(cardId: string, password: string) {
-        const user = await this.getUserByCardId(cardId);
+        const user = await this.getUserByCardId(cardId)
+        if (!user) throw new Error('Invalid card ID')
 
-        if (!user) {
-            throw new Error('Invalid card ID');
-        }
-
-        let email;
-
-        if (!user.email || user.email.includes('@company.local')) {
-            email = `${cardId}@company.local`;
-        } else {
-            email = user.email;
-        }
+        const email = !user.email || user.email.includes('@company.local')
+            ? `${cardId}@company.local`
+            : user.email
 
         const { data, error } = await supabase.auth.signInWithPassword({
-            email: email,
-            password: password,
-        });
+            email,
+            password,
+        })
 
-        if (error) {
-            throw new Error(error.message);
-        }
+        if (error) throw new Error(error.message)
 
         await supabase
             .from('employees')
             .update({ last_login_at: new Date().toISOString() })
-            .eq('id', user.id);
+            .eq('id', user.id)
+
+
+        console.log(data);
 
         return {
             user: data.user,
             session: data.session,
-        };
+        }
     }
 
     static async getCurrentUser(): Promise<IUser & { auth_email: string } | null> {
@@ -180,30 +174,38 @@ export class AuthService {
     }
 
     static async changePassword(newPassword: string): Promise<boolean> {
-        const { data: { user }, error: userError } = await supabase.auth.getUser();
+        const { data: { user }, error: userError } = await supabase.auth.getUser()
 
         if (userError || !user) {
-            throw new Error('Not authenticated');
+            throw new Error('Not authenticated')
         }
 
         const { error } = await supabase.auth.updateUser({
             password: newPassword,
-        });
+        })
 
         if (error) {
-            throw new Error('Password update failed');
+            throw new Error('Password update failed')
         }
 
         await supabase
             .from('employees')
-            .update({ updated_at: new Date().toISOString() })
-            .eq('auth_id', user.id);
+            .update({
+                password_changed: true,
+                must_change_password: false,
+                updated_at: new Date().toISOString(),
+            })
+            .eq('auth_id', user.id)
 
-        return true;
+        return true
     }
 
-    static async logout() {
-        await supabase.auth.signOut();
+    static async logout(employeeId?: number) {
+        if (employeeId) {
+            const { SessionService } = await import('@/services/sessionService')
+            await SessionService.endSession(employeeId)
+        }
+        await supabase.auth.signOut()
     }
 
     static async hasSession(): Promise<boolean> {

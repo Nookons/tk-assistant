@@ -71,7 +71,7 @@ const LocationSheet = ({el, onClose, onUpdate, stockData}: {
 
 
     const visibleItems = el.items.filter(i => i.total_quantity > 0);
-    const locationLabel = el.location.split('-')[1]?.toUpperCase() ?? el.location;
+    const locationLabel = el.location.split('-').pop()?.toUpperCase() ?? el.location;
     const warehouseName = el.items[0]?.warehouse ?? '';
 
     const deleteHandle = async (item: LocationItem) => {
@@ -127,7 +127,7 @@ const LocationSheet = ({el, onClose, onUpdate, stockData}: {
                                                 <div className={`pt-2`}>
                                                     <Link
                                                         className="text-blue-500 hover:underline font-medium"
-                                                        href="#"
+                                                        href={`/stock-item/${item.material_number}`}
                                                     >
                                                         {item.material_number}
                                                     </Link>

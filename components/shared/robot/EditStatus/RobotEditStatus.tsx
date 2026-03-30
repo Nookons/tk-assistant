@@ -145,11 +145,12 @@ const ACTION_CONFIGS: Record<ActionType, ActionConfig> = {
 };
 
 interface RobotStatusDialogProps {
+    isEdit?: boolean;
     currentRobot: IRobot;
     actionType: ActionType;
 }
 
-const RobotStatusDialog: React.FC<RobotStatusDialogProps> = ({currentRobot, actionType}) => {
+const RobotStatusDialog: React.FC<RobotStatusDialogProps> = ({isEdit = false, currentRobot, actionType}) => {
     const config = ACTION_CONFIGS[actionType];
     const Icon = config.icon;
 
@@ -196,12 +197,10 @@ const RobotStatusDialog: React.FC<RobotStatusDialogProps> = ({currentRobot, acti
         try {
             setIsLoading(true);
 
-            // Определяем данные для обновления робота
             const robotUpdateData = config.clearIssueOnSubmit
                 ? { type_problem: '', problem_note: '' }
                 : { type_problem: issueType, problem_note: issueNote };
 
-            // Параллельное выполнение запросов
             const [statusResponse] = await Promise.all([
                 changeRobotStatus({
                     robot_id: currentRobot.id,
@@ -227,7 +226,6 @@ const RobotStatusDialog: React.FC<RobotStatusDialogProps> = ({currentRobot, acti
                 throw new Error("User not found");
             }
 
-            // Обновление локального состояния
             setNewStatus(currentRobot.id, config.newStatus, {
                 id: dayjs().valueOf(),
                 add_by: currentUser?.card_id || 0,
@@ -259,10 +257,15 @@ const RobotStatusDialog: React.FC<RobotStatusDialogProps> = ({currentRobot, acti
     return (
         <Dialog open={isOpen} onOpenChange={setIsOpen}>
             <DialogTrigger asChild>
-                <div className={`flex gap-2 items-center w-full cursor-pointer`}>
-                    {offline ? <Construction/> : <Construction/>}
-                    {config.buttonFullWidth && config.buttonText}
-                </div>
+                {isEdit
+                ?
+                    <Button><Pencil /> Edit</Button>
+                :
+                    <div className={`flex gap-2 items-center w-full cursor-pointer`}>
+                        {offline ? <Construction/> : <Construction/>}
+                        {config.buttonFullWidth && config.buttonText}
+                    </div>
+                }
             </DialogTrigger>
 
             <DialogContent className="sm:max-w-[425px]">
@@ -335,7 +338,7 @@ const RobotStatusDialog: React.FC<RobotStatusDialogProps> = ({currentRobot, acti
                             type="submit"
                             disabled={isLoading || !issueType}
                         >
-                            {isLoading ? 'Sending...' : config.buttonText}
+                            {isLoading ? 'Sending...' : isEdit ? "Save" : config.buttonText}
                         </Button>
                     </DialogFooter>
                 </form>
