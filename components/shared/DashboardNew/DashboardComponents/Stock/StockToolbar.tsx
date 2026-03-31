@@ -40,13 +40,13 @@ export function StockToolbar({
                     :
                     <>
                         {data &&
-                            <Tabs value={pickedWarehouse} onValueChange={onWarehouse}>
+                            <Tabs className={`flex-wrap`} value={pickedWarehouse} onValueChange={onWarehouse}>
                                 <TabsList className="h-9">
-                                    <TabsTrigger key={'999'} value={'All'} className="text-xs px-3">
+                                    <TabsTrigger key={'999'} value={'All'} className="text-[10px] md:text-xs px-3">
                                         All
                                     </TabsTrigger>
                                     {data.map(w => (
-                                        <TabsTrigger key={w.id} value={w.title} className="text-xs px-3">
+                                        <TabsTrigger key={w.id} value={w.title} className="text-[10px] md:text-xs px-3">
                                             {w.title}
                                         </TabsTrigger>
                                     ))}

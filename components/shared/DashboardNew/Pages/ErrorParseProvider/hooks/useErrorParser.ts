@@ -147,17 +147,11 @@ export const useErrorParser = () => {
             const current_user = users.find((u) => u.user_name.toLowerCase() === line.toLowerCase());
 
             if (current_user) {
-                console.log(current_user);
                 currentEmployee = line;
-                user_warehouse = getUserWarehouse(current_user.warehouse ?? "");
+                user_warehouse = current_user.warehouse ?? "GLP-C";
                 return;
             }
 
-            console.log(currentEmployee);
-            console.log(user_warehouse);
-            console.log(line);
-
-            //console.log([...line].map(c => c + ' = ' + c.charCodeAt(0)));
             const parts = line.trim().split(/[.,]/).map(s => s.trim());
 
             if (user_warehouse === 'P3') {

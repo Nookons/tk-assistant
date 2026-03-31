@@ -155,7 +155,7 @@ const SearchStockTemplate = () => {
                 </div>
             ) : (
                 <>
-                    <div className={`grid ${pageData.length === 1 ? 'grid-cols-1' : 'grid-cols-2 md:grid-cols-4'} gap-2`}>
+                    <div className={`grid ${pageData.length === 1 ? 'grid-cols-1' : 'grid-cols-1 md:grid-cols-4'} gap-2`}>
                         {pageData.map((part) => (
                             <StockItemPreview key={part.material_number} data={part}/>
                         ))}
