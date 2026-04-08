@@ -18,14 +18,13 @@ interface ExceptionDisplayProps {
 }
 
 const ExceptionDisplay = ({date, setException_data}: ExceptionDisplayProps) => {
-    // ✅ Хуки ВСЕГДА вверху — до любых ранних return
     const [page,        setPage]        = useState<number>(1);
     const [items_count, setItems_count] = useState<number>(25);
 
     const {data, isLoading, isError} = useQuery({
         queryKey: ['month-report-exception', date],
         queryFn:  () => getMonthExceptions(dayjs(date!).format("YYYY-MM")),
-        enabled:  !!date, // ✅ вместо if (!date) return null перед хуками
+        enabled:  !!date,
         retry: 3,
     });
 
@@ -33,7 +32,6 @@ const ExceptionDisplay = ({date, setException_data}: ExceptionDisplayProps) => {
         setException_data(data ?? []);
     }, [data]);
 
-    // ✅ Ранний return — только после всех хуков
     if (!date) return null;
 
     const max_page    = Math.ceil((data?.length ?? 0) / items_count);

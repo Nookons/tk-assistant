@@ -59,9 +59,9 @@ const UsedPartsStats = () => {
         : null;
 
     const TrendIcon = diff > 0 ? TrendingUp : diff < 0 ? TrendingDown : Minus;
-    const trendColor = diff > 0
+    const trendColor = diff < 0
         ? "text-destructive"
-        : diff < 0
+        : diff > 0
             ? "text-emerald-500"
             : "text-muted-foreground";
 
@@ -91,7 +91,7 @@ const UsedPartsStats = () => {
                             <div className={`flex items-center gap-1 mb-1 ${trendColor}`}>
                                 <TrendIcon size={14}/>
                                 <span className="text-xs font-medium">
-                                    {diff > 0 ? "+" : ""}{diffPercent}%
+                                    {diff < 0 ? "+" : ""}{diffPercent}%
                                 </span>
                             </div>
                         )}

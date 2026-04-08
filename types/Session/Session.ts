@@ -1,4 +1,5 @@
 import {IWarehouse} from "@/types/Warehouse/Warehouse";
+import {IUser} from "@/types/user/user";
 
 export interface IUserSession {
     id: number
@@ -10,4 +11,5 @@ export interface IUserSession {
     created_by: number | null
     warehouse_sessions: string
     warehouse: IWarehouse
+    user: IUser
 }

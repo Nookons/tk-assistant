@@ -24,6 +24,29 @@ export class ExceptionService {
         return id;
     }
 
+    static async addException(data: Partial<IRobotException>): Promise<IRobotException> {
+        if (!data || typeof data !== 'object') {
+            throw new Error('Invalid exception data');
+        }
+
+        const { data: response, error } = await supabase
+            .from('exceptions_glpc')
+            .insert(data)
+            .select('*')
+            .single();
+
+        if (error) {
+            console.error('Add exception error:', error);
+            throw new Error(`Failed to add exception: ${error.message}`);
+        }
+
+        if (!response) {
+            throw new Error('Insert succeeded but no data returned');
+        }
+
+        return response;
+    }
+
     static async createTemplate(data: Omit<IIssueTemplate, "id" | "created_at" | "updated_at" | "updated_by">): Promise<IIssueTemplate | null> {
         const { data: template, error } = await supabase
             .from('issue_templates')
@@ -48,14 +71,14 @@ export class ExceptionService {
             supabase
                 .from('exceptions_glpc')
                 .select('*', { count: 'exact', head: true })
-                .gte('created_at', currentMonthStart)
+                .gte('error_start_time', currentMonthStart)
                 .eq('warehouse', warehouse),
 
             supabase
                 .from('exceptions_glpc')
                 .select('*', { count: 'exact', head: true })
-                .gte('created_at', prevMonthStart)
-                .lte('created_at', prevMonthEnd)
+                .gte('error_start_time', prevMonthStart)
+                .lte('error_start_time', prevMonthEnd)
                 .eq('warehouse', warehouse),
         ]);
 
@@ -71,7 +94,7 @@ export class ExceptionService {
         const { data, error }= await supabase
                 .from('exceptions_glpc')
                 .select('*')
-                .gte('created_at', currentMonthStart)
+                .gte('error_start_time', currentMonthStart)
                 .eq('warehouse', warehouse)
                 .limit(5000)
 

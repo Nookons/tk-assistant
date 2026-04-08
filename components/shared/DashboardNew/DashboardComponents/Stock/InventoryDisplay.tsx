@@ -21,9 +21,10 @@ import { useUserStore } from '@/store/user';
 import { IStockItemTemplate } from '@/types/stock/StockItem';
 import { toast } from 'sonner';
 import {WAREHOUSES} from "@/lib/Warehouses";
+import {useSessionStore} from "@/store/session";
+import {IUserSession} from "@/types/Session/Session";
 
 
-type WarehouseValue = typeof WAREHOUSES[number];
 const TEMPLATE_DEBOUNCE_MS = 100;
 
 
@@ -31,14 +32,13 @@ interface StockFormValues {
     location:  string;
     selected:  string;
     quantity:  string;
-    warehouse: WarehouseValue;
+    session:  IUserSession | null;
 }
 
 interface StockFormHandlers {
     onLocationChange:  (v: string) => void;
     onSelectedChange:  (v: string) => void;
     onQuantityChange:  (v: string) => void;
-    onWarehouseChange: (v: WarehouseValue) => void;
     onSubmit:          () => void;
 }
 
@@ -51,7 +51,6 @@ interface StockFormState {
 
 type StockFormProps = StockFormValues & StockFormHandlers & StockFormState;
 
-// ─── Field wrapper ────────────────────────────────────────────────────────────
 
 interface FieldProps {
     label:     string;
@@ -110,11 +109,11 @@ const StockForm = ({
                        location, onLocationChange,
                        selected, onSelectedChange,
                        quantity, onQuantityChange,
-                       warehouse, onWarehouseChange,
                        pickedTemplate, isLoadingTemplate,
                        isSubmitting, canInteract,
-                       onSubmit,
+                       onSubmit, session
                    }: StockFormProps) => {
+
     const handleQuantityChange = (e: React.ChangeEvent<HTMLInputElement>) => {
         const v = e.target.value;
         if (v === '' || /^\d+$/.test(v)) onQuantityChange(v);
@@ -123,7 +122,6 @@ const StockForm = ({
     return (
         <div className="space-y-5 p-4 sm:p-5">
 
-            {/* Step 1 — Location */}
             <section className="space-y-3" aria-label="Step 1: Location">
                 <Step n={1} label="Location" />
                 <Field
@@ -151,7 +149,6 @@ const StockForm = ({
 
             <Separator />
 
-            {/* Step 2 — Material */}
             <section
                 aria-label="Step 2: Material"
                 aria-disabled={!canInteract}
@@ -183,7 +180,6 @@ const StockForm = ({
 
             <Separator />
 
-            {/* Step 3 — Quantity & Warehouse */}
             <section
                 aria-label="Step 3: Quantity and Warehouse"
                 aria-disabled={!canInteract}
@@ -213,53 +209,36 @@ const StockForm = ({
                             />
                         </div>
                     </Field>
-
-                    <Field label="Warehouse" required>
-                        <Select value={warehouse} onValueChange={onWarehouseChange}>
-                            <SelectTrigger className="w-full mt-2" aria-label="Select warehouse">
-                                <Warehouse
-                                    size={14}
-                                    className="mr-1 shrink-0 text-muted-foreground"
-                                    aria-hidden="true"
-                                />
-                                <SelectValue placeholder="Select" />
-                            </SelectTrigger>
-                            <SelectContent>
-                                <SelectGroup>
-                                    <SelectLabel>Available</SelectLabel>
-                                    {WAREHOUSES.slice(1).map(w => (
-                                        <SelectItem key={w} value={w}>
-                                            {w}
-                                        </SelectItem>
-                                    ))}
-                                </SelectGroup>
-                            </SelectContent>
-                        </Select>
+                    <Field label="Save">
+                        <div className={`mt-1`}>
+                            <Button
+                                onClick={onSubmit}
+                                disabled={isSubmitting || !canInteract}
+                                className="w-full"
+                                size="lg"
+                                aria-busy={isSubmitting}
+                            >
+                                {isSubmitting ? (
+                                    <>
+                                        <Loader2 size={15} className="mr-2 animate-spin" aria-hidden="true" />
+                                        Adding to stock…
+                                    </>
+                                ) : (
+                                    <>
+                                        <PackagePlus size={15} className="mr-2" aria-hidden="true" />
+                                        Add to Stock
+                                    </>
+                                )}
+                            </Button>
+                            <div className={`text-right mt-2`}>
+                                <p className={`text-xs`}>{session?.warehouse.address}</p>
+                                <p className={`text-xs`}>{session?.user.user_name} - {session?.user.card_id}</p>
+                                <p className={`text-xs`}>{session?.warehouse.title}</p>
+                            </div>
+                        </div>
                     </Field>
                 </div>
             </section>
-
-            <Separator />
-
-            <Button
-                onClick={onSubmit}
-                disabled={isSubmitting || !canInteract}
-                className="w-full"
-                size="lg"
-                aria-busy={isSubmitting}
-            >
-                {isSubmitting ? (
-                    <>
-                        <Loader2 size={15} className="mr-2 animate-spin" aria-hidden="true" />
-                        Adding to stock…
-                    </>
-                ) : (
-                    <>
-                        <PackagePlus size={15} className="mr-2" aria-hidden="true" />
-                        Add to Stock
-                    </>
-                )}
-            </Button>
         </div>
     );
 };
@@ -283,12 +262,12 @@ const PageHeader = () => (
     </header>
 );
 
-// ─── Root component ───────────────────────────────────────────────────────────
 
 const InventoryDisplay = () => {
+    const session = useSessionStore(state => state.currentSession)
+
     const [selected,  setSelected]  = useState('');
     const [location,  setLocation]  = useState('');
-    const [warehouse, setWarehouse] = useState<WarehouseValue>('GLPC');
     const [quantity,  setQuantity]  = useState('');
 
     const [isSubmitting,      setIsSubmitting]      = useState(false);
@@ -299,7 +278,6 @@ const InventoryDisplay = () => {
     const itemsTemplates   = useStockStore(state => state.items_templates);
     const addItemToHistory = useStockStore(state => state.add_item_to_history);
 
-    // ── Template lookup with debounce ────────────────────────────────────────
 
     useEffect(() => {
         if (!selected || !Array.isArray(itemsTemplates)) {
@@ -318,17 +296,18 @@ const InventoryDisplay = () => {
         return () => clearTimeout(timer);
     }, [selected, itemsTemplates]);
 
-    // ── Submit ───────────────────────────────────────────────────────────────
 
     const handleSubmit = useCallback(async () => {
         if (!pickedTemplate) return;
+        if (!session) return;
+        if (!currentUser) return;
 
         setIsSubmitting(true);
         try {
             const payload = {
-                card_id:         currentUser?.card_id,
+                card_id:         session.user.card_id,
                 material_number: pickedTemplate.material_number,
-                warehouse,
+                warehouse:       session.warehouse.title,
                 quantity:        Number(quantity),
                 location,
             };
@@ -345,9 +324,8 @@ const InventoryDisplay = () => {
         } finally {
             setIsSubmitting(false);
         }
-    }, [pickedTemplate, currentUser, warehouse, quantity, location, addItemToHistory]);
+    }, [pickedTemplate, currentUser, session, quantity, location, addItemToHistory]);
 
-    // ── Derived ──────────────────────────────────────────────────────────────
 
     const canInteract = location.trim().length > 0;
 
@@ -355,37 +333,20 @@ const InventoryDisplay = () => {
         location,  onLocationChange:  setLocation,
         selected,  onSelectedChange:  setSelected,
         quantity,  onQuantityChange:  setQuantity,
-        warehouse, onWarehouseChange: setWarehouse,
         pickedTemplate,
         isLoadingTemplate,
         isSubmitting,
         canInteract,
         onSubmit: handleSubmit,
+        session: session
     };
 
-    /**
-     * Layout model
-     * ─────────────────────────────────────────────────────────────────────────
-     * Root          h-dvh  flex flex-col
-     *   Header      shrink-0
-     *   Content     flex-1  min-h-0          ← min-h-0 is critical: without it,
-     *                                          a flex child never shrinks below
-     *                                          its content height, so overflow
-     *                                          never triggers.
-     *     Mobile    flex flex-col h-full
-     *       TabBar  shrink-0
-     *       Panel   flex-1  min-h-0  overflow-y-auto   ← actual scroll container
-     *     Desktop   grid cols h-full
-     *       Left    overflow-y-auto
-     *       Right   overflow-y-auto
-     */
     return (
         <div className="flex flex-col h-dvh w-full overflow-hidden">
             <PageHeader />
 
             <div className="flex-1 min-h-0">
 
-                {/* Mobile (< md) */}
                 <div className="md:hidden flex flex-col h-full">
                     <Tabs defaultValue="form" className="flex flex-col h-full">
                         <TabsList className="w-full rounded-none h-10 bg-muted/40 border-b shrink-0">
@@ -421,7 +382,6 @@ const InventoryDisplay = () => {
                     </Tabs>
                 </div>
 
-                {/* Desktop (≥ md) */}
                 <div className="hidden md:grid md:grid-cols-[520px_1fr] h-full divide-x">
                     <div className="overflow-y-auto">
                         <StockForm {...formProps} />

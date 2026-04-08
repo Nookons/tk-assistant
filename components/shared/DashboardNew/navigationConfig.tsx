@@ -15,9 +15,9 @@ import ReportsDisplay from "@/components/shared/DashboardNew/Pages/ReportsDispla
 import EmployeesDisplay from "@/components/shared/DashboardNew/Pages/EmployeesDisplay";
 import RobotsDisplay from "@/components/shared/DashboardNew/Pages/RobotsDisplay";
 import SettingsDisplay from "@/components/shared/DashboardNew/Pages/SettingsDisplay";
-import ErrorParseProvider from "@/components/shared/DashboardNew/Pages/ErrorParseProvider";
 import PartsCatalogue from "@/components/shared/DashboardNew/Pages/PartsCatalogue";
 import Docs from "@/components/shared/DashboardNew/Pages/Docs";
+import ErrorParse from "@/components/shared/DashboardNew/Pages/ErrorParse";
 
 interface NavItem {
     id: string;
@@ -44,7 +44,7 @@ export const PAGE_REGISTRY: Record<string, React.ComponentType<any>> = {
     reports:    ReportsDisplay,
     robots:    RobotsDisplay,
     settings:    SettingsDisplay,
-    error_parse:    ErrorParseProvider,
+    error_parse:    ErrorParse,
     docs:    Docs,
     parts_catalogue:    PartsCatalogue,
 };

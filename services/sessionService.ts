@@ -8,7 +8,7 @@ export class SessionService {
 
         const { data: activeSub } = await supabase
             .from('worker_sessions')
-            .select('*')                           // ← было только warehouse_id
+            .select('*, user:employee_id(*)')
             .eq('employee_id', employeeId)
             .lte('started_at', new Date().toISOString())
             .or(`ended_at.is.null,ended_at.gt.${new Date().toISOString()}`)
@@ -32,7 +32,7 @@ export class SessionService {
                 status: 'active',
                 warehouse_sessions: warehouse_title,
             })
-            .select('*')
+            .select('*, user:employee_id(*)')
             .single()
 
         if (error) throw new Error(`Error to create session: ${error.message}`)
@@ -50,7 +50,7 @@ export class SessionService {
 
         const { data: session, error } = await supabase
             .from('worker_sessions')
-            .select('*, warehouse:warehouse_id(*)')
+            .select('*, warehouse:warehouse_id(*), user:employee_id(*)')
             .eq('employee_id', user.id)
             .eq('status', 'active')
             .order('started_at', { ascending: false })  // вместо created_at

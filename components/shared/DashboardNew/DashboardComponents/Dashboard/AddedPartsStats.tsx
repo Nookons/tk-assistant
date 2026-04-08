@@ -62,7 +62,7 @@ const AddedPartsStats = () => {
     const TrendIcon = diff > 0 ? TrendingUp : diff < 0 ? TrendingDown : Minus;
     const trendColor = diff < 0
         ? "text-destructive"
-        : diff > 0
+        : diff < 0
             ? "text-emerald-500"
             : "text-muted-foreground";
 

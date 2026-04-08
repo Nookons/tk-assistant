@@ -18,4 +18,7 @@ export interface IRobotException {
     uniq_key: string;
     shift_type: 'day' | 'night' | string;
     user: IUser;
+    issue_data?: string;
+    issue_warehouse?: string;
+    warehouse?: string;
 }

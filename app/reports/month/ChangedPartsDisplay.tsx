@@ -24,7 +24,6 @@ const ChangedPartsDisplay = ({date, setChanged_parts_data}: ChangedPartsDisplayP
 
     const month_parts = useMemo<IMonthParts[]>(() => {
         if (!robots_store || !date) return [];
-
         const result: IMonthParts[] = [];
         const targetMonth = dayjs(date).format("YYYY-MM");
 
@@ -33,6 +32,9 @@ const ChangedPartsDisplay = ({date, setChanged_parts_data}: ChangedPartsDisplayP
 
             for (const part of robot.parts_history) {
                 if (dayjs(part.created_at).format("YYYY-MM") !== targetMonth) continue;
+
+                console.log(part);
+
 
                 let changed_parts: string[] = [];
                 try {
