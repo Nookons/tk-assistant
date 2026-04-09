@@ -16,6 +16,9 @@ import Link from "next/link";
 import {Button} from "@/components/ui/button";
 import {Empty, EmptyHeader, EmptyTitle} from "@/components/ui/empty";
 import TemplateEditDialog from "@/components/shared/Stock/TemplateEditDialog";
+import {Card, CardContent, CardHeader, CardTitle} from "@/components/ui/card";
+import {Avatar, AvatarFallback, AvatarImage} from "@/components/ui/avatar";
+import {format} from "date-fns";
 
 function Row({label, value}: { label: string; value?: string | number | null }) {
     if (value === null || value === undefined || value === "") return null;
@@ -94,90 +97,68 @@ function UsageHistorySkeleton({material_number}: { material_number: string }) {
     );
 
     return (
-        <div className="border rounded-xl overflow-hidden">
-            <SectionTitle title="Usage History"/>
-
-            <div className="divide-y">
-                {sorted_data.map((item, i) => {
+        <Card>
+            <CardContent className="space-y-4">
+                {sorted_data.map((item) => {
                     const isNegative = item.quantity < 0;
-
                     return (
                         <div
                             key={item.id}
-                            className="flex gap-3 px-4 py-4"
+                            className="flex flex-col sm:flex-row sm:items-start gap-3 pb-4 last:pb-0 border-b last:border-0"
                         >
-                            {/* Avatar */}
-                            <div className="w-12 h-12 rounded-full overflow-hidden bg-muted shrink-0">
-                                {item.user.avatar_url ? (
-                                    <img
-                                        src={item.user.avatar_url}
-                                        alt={item.user.user_name}
-                                        className="w-full h-full object-cover"
-                                    />
-                                ) : (
-                                    <div className="flex items-center justify-center h-full text-xs">
-                                        {item.user.user_name?.[0]}
-                                    </div>
-                                )}
-                            </div>
-
-                            <div className="flex-1 space-y-1">
-                                <div className="flex items-center justify-between">
-                                    <div className="flex flex-col gap-1 items-start justify-between">
-                                        <p
-                                            className={`text-sm font-semibold ${
-                                                isNegative ? "text-red-500" : "text-green-500"
+                            <div className="grid grid-cols-3 gap-2 w-full items-center">
+                                <div className="flex items-center gap-2">
+                                        <span
+                                            className={`text-base font-semibold ${
+                                                isNegative ? "text-red-500" : "text-green-600"
                                             }`}
                                         >
                                             {isNegative ? "" : "+"}
                                             {item.quantity}
-                                        </p>
-                                        <div
-                                            className="text-sm text-muted-foreground flex items-center flex-wrap gap-2">
-                                            <p className="text-sm font-medium">
-                                                {item.user.user_name}
-                                            </p>
-                                        </div>
+                                        </span>
+                                    <Separator orientation={`vertical`}/>
+                                    <div className={`flex items-center gap-2`}>
+                                        <span className="text-sm text-muted-foreground">
+                                          {item.user.user_name}
+                                        </span>
                                     </div>
-                                    <div className={`flex flex-col items-end gap-2`}>
-                                        <div className={`flex items-center gap-4`}>
-                                            <Link className={`flex items-center gap-2 hover:underline`}
-                                                  href={`#`}>
-                                                <Warehouse size={16}/>
-                                                <span>{item.warehouse}</span>
-                                            </Link>
-                                            {item.location &&
-                                                <Link className={`flex items-center gap-2 hover:underline`}
-                                                      href={`/stock/cell?location=${item.warehouse.toLowerCase()}-${item.location.toLowerCase()}&warehouse=${item.warehouse}`}>
-                                                    <Locate size={16}/>
-                                                    {item.location}
-                                                </Link>
-                                            }
-                                            {item.robot_data && (
-                                                <Link className={`flex items-center gap-2 hover:underline`}
-                                                      href={`/robot/${item.robot_data.id}`}>
-                                                    <Bot size={16}/>
-                                                    <span>{item.robot_data.robot_number}</span>
-                                                </Link>
-                                            )}
+                                </div>
+                                <div className="flex flex-wrap gap-x-4 gap-y-1 text-sm">
+                                    {item.location && (
+                                        <div className="flex items-center gap-1 text-muted-foreground">
+                                            <Locate size={14}/>
+                                            <span className={`text-foreground font-medium`}>{item.location}</span>
                                         </div>
-
-                                        <p className="text-xs text-muted-foreground">
-                                            {dayjs(item.created_at).format("DD MMM YYYY, HH:mm")}
-                                        </p>
-                                    </div>
+                                    )}
+                                    {item.robot_data && (
+                                        <div className="flex items-center gap-1 text-muted-foreground">
+                                            <Bot size={14}/>
+                                            <span className={`text-foreground font-medium`}>{item.robot_data.robot_number}</span>
+                                        </div>
+                                    )}
+                                </div>
+                                <div className={`flex items-center gap-4 justify-end`}>
+                                    <span className="text-xs text-right text-muted-foreground">
+                                        {format(new Date(item.created_at), "dd MMM yyyy, HH:mm")}
+                                    </span>
+                                    {item.warehouse && (
+                                        <div className="flex items-center gap-1 text-muted-foreground">
+                                            <Warehouse size={14}/>
+                                            <span>{item.warehouse}</span>
+                                        </div>
+                                    )}
                                 </div>
                             </div>
                         </div>
                     );
                 })}
-            </div>
-        </div>
+            </CardContent>
+        </Card>
     );
 }
 
-function StockSlots({ material_number }: { material_number: string }) {
-    const { data, isLoading, isError } = useQuery({
+function StockSlots({material_number}: { material_number: string }) {
+    const {data, isLoading, isError} = useQuery({
         queryKey: [`stock-item-slots-${material_number}`],
         queryFn: () => TemplateService.getTemplateStockSlots(material_number),
         enabled: !!material_number,
@@ -203,7 +184,7 @@ function StockSlots({ material_number }: { material_number: string }) {
 
     return (
         <div className="border rounded-xl overflow-hidden">
-            <SectionTitle title="Stock Locations" />
+            <SectionTitle title="Stock Locations"/>
 
             <div className="divide-y">
                 {sorted_data.map((slot) => (
@@ -215,13 +196,13 @@ function StockSlots({ material_number }: { material_number: string }) {
                         {/* Left */}
                         <div className="flex flex-col gap-1">
                             <div className="flex items-center gap-2 text-sm font-medium">
-                                <Warehouse size={16} />
+                                <Warehouse size={16}/>
                                 <span>{slot.warehouse}</span>
                             </div>
 
                             {slot.location && (
                                 <div className="flex items-center gap-2 text-xs text-muted-foreground">
-                                    <Locate size={14} />
+                                    <Locate size={14}/>
                                     <span>{slot.location}</span>
                                 </div>
                             )}
@@ -287,7 +268,7 @@ const Page = () => {
                         )}
 
                         <div>
-                            <StockSlots material_number={itemId} />
+                            <StockSlots material_number={itemId}/>
                         </div>
                     </div>
 

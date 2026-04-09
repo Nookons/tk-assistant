@@ -8,6 +8,7 @@ import CreateNewStockTemplate from "@/components/shared/Stock/CreateNewStockTemp
 import {Badge} from "@/components/ui/badge";
 import {Button} from "@/components/ui/button";
 import {PackageSearch, ChevronLeft, ChevronRight} from "lucide-react";
+import {Tabs, TabsList, TabsTrigger} from "@/components/ui/tabs";
 
 const PAGE_SIZE = 20;
 
@@ -17,18 +18,28 @@ const SearchStockTemplate = () => {
     const [value, setValue] = useState<string>("");
     const [page, setPage] = useState<number>(1);
 
+    const [tabs_value, setTabs_value] = useState<string>('ALL')
+
     const filteredData = useMemo<IStockItemTemplate[]>(() => {
         if (!stock_store) return [];
 
+        let baseData = stock_store;
+
+        if (tabs_value !== 'ALL') {
+            baseData = baseData.filter(item =>
+                item.robot_match?.includes(tabs_value)
+            );
+        }
+
         const trimmed = value.trim();
-        if (trimmed.length === 0) return stock_store;
+        if (trimmed.length === 0) return baseData;
 
         const searchTerms = trimmed.toUpperCase().split(/\s+/);
 
-        return stock_store
+        return baseData
             .map(item => {
                 const materialNumber = item.material_number?.toUpperCase() ?? "";
-                const description    = item.description_eng?.toUpperCase()  ?? "";
+                const description    = item.description_eng?.toUpperCase() ?? "";
 
                 const matchCount = searchTerms.filter(term =>
                     materialNumber.includes(term) || description.includes(term)
@@ -38,12 +49,13 @@ const SearchStockTemplate = () => {
                     materialNumber.startsWith(searchTerms[0]) ? 2 :
                         description.startsWith(searchTerms[0])    ? 1 : 0;
 
-                return {item, score: matchCount + startsWithBonus, matchCount};
+                return { item, score: matchCount + startsWithBonus, matchCount };
             })
             .filter(r => r.matchCount === searchTerms.length)
             .sort((a, b) => b.score - a.score)
             .map(r => r.item);
-    }, [value, stock_store]);
+
+    }, [value, stock_store, tabs_value]);
 
     const handleSearch = (e: React.ChangeEvent<HTMLInputElement>) => {
         setValue(e.target.value);
@@ -66,6 +78,14 @@ const SearchStockTemplate = () => {
             <div className={`grid md:grid-cols-[1fr_500px] items-center gap-2 mb-2`}>
                 <div className="flex w-full items-end justify-end gap-2">
                     <CreateNewStockTemplate/>
+                    <Tabs value={tabs_value} onValueChange={(e) => setTabs_value(e)} className="">
+                        <TabsList>
+                            <TabsTrigger value="ALL">ALL</TabsTrigger>
+                            <TabsTrigger value="K50H">K50H</TabsTrigger>
+                            <TabsTrigger value="A42T">A42T</TabsTrigger>
+                            <TabsTrigger value="A42T E2">A42T E2</TabsTrigger>
+                        </TabsList>
+                    </Tabs>
                 </div>
 
                 <div className={`flex flex-col items-end md:flex-row md:items-center justify-end gap-2`}>

@@ -105,13 +105,13 @@ const Exception = ({ data }: { data: IRobotException[] }) => {
                                     <div className="flex items-center gap-2">
                                         <div className="flex items-center gap-2">
                                             <span className="text-sm font-mono font-semibold">
-                                                {dayjs(exception.error_start_time).format("HH:mm")}
+                                                {dayjs(exception.error_start_time).subtract(2, 'h').format("HH:mm")}
                                             </span>
                                         </div>
                                         <MoveRight size={14} />
                                         <div className="flex items-center gap-2">
                                             <span className="text-sm font-mono font-semibold">
-                                                {dayjs(exception.error_end_time).format("HH:mm")}
+                                                {dayjs(exception.error_end_time).subtract(2, 'h').format("HH:mm")}
                                             </span>
                                         </div>
                                     </div>

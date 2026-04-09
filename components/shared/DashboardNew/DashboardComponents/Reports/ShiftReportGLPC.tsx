@@ -192,7 +192,7 @@ const ShiftReportGlpc = () => {
                 <div>
                     {isLoading
                         ? <Skeleton className="w-full h-[60vh]"/>
-                        : <Exception data={exception_data}/>
+                        : <Exception data={exception_data.sort((a,b) => dayjs(b.error_start_time).valueOf() - dayjs(a.error_end_time).valueOf())} />
                     }
                 </div>
 

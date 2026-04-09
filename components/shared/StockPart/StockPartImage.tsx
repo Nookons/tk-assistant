@@ -29,6 +29,7 @@ const StockPartImage = ({avatar_url}: {avatar_url: string}) => {
                 {avatar_url ? (
                     <>
                         <Image
+                            unoptimized
                             key={avatar_url}
                             src={avatar_url}
                             alt="item image"
