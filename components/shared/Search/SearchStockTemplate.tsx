@@ -77,7 +77,9 @@ const SearchStockTemplate = () => {
         <div ref={topRef} className="rounded-xl">
             <div className={`grid md:grid-cols-[1fr_500px] items-center gap-2 mb-2`}>
                 <div className="flex w-full items-end justify-end gap-2">
+
                     <CreateNewStockTemplate/>
+
                     <Tabs value={tabs_value} onValueChange={(e) => setTabs_value(e)} className="">
                         <TabsList>
                             <TabsTrigger value="ALL">ALL</TabsTrigger>

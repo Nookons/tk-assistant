@@ -22,7 +22,8 @@ import {
 } from "@/components/ui/dropdown-menu";
 import {parts_types} from "@/utils/RobotsConsts";
 import utc from "dayjs/plugin/utc";
-import {FilePlus, Plus} from "lucide-react";
+import {ChevronsUpDown, FilePlus, Plus, X} from "lucide-react";
+import {Badge} from "@/components/ui/badge";
 
 dayjs.extend(utc);
 
@@ -142,18 +143,29 @@ const CreateNewStockTemplate = () => {
                                 placeholder="Fork Position Anti-Mistake Sensor"
                             />
                         </div>
-                        <div className={`flex flex-col gap-2`}>
-                            <Label>Robot Type</Label>
+                        <div className="flex flex-col gap-2">
+                            <Label>Part Types</Label>
                             <DropdownMenu>
                                 <DropdownMenuTrigger asChild>
-                                    <Button variant="outline" className="w-full text-left">
-                                        {data.robot_match.length
-                                            ? data.robot_match.join(", ")
-                                            : "Select robot types"}
+                                    <Button
+                                        variant="outline"
+                                        className="w-full justify-between font-normal"
+                                    >
+                                        <span className="truncate text-left">
+                                            {data.robot_match.length
+                                                ? data.robot_match.length === 1
+                                                    ? data.robot_match[0]
+                                                    : `${data.robot_match[0]} +${data.robot_match.length - 1} more`
+                                                : "Select part types"}
+                                        </span>
+                                        <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
                                     </Button>
                                 </DropdownMenuTrigger>
 
-                                <DropdownMenuContent className="w-full">
+                                <DropdownMenuContent
+                                    className="w-[var(--radix-dropdown-menu-trigger-width)]"
+                                    align="start"
+                                >
                                     {parts_types.map(robot => (
                                         <DropdownMenuCheckboxItem
                                             key={robot}
@@ -165,6 +177,23 @@ const CreateNewStockTemplate = () => {
                                     ))}
                                 </DropdownMenuContent>
                             </DropdownMenu>
+
+                            {/* Badges для выбранных значений */}
+                            {data.robot_match.length > 0 && (
+                                <div className="flex flex-wrap gap-1">
+                                    {data.robot_match.map(robot => (
+                                        <Badge
+                                            key={robot}
+                                            variant="secondary"
+                                            className="cursor-pointer gap-1"
+                                            onClick={() => setRobotMatch(robot)}
+                                        >
+                                            {robot}
+                                            <X className="h-3 w-3" />
+                                        </Badge>
+                                    ))}
+                                </div>
+                            )}
                         </div>
                     </div>
                     <DialogFooter className="sm:justify-start">

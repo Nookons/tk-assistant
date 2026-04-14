@@ -79,7 +79,10 @@ const TemplateEditDialog: React.FC<props> = ({part}) => {
     return (
         <AlertDialog>
             <AlertDialogTrigger asChild>
-                <Button className="p-0 m-0" variant="ghost"><Pencil/></Button>
+                <Button className="p-0 m-0" variant="secondary">
+                    <Pencil/>
+                    <span>Edit part</span>
+                </Button>
             </AlertDialogTrigger>
             <AlertDialogContent className="max-w-[95%] p-4">
                 <AlertDialogHeader>

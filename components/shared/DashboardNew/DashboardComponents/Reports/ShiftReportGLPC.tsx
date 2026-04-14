@@ -74,6 +74,10 @@ const ShiftReportGlpc = () => {
         getData.mutate({date, shift_type});
     }, [date, shift_type]);
 
+    useEffect(() => {
+        console.log(exception);
+    }, [exception]);
+
     const handlePDF = async () => {
         if (!date) return;
 

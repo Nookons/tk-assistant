@@ -153,7 +153,7 @@ const RobotHeader = ({robot}: { robot: IRobot }) => {
 
                 <CommandDialog open={open} onOpenChange={setOpen}>
                     <Command>
-                        <CommandInput placeholder="Type a command or search..."/>
+                        <CommandInput className="text-base" placeholder="Type a command or search..."/>
                         <CommandList>
                             <CommandEmpty>No results found.</CommandEmpty>
 

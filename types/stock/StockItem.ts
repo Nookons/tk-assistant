@@ -18,8 +18,8 @@ export interface IStockItemTemplate {
 
 export interface IStockLocationSlot{
     id: number;
-    created_at: Timestamp | string;
-    updated_at: Timestamp | string;
+    created_at: string;
+    updated_at: string;
     quantity: number;
     last_update_by: number;
     material_number: string;

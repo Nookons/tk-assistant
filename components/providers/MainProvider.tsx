@@ -10,6 +10,8 @@ import {Toaster} from "@/components/ui/sonner";
 import Snow from "@/app/snow";
 import {getAllStockHistory} from "@/futures/stock/getAllStockHistory";
 import {useSessionStore} from "@/store/session";
+import {useStockSlots} from "@/store/stock-slots";
+import {StockService} from "@/services/stockService";
 
 const MainProvider = () => {
     const session = useSessionStore(state => state.currentSession)
@@ -23,6 +25,7 @@ const MainProvider = () => {
     const setStockTemplates = useStockStore(state => state.set_items_templates)
     const setStockSummary = useStockStore(state => state.set_stock_summary)
     const setStockHistory = useStockStore(state => state.set_stock_history)
+    const setStockSlots = useStockSlots(state => state.set_stock_slots)
 
     const { data, error, isLoading } = useQuery({
         queryKey: ['robots-list'],
@@ -47,6 +50,18 @@ const MainProvider = () => {
         queryFn: async () => getAllStockHistory(session),
         enabled: !!session,
     });
+
+    const { data: stockSlots } = useQuery({
+        queryKey: ['stockSlots-full'],
+        queryFn: () => StockService.getStockSlots(),
+        enabled: !!session,
+    });
+
+    useEffect(() => {
+        if (stockSlots) {
+            setStockSlots(stockSlots);
+        }
+    }, [stockSlots]);
 
     useEffect(() => {
         if (data !== undefined) {

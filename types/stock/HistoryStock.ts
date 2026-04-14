@@ -2,8 +2,8 @@ import {IUser} from "@/types/user/user";
 import {IRobot} from "@/types/robot/robot";
 
 export interface IHistoryStockItem {
-    id: number | string;
-    created_at: Date;
+    id: number;
+    created_at: string;
     card_id: number;
     material_number: string;
     quantity: number;

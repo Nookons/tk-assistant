@@ -19,7 +19,7 @@ export function StockSearch({ searchValue, onSearch, onClear, total, shown }: St
                     value={searchValue}
                     onChange={e => onSearch(e.target.value)}
                     placeholder="Search by location, material or description…"
-                    className="pl-9 pr-9 h-9 text-sm"
+                    className="pl-9 pr-9 h-9 text-base"
                 />
                 {searchValue && (
                     <button

@@ -6,7 +6,7 @@ import {Button} from "@/components/ui/button";
 import {ButtonGroup} from "@/components/ui/button-group";
 import {TransformWrapper, TransformComponent} from "react-zoom-pan-pinch";
 import Image from "next/image";
-import {ZoomIn, ZoomOut, RotateCcw} from "lucide-react";
+import {ZoomIn, ZoomOut, RotateCcw, Loader} from "lucide-react";
 import {cn} from "@/lib/utils";
 
 const StockPartImage = ({avatar_url}: {avatar_url: string}) => {
@@ -23,7 +23,10 @@ const StockPartImage = ({avatar_url}: {avatar_url: string}) => {
         <>
             <div className="relative w-full aspect-square rounded-md overflow-hidden mb-2 group">
                 {isLoading && avatar_url && (
-                    <Skeleton className="absolute inset-0 w-full h-full"/>
+                    <div className={`flex items-center justify-center w-full h-full`}>
+                        <Skeleton className="absolute inset-0 w-full h-full"/>
+                        <Loader className={`animate-spin`}/>
+                    </div>
                 )}
 
                 {avatar_url ? (

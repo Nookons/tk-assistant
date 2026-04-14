@@ -9,7 +9,6 @@ import { Field, FieldGroup } from "@/components/ui/field";
 import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
 import { LocationItem, LocationStock } from "@/types/stock/SummaryItem";
-import { StockService } from "@/services/stockService";
 import { useUserStore } from "@/store/user";
 import {toast} from "sonner";
 
@@ -48,7 +47,6 @@ const MoveItemDialog = ({ el, item, onClose, onUpdate, stockData }: MoveItemDial
         setError(null);
 
         try {
-            const movedItem = await StockService.moveItem(item, newLocation, user, quantity);
             const isFullMove = quantity === item.total_quantity;
 
             // Старая локация — передаём el.location
@@ -71,7 +69,7 @@ const MoveItemDialog = ({ el, item, onClose, onUpdate, stockData }: MoveItemDial
                         ? { ...i, total_quantity: i.total_quantity + quantity }
                         : i
                 )
-                : [...targetItems, movedItem];
+                : [...targetItems];
             onUpdate(newLocation, updatedNewItems);
 
             setOpen(false);

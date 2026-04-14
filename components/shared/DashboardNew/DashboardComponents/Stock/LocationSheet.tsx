@@ -46,28 +46,6 @@ const LocationSheet = ({el, onClose, onUpdate, stockData}: {
     const [newLocationAll, setNewLocationAll] = React.useState('');
     const user = useUserStore(state => state.currentUser);
 
-    const handleMoveAll = async () => {
-        if (!user || !newLocationAll.trim()) return;
-        setMovingAll(true);
-        try {
-            const movedItems = await StockService.moveLocation(visibleItems, newLocationAll, user);
-
-            // Очищаем старую локацию
-            onUpdate(el.location, []);
-
-            // Добавляем в новую
-            const target = stockData.find(s => s.location === newLocationAll);
-            onUpdate(newLocationAll, [...(target?.items ?? []), ...movedItems]);
-
-            toast.success(`Moved ${movedItems.length} items to ${newLocationAll}`);
-            setMoveAllOpen(false);
-            onClose();
-        } catch (err) {
-            toast.error('Failed to move location.');
-        } finally {
-            setMovingAll(false);
-        }
-    };
 
 
     const visibleItems = el.items.filter(i => i.total_quantity > 0);
@@ -227,7 +205,6 @@ const LocationSheet = ({el, onClose, onUpdate, stockData}: {
                                         Cancel
                                     </Button>
                                     <Button
-                                        onClick={handleMoveAll}
                                         disabled={movingAll || !newLocationAll.trim()}
                                     >
                                         {movingAll ? 'Moving...' : `Move ${visibleItems.length} items`}
