@@ -7,26 +7,6 @@ import {Empty, EmptyDescription, EmptyHeader, EmptyMedia, EmptyTitle} from "@/co
 import {Bubbles, Pencil} from "lucide-react";
 import {hasProblem} from "@/utils/Robot/hasProblem";
 import {IRobot} from "@/types/robot/robot";
-import {Button} from "@/components/ui/button";
-import {
-    Dialog, DialogClose,
-    DialogContent,
-    DialogDescription,
-    DialogFooter,
-    DialogHeader,
-    DialogTitle,
-    DialogTrigger
-} from "@/components/ui/dialog";
-import { FieldGroup } from "@/components/ui/field";
-import {
-    Select,
-    SelectContent,
-    SelectGroup,
-    SelectItem,
-    SelectLabel,
-    SelectTrigger,
-    SelectValue
-} from "@/components/ui/select";
 
 const RobotInfo = ({robot}: {robot: IRobot}) => {
     const isProblem = hasProblem({robot})

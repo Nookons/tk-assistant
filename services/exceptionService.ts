@@ -1,12 +1,12 @@
 import {supabase} from "@/lib/supabase/client";
 import dayjs from "dayjs";
-import {IStockItemTemplate} from "@/types/stock/StockItem";
 import utc from "dayjs/plugin/utc";
-import {IHistoryStockItem} from "@/types/stock/HistoryStock";
 import {IIssueTemplate} from "@/types/Exception/ExceptionParse";
 import {IRobotException} from "@/types/Exception/Exception";
+import isoWeek from 'dayjs/plugin/isoWeek'
 
 dayjs.extend(utc);
+dayjs.extend(isoWeek)
 
 export class ExceptionService {
 
@@ -61,6 +61,26 @@ export class ExceptionService {
 
         return template;
     }
+
+
+    static async getExceptionsWeek(warehouse: string): Promise<IRobotException[] | null> {
+        const weekStart = dayjs.utc().startOf('isoWeek').toISOString();
+
+        const { data, error } = await supabase
+            .from('exceptions_glpc')
+            .select('*')
+            .gte('error_start_time', weekStart)
+            .eq('warehouse', warehouse)
+            .order('error_start_time', { ascending: false });
+
+        if (error) {
+            console.error(error);
+            return null;
+        }
+
+        return data as IRobotException[];
+    }
+
 
     static async getExceptionsHistory(warehouse: string): Promise<{ currentMonth: number; prevMonth: number } | null> {
         const currentMonthStart = dayjs.utc().startOf('month').toISOString();

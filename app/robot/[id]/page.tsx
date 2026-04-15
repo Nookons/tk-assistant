@@ -2,31 +2,11 @@
 
 import React, {useMemo} from 'react'
 import {useParams, notFound} from 'next/navigation'
-import Link from 'next/link'
-import Image from 'next/image'
-import {Bubbles, Wrench} from 'lucide-react'
-
 import {useRobotsStore} from '@/store/robotsStore'
 import {useUserStore} from '@/store/user'
-import {timeToString} from '@/utils/timeToString'
-
-import {Badge} from '@/components/ui/badge'
 import {Separator} from '@/components/ui/separator'
-import {Card, CardContent, CardHeader, CardTitle} from '@/components/ui/card'
 import {Skeleton} from '@/components/ui/skeleton'
-import {
-    Breadcrumb, BreadcrumbItem,
-    BreadcrumbLink, BreadcrumbList, BreadcrumbSeparator,
-} from '@/components/ui/breadcrumb'
-import {
-    Empty, EmptyDescription, EmptyHeader,
-    EmptyMedia, EmptyTitle,
-} from '@/components/ui/empty'
-
 import RobotHistory from '@/components/shared/robot/changedParts/RobotHistory'
-import AddCommentRobot from '@/components/shared/robot/addComment/AddCommentRobot'
-import CommentsList from '@/components/shared/robot/commentsList/CommentsList'
-import RobotStatusDialog from '@/components/shared/robot/EditStatus/RobotEditStatus'
 import RobotHeader from "@/components/shared/RobotNew/RobotHeader";
 import RobotInfo from "@/components/shared/RobotNew/RobotInfo";
 import RobotCommentsProvider from "@/components/shared/RobotNew/RobotCommentsProvider";

@@ -43,12 +43,12 @@ const StockItemPreview: React.FC<props> = ({ data }) => {
 
                     <div className="flex flex-wrap justify-end gap-1 max-w-[60%]">
                         {data.robot_match.map((el) => (
-                            <code
+                            <p
                                 key={el}
                                 className="bg-muted px-1.5 py-0.5 rounded text-xs font-medium whitespace-nowrap"
                             >
                                 {el}
-                            </code>
+                            </p>
                         ))}
                     </div>
                 </div>

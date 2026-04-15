@@ -3,8 +3,9 @@ import dayjs from "dayjs";
 import {IStockItemTemplate, IStockLocationSlot} from "@/types/stock/StockItem";
 import utc from "dayjs/plugin/utc";
 import {IHistoryStockItem} from "@/types/stock/HistoryStock";
-import {LocationItem} from "@/types/stock/SummaryItem";
+import {LocationItem, LocationStock} from "@/types/stock/SummaryItem";
 import {IUser} from "@/types/user/user";
+import {IUserSession} from "@/types/Session/Session";
 
 dayjs.extend(utc);
 
@@ -152,17 +153,31 @@ export class StockService {
         return { added, subtracted };
     }
 
-    /*static async moveLocation(items: LocationItem[], newLocation: string, user: IUser): Promise<LocationItem[]> {
-        const results: LocationItem[] = [];
 
-        for (const item of items) {
-            const moved = await StockService.moveSlot(item, newLocation, user);
-            results.push(moved);
-        }
+    static async moveLocation(data: LocationStock, session: IUserSession, new_location: string): Promise<LocationItem[]> {
+        const updatedItems = await Promise.all(
+            data.items.map(async (item) => {
 
-        return results;
-    }*/
+                const stock_location_slot = {
+                    card_id: session.user.card_id,
+                    material_number: item.material_number,
+                    quantity: item.total_quantity,
+                    warehouse: item.warehouse,
+                    location: new_location,
+                };
 
+                await StockService.addStockRecord(stock_location_slot);
+                await StockService.removeFromStock(item);
+
+                return {
+                    ...item,
+                    location: new_location
+                };
+            })
+        );
+
+        return updatedItems;
+    }
     static async removeFromStock(data: LocationItem): Promise<boolean> {
         const {data: result, error} = await supabase
             .from('stock')

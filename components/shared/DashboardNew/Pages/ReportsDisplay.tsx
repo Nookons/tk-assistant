@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import ShiftReportGLPC from "@/components/shared/DashboardNew/DashboardComponents/Reports/ShiftReportGLPC";
 import MonthReportGLPC from "@/components/shared/DashboardNew/DashboardComponents/Reports/MonthReportGLPC";
+import WeeklyReport from "@/components/shared/DashboardNew/DashboardComponents/Reports/WeeklyReport";
 
 const STORAGE_KEY = 'report_sub_tab';
 const DEFAULT_TAB = 'glpc_shift';
@@ -20,11 +21,15 @@ const ReportsDisplay = () => {
     return (
         <Tabs value={activeTab} onValueChange={onTabChange} className="w-full">
             <TabsList>
-                <TabsTrigger value="glpc_shift">Shift Report</TabsTrigger>
-                <TabsTrigger value="analytics">Month Report</TabsTrigger>
+                <TabsTrigger value="glpc_shift">Shift</TabsTrigger>
+                <TabsTrigger value="weekly">Weekly</TabsTrigger>
+                <TabsTrigger value="analytics">Month</TabsTrigger>
             </TabsList>
             <TabsContent value="glpc_shift">
                 <ShiftReportGLPC />
+            </TabsContent>
+            <TabsContent value="weekly">
+                <WeeklyReport />
             </TabsContent>
             <TabsContent value="analytics">
                 <MonthReportGLPC />

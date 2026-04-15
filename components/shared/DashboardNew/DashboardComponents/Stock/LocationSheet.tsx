@@ -32,6 +32,8 @@ import {
 } from "@/components/ui/dialog";
 import {Label} from "@/components/ui/label";
 import {Input} from "@/components/ui/input";
+import {useSessionStore} from "@/store/session";
+import {useStockStore} from "@/store/stock";
 
 const LocationSheet = ({el, onClose, onUpdate, stockData}: {
     el: LocationStock | null;
@@ -41,16 +43,19 @@ const LocationSheet = ({el, onClose, onUpdate, stockData}: {
 }) => {
     if (!el) return null;
 
+    const session = useSessionStore(state => state.currentSession)
+
     const [movingAll, setMovingAll] = React.useState(false);
     const [moveAllOpen, setMoveAllOpen] = React.useState(false);
     const [newLocationAll, setNewLocationAll] = React.useState('');
     const user = useUserStore(state => state.currentUser);
 
-
-
     const visibleItems = el.items.filter(i => i.total_quantity > 0);
     const locationLabel = el.location.split('-').pop()?.toUpperCase() ?? el.location;
     const warehouseName = el.items[0]?.warehouse ?? '';
+
+    const add_stock_summary = useStockStore(state => state.add_stock_summary)
+    const delete_stock_summary = useStockStore(state => state.delete_stock_summary)
 
     const deleteHandle = async (item: LocationItem) => {
         try {
@@ -64,6 +69,21 @@ const LocationSheet = ({el, onClose, onUpdate, stockData}: {
 
         } catch (error) {
             console.log(error);
+        }
+    }
+
+    const handleMoveContainer = async () => {
+        if (!session) return null
+
+        try {
+            const response = await StockService.moveLocation(el, session, newLocationAll);
+
+            if (response) {
+                window.location.reload();
+            }
+
+        } catch (err) {
+            console.log(err);
         }
     }
 
@@ -189,7 +209,7 @@ const LocationSheet = ({el, onClose, onUpdate, stockData}: {
                                     <Input
                                         id="move_all_location"
                                         value={newLocationAll}
-                                        onChange={e => setNewLocationAll(e.target.value)}
+                                        onChange={e => setNewLocationAll(e.target.value.toUpperCase())}
                                         placeholder="e.g. B456"
                                         disabled={movingAll}
                                         className="mt-1.5"
@@ -205,6 +225,7 @@ const LocationSheet = ({el, onClose, onUpdate, stockData}: {
                                         Cancel
                                     </Button>
                                     <Button
+                                        onClick={() => handleMoveContainer()}
                                         disabled={movingAll || !newLocationAll.trim()}
                                     >
                                         {movingAll ? 'Moving...' : `Move ${visibleItems.length} items`}

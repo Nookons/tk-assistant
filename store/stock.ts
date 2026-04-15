@@ -9,6 +9,8 @@ type UserState = {
 
     stock_summary: StockByLocationResponse | null
     set_stock_summary: (data: StockByLocationResponse) => void
+    add_stock_summary: (data: LocationStock) => void
+    delete_stock_summary: (locationKey: string) => void
     update_stock_location: (locationKey: string, data: LocationItem[]) => void
 
     stock_history: IHistoryStockItem[] | null
@@ -80,4 +82,16 @@ export const useStockStore = create<UserState>((set, get) => ({
                 return { stock_summary: [...(state.stock_summary ?? []), newEntry] };
             }
         }),
+
+    add_stock_summary: (data) =>
+        set((state) => ({
+            stock_summary: [...(state.stock_summary ?? []), data],
+        })),
+
+    delete_stock_summary: (locationKey) =>
+        set((state) => ({
+            stock_summary: state.stock_summary?.filter(
+                (location) => location.location !== locationKey
+            ) ?? null
+        })),
 }))
