@@ -210,7 +210,7 @@ const ErrorParse = () => {
                 <Textarea
                     value={input_value}
                     onChange={(e) => setInput_value(e.target.value)}
-                    className="max-h-[100px] focus:max-h-[350px] transition-[max-height] duration-300 ease-in-out"
+                    className="max-h-[250px] transition-[max-height] duration-300 ease-in-out"
                     placeholder="Вставьте текст из Lark..."
                 />
                 <p className={`text-xs text-muted-foreground mt-2`}>
@@ -231,7 +231,7 @@ const ErrorParse = () => {
 
                 <div className="flex gap-2 mb-4">
                     <Button onClick={handleCopyForExcel} disabled={parsed_data.length === 0} variant="outline" size="sm">
-                        <FileSpreadsheet className="mr-1 h-4 w-4" /> Копировать для Excel
+                        <FileSpreadsheet className="mr-1 h-4 w-4" /> Copy to Excel ({parsed_data.length})
                     </Button>
                     <Button onClick={handleSendToServer} disabled={parsed_data.length === 0 || isSubmitting} size="sm">
                         {isSubmitting ? <Loader className="mr-1 h-4 w-4 animate-spin" /> : <Send className="mr-1 h-4 w-4" />}

@@ -13,6 +13,7 @@ import ExceptionsStats from "@/components/shared/DashboardNew/DashboardComponent
 import UsedPartsStats from "@/components/shared/DashboardNew/DashboardComponents/Dashboard/UsedPartsStats";
 import AddedPartsStats from "@/components/shared/DashboardNew/DashboardComponents/Dashboard/AddedPartsStats";
 import ExceptionChart from "@/components/shared/DashboardNew/DashboardComponents/Dashboard/ExceptionChart";
+import RobotsStats from "@/components/shared/DashboardNew/DashboardComponents/Dashboard/RobotsStats";
 
 interface Props {
     onSelect: (id: string) => void;
@@ -30,18 +31,24 @@ function DashboardContent({onSelect}: Props) {
                 </div>
             </div>
 
-            <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-4">
-                <RepairStats />
-                <ExceptionsStats />
-                <UsedPartsStats />
-                <AddedPartsStats />
+            <div className="grid md:grid-cols-3 gap-2">
+                <div className={`grid col-span-3 md:col-span-1 md:grid-cols-2 gap-2`}>
+                    <RepairStats />
+                    <ExceptionsStats />
+                    <UsedPartsStats />
+                    <AddedPartsStats />
+                </div>
+                <div className={`max-w-full overflow-hidden col-span-3 md:col-span-2`}>
+                    <RobotsStats />
+                </div>
             </div>
 
-            <div className={`border`}>
+
+            <div>
                 <ExceptionChart />
             </div>
 
-            <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
+            <div className="grid grid-cols-1 lg:grid-cols-3 items-start gap-4">
                 <Card className="lg:col-span-2">
                     <CardHeader className="flex flex-row items-start justify-between space-y-0">
                         <div>

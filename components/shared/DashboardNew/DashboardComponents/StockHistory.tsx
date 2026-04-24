@@ -6,6 +6,8 @@ import {useUserStore} from "@/store/user";
 import {getUserWarehouse} from "@/utils/getUserWarehouse";
 import {PackageOpen} from "lucide-react";
 import dayjs from "dayjs";
+import UserAvatar from "@/components/shared/User/UserAvatar";
+import Link from "next/link";
 
 const PREVIEW_LIMIT = 8;
 
@@ -26,7 +28,6 @@ const StockHistory = () => {
         <Table>
             <TableHeader>
                 <TableRow>
-                    <TableHead>Warehouse</TableHead>
                     <TableHead>Employee</TableHead>
                     <TableHead>Material</TableHead>
                     <TableHead>Amount</TableHead>
@@ -46,10 +47,22 @@ const StockHistory = () => {
                     recentItems.map((item) => (
                         <TableRow
                             key={item.id}
-                            className={item.quantity < 0 ? "bg-destructive/5 hover:bg-destructive/10" : ""}
                         >
-                            <TableCell>{item.warehouse}</TableCell>
-                            <TableCell>{item.user.user_name}</TableCell>
+                            <TableCell>
+                                <div className={`flex gap-2 items-center`}>
+                                    <div className={`w-8 h-8 rounded-xl overflow-hidden`}>
+                                        <UserAvatar user={item.user} allowFullscreen />
+                                    </div>
+                                    <div>
+                                        <Link
+                                            className={`text-muted-foreground hover:text-blue-500 hover:underline`}
+                                            href={`/user/${item.user.auth_id}`}
+                                        >
+                                            {item.user.user_name}
+                                        </Link>
+                                    </div>
+                                </div>
+                            </TableCell>
                             <TableCell>{item.material_number}</TableCell>
                             <TableCell className={`font-medium ${item.quantity < 0 ? "text-destructive" : "text-emerald-500"}`}>
                                 {item.quantity > 0 ? `+${item.quantity}` : item.quantity}

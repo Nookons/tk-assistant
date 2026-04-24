@@ -7,7 +7,7 @@ import {useUserStore} from '@/store/user'
 import {Separator} from '@/components/ui/separator'
 import {Skeleton} from '@/components/ui/skeleton'
 import RobotHistory from '@/components/shared/robot/changedParts/RobotHistory'
-import RobotHeader from "@/components/shared/RobotNew/RobotHeader";
+import RobotHeader from "@/components/shared/robot/Header/RobotHeader";
 import RobotInfo from "@/components/shared/RobotNew/RobotInfo";
 import RobotCommentsProvider from "@/components/shared/RobotNew/RobotCommentsProvider";
 import PagesHeader from "@/components/shared/PagesHeader";
@@ -49,7 +49,6 @@ export default function RobotPage() {
     const robotId = Number(params?.id)
 
     const robotsList = useRobotsStore(state => state.robots)
-    const user = useUserStore(state => state.currentUser)
 
     const robot = useMemo(
         () => robotsList?.find(r => r.id === robotId) ?? null,

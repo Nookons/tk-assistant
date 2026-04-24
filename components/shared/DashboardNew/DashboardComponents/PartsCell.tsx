@@ -37,7 +37,7 @@ function PartsCell({parts_history}: PartsCellProps) {
 
                     return (
                         <div key={index} className="flex items-center gap-2">
-                            <Link href="#" className="text-sm font-mono hover:underline">
+                            <Link href={`/stock-item/${parts.join(',')}`} className="text-sm font-mono hover:underline hover:text-blue-500">
                                 {parts.join(", ")}
                             </Link>
                             {el.created_at && (

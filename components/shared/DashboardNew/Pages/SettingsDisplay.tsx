@@ -27,6 +27,7 @@ import {IUser} from "@/types/user/user";
 import {UserService} from "@/services/userService";
 import {Empty, EmptyContent, EmptyDescription, EmptyHeader, EmptyMedia, EmptyTitle} from "@/components/ui/empty";
 import UserHistory from "@/components/shared/DashboardNew/DashboardComponents/User/UserHistory";
+import UserAvatar from "@/components/shared/User/UserAvatar";
 
 dayjs.extend(relativeTime);
 
@@ -336,19 +337,11 @@ const SettingsDisplay = () => {
                 <div className="relative -mt-14 mb-4 flex items-end justify-between">
                     <div className="relative">
                         <div className="w-24 h-24 rounded-2xl border-4 border-background overflow-hidden bg-muted shadow-xl">
-                            {user.avatar_url ? (
-                                <Image
-                                    src={user.avatar_url}
-                                    alt={user.user_name}
-                                    width={96}
-                                    height={96}
-                                    className="w-full h-full object-cover"
-                                />
-                            ) : (
-                                <div className="w-full h-full flex items-center justify-center">
-                                    <User className="h-10 w-10 text-muted-foreground/40" />
-                                </div>
-                            )}
+                            <UserAvatar
+                                user={user}
+                                isEdit={true}
+                                allowFullscreen
+                            />
                         </div>
                         <span className="absolute bottom-1.5 right-1.5 w-3.5 h-3.5 rounded-full bg-emerald-500 border-2 border-background" />
                     </div>

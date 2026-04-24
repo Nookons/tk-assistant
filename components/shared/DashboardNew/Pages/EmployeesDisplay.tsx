@@ -19,6 +19,7 @@ import {Input} from "@/components/ui/input";
 import {getUserWarehouse} from "@/utils/getUserWarehouse";
 import {ScoreBar} from "@/components/shared/DashboardNew/DashboardComponents/Settings/ScoreBar";
 import {getScoreRank} from "@/components/shared/DashboardNew/DashboardComponents/Settings/getScoreRank";
+import UserAvatar from "@/components/shared/User/UserAvatar";
 
 const ScoreBadge = ({score}: { score: number }) => {
     if (score >= 80) return <Badge
@@ -131,12 +132,9 @@ const EmployeesDisplay = () => {
                             return (
                                 <TableRow key={employee.auth_id}>
                                     <TableCell>
-                                        <Avatar className="h-8 w-8">
-                                            <AvatarImage src={employee.avatar_url ?? ""}/>
-                                            <AvatarFallback className="text-xs bg-primary text-primary-foreground">
-                                                {employee.user_name.toUpperCase().slice(0, 2)}
-                                            </AvatarFallback>
-                                        </Avatar>
+                                        <div className={`w-12 h-12 rounded-xl overflow-hidden`}>
+                                            <UserAvatar user={employee} allowFullscreen />
+                                        </div>
                                     </TableCell>
                                     <TableCell>
                                         <div className="flex items-center gap-2">

@@ -12,6 +12,7 @@ import {getAllStockHistory} from "@/futures/stock/getAllStockHistory";
 import {useSessionStore} from "@/store/session";
 import {useStockSlots} from "@/store/stock-slots";
 import {StockService} from "@/services/stockService";
+import ToTopButton from "@/components/shared/ToTopButton";
 
 const MainProvider = () => {
     const session = useSessionStore(state => state.currentSession)
@@ -91,6 +92,7 @@ const MainProvider = () => {
 
     return (
         <div>
+            {/*<ToTopButton />*/}
             {isClient && <Snow />}
             {isClient && <Toaster richColors position="bottom-right" />}
         </div>

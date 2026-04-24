@@ -50,7 +50,6 @@ export async function middleware(request: NextRequest) {
     }
 
     const response_session = await SessionService.getCurrentSession(user.id)
-    console.log(response_session);
 
     if (!response_session) {
         if (pathname !== '/no-session') {

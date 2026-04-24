@@ -91,7 +91,9 @@ const CommentItem: React.FC<CommentItemProps> = ({
             <div className={`p-4 border-l-2 relative ${isRoot ? 'border-primary' : 'border-green-500'}`}>
                 <div className="flex justify-between items-start gap-2 mb-3">
                     <div className="flex items-center gap-2">
-                        <UserAvatar user={comment.employees} />
+                        <div className={`w-12 h-12 rounded-xl overflow-hidden`}>
+                            <UserAvatar user={comment.employees} allowFullscreen />
+                        </div>
                         <div className="flex flex-col">
                             <Label className="text-sm font-semibold">
                                 {comment.employees?.user_name || "Unknown User"}

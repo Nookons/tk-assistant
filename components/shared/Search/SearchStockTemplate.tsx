@@ -184,6 +184,61 @@ const SearchStockTemplate = () => {
                     </div>
                 </>
             )}
+            <div className={`p-2 pb-10 flex md:hidden justify-end`}>
+                {totalPages > 1 && (
+                    <div className="flex items-center justify-center gap-2">
+                        <Button
+                            variant="outline"
+                            size="icon"
+                            className="h-7 w-7"
+                            onClick={() => scrollToTopAndSetPage(p => Math.max(1, p - 1))}
+                            disabled={safePage === 1}
+                        >
+                            <ChevronLeft size={14}/>
+                        </Button>
+
+                        <div className="flex items-center gap-1">
+                            {Array.from({length: totalPages}, (_, i) => i + 1)
+                                .filter(p =>
+                                    p === 1 ||
+                                    p === totalPages ||
+                                    Math.abs(p - safePage) <= 1
+                                )
+                                .reduce<(number | "...")[]>((acc, p, idx, arr) => {
+                                    if (idx > 0 && p - (arr[idx - 1] as number) > 1) acc.push("...");
+                                    acc.push(p);
+                                    return acc;
+                                }, [])
+                                .map((p, idx) =>
+                                    p === "..." ? (
+                                        <span key={`ellipsis-${idx}`} className="text-xs text-muted-foreground px-1">…</span>
+                                    ) : (
+                                        <Button
+                                            key={p}
+                                            variant={safePage === p ? "default" : "outline"}
+                                            size="icon"
+                                            className="h-7 w-7 text-xs"
+                                            onClick={() => scrollToTopAndSetPage(() => p)}
+                                        >
+                                            {p}
+                                        </Button>
+                                    )
+                                )
+                            }
+                        </div>
+
+                        <Button
+                            variant="outline"
+                            size="icon"
+                            className="h-7 w-7"
+                            onClick={() => scrollToTopAndSetPage(p => Math.min(totalPages, p + 1))}
+                            disabled={safePage === totalPages}
+                        >
+                            <ChevronRight size={14}/>
+                        </Button>
+                    </div>
+                )}
+            </div>
         </div>
     );
 };

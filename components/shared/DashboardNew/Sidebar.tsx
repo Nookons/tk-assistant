@@ -21,6 +21,7 @@ import {
 } from "@/components/ui/dropdown-menu";
 import {Avatar, AvatarFallback, AvatarImage} from "@/components/ui/avatar";
 import Image from "next/image";
+import UserAvatar from "@/components/shared/User/UserAvatar";
 
 interface AppSidebarProps {
     activeItem: string
@@ -143,13 +144,6 @@ export function AppSidebar({activeItem, onSelect}: AppSidebarProps) {
                                 {/* User info */}
                                 <DropdownMenuLabel className="font-normal">
                                     <div className="flex items-center gap-2">
-                                        <Avatar className="h-8 w-8 rounded-lg">
-                                            <AvatarImage src={user.avatar_url ?? ""}/>
-                                            <AvatarFallback
-                                                className="rounded-lg text-xs bg-primary text-primary-foreground">
-                                                {user.user_name?.toUpperCase().slice(0, 2)}
-                                            </AvatarFallback>
-                                        </Avatar>
                                         <div className="flex flex-col gap-0.5">
                                             <span className="font-medium text-sm">{user.user_name}</span>
                                             <span className="text-xs text-muted-foreground">{user.email}</span>

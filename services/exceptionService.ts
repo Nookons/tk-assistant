@@ -108,17 +108,30 @@ export class ExceptionService {
         };
     }
 
-    static async getExceptionsChartHistory(warehouse: string): Promise<IRobotException[] | null> {
+    static async getExceptionsChartHistory(warehouse: string): Promise<IRobotException[]> {
         const currentMonthStart = dayjs.utc().startOf('month').subtract(1, 'month').toISOString();
 
-        const { data, error }= await supabase
+        const pageSize = 1000;
+        let page = 0;
+        let all: IRobotException[] = [];
+
+        while (true) {
+            const { data, error } = await supabase
                 .from('exceptions_glpc')
                 .select('*')
                 .gte('error_start_time', currentMonthStart)
                 .eq('warehouse', warehouse)
-                .limit(5000)
+                .range(page * pageSize, (page + 1) * pageSize - 1)
+                .order('error_start_time', { ascending: true });
 
-        if (error) throw new Error(error.message);
-        return data
+            if (error) throw new Error(error.message);
+            if (!data?.length) break;
+
+            all = [...all, ...data];
+            if (data.length < pageSize) break;
+            page++;
+        }
+
+        return all;
     }
 }

@@ -84,7 +84,7 @@ const StockPartImage = ({avatar_url}: {avatar_url: string}) => {
                                     </ButtonGroup>
                                 </div>
 
-                                <div className="relative cursor-grab w-full max-h-[70vh] rounded-lg overflow-hidden">
+                                <div className="relative cursor-grab max-h-[70vh] rounded-lg overflow-hidden">
                                     {isDialogLoading && avatar_url && (
                                         <Skeleton className="absolute inset-0 w-full h-full min-h-64"/>
                                     )}

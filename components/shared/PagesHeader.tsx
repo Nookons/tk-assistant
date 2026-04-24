@@ -12,7 +12,7 @@ import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import { useUserStore } from "@/store/user";
 import {ThemeToggle} from "@/components/shared/theme/theme-toggle";
-import {Dot} from "lucide-react";
+import {Dot, House} from "lucide-react";
 
 const PagesHeader = () => {
     const route = useRouter();
@@ -25,6 +25,17 @@ const PagesHeader = () => {
 
             <Breadcrumb>
                 <BreadcrumbList>
+                    <BreadcrumbItem>
+                        <BreadcrumbLink asChild>
+                            <Button
+                                variant={'ghost'}
+                                onClick={() => route.push('/')}
+                                className="text-foreground font-bold"
+                            >
+                                <House />
+                            </Button>
+                        </BreadcrumbLink>
+                    </BreadcrumbItem>
                     <BreadcrumbItem>
                         <BreadcrumbLink asChild>
                             <Button
@@ -43,8 +54,6 @@ const PagesHeader = () => {
             <div className={`flex items-center gap-2`}>
                 <div className="text-xs text-muted-foreground flex items-center gap-1">
                     <p className={`text-nowrap`}>{user?.user_name}</p>
-                    <Dot />
-                    <p className={`line-clamp-1`}>{user?.position_title}</p>
                 </div>
                 <ThemeToggle />
             </div>

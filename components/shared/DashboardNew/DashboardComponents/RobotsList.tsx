@@ -12,6 +12,8 @@ import {Input} from "@/components/ui/input";
 import {Toggle} from "@/components/ui/toggle";
 import {Button} from "@/components/ui/button";
 import {timeToString} from "@/utils/timeToString";
+import UserAvatar from "@/components/shared/User/UserAvatar";
+import Image from "next/image";
 
 const PAGE_SIZE = 25;
 
@@ -61,7 +63,7 @@ function EmptyNoResults({hasFilters}: { hasFilters: boolean }) {
     );
 }
 
-const RobotsList = ({previewLimit = 5}: RobotsHistoryProps) => {
+const RobotsList = ({previewLimit = 6}: RobotsHistoryProps) => {
     const robots = useRobotsStore(state => state.robots);
     const [search_value, setSearch_value] = useState<string>("")
     const [isBrokenSearch, setIsBrokenSearch] = useState<boolean>(false);
@@ -163,60 +165,70 @@ const RobotsList = ({previewLimit = 5}: RobotsHistoryProps) => {
                             </TableRow>
                         </TableHeader>
                         <TableBody>
-                            {displayData.map((robot: IRobot) => (
-                                <TableRow key={robot.id} className="group">
-                                    <TableCell>
-                                        <Link
-                                            href={`/robot/${robot.id}`}
-                                            className="flex items-center gap-2 font-medium text-sm hover:text-primary transition-colors hover:underline"
-                                        >
-                                            <div className="flex h-7 w-7 items-center justify-center rounded-md bg-muted group-hover:bg-primary/10 transition-colors shrink-0">
-                                                <Bot size={14} className="text-muted-foreground group-hover:text-primary transition-colors"/>
+                            {displayData.map((robot: IRobot) => {
+                                const isHighRobot = robot.robot_type !== 'K50H' ? false : true;
+                                const isOffline = robot.status === '离线 | Offline' ? true : false;
+
+                                return (
+                                    <TableRow key={robot.id} className="group">
+                                        <TableCell>
+                                            <div className={`flex items-center gap-2`}>
+                                                <Image
+                                                    src={isHighRobot
+                                                        ? isOffline ? "/img/K50H_red.svg" : "/img/K50H_Green.svg"
+                                                        : isOffline ? "/img/A42T_red.svg" : "/img/A42T_Green.svg"
+                                                    }
+                                                    alt="robot"
+                                                    width={24}
+                                                    height={24}
+                                                />
+                                                <Link
+                                                    href={`/robot/${robot.id}`}
+                                                    className="flex items-center gap-2 font-medium text-sm hover:text-primary transition-colors hover:underline"
+                                                >
+                                                    {robot.robot_number}
+                                                </Link>
                                             </div>
-                                            {robot.robot_number}
-                                        </Link>
-                                    </TableCell>
-                                    <TableCell className="text-sm text-muted-foreground">
-                                        {robot.robot_type}
-                                    </TableCell>
-                                    <TableCell className="text-sm text-muted-foreground">
-                                        {robot.warehouse || <Minus size={14} className="text-muted-foreground/40"/>}
-                                    </TableCell>
-                                    <TableCell>
-                                        <div className="flex items-center gap-1.5">
-                                            <ArrowRight size={12} className="text-muted-foreground shrink-0"/>
-                                            <Badge variant={getStatusVariant(robot.status)} className="text-[11px] px-2 py-0">
-                                                {robot.status}
-                                            </Badge>
-                                        </div>
-                                    </TableCell>
-                                    <TableCell>
-                                        <p>{timeToString(robot.updated_at)}</p>
-                                    </TableCell>
-                                    <TableCell>
-                                        <PartsCell parts_history={robot.parts_history?.sort((a, b) => dayjs(b.created_at).valueOf() - dayjs(a.created_at).valueOf())}/>
-                                    </TableCell>
-                                    <TableCell>
-                                        {robot.updated_by ? (
-                                            <div className="flex items-center gap-2">
-                                                <Avatar className="h-6 w-6">
-                                                    <AvatarImage src={robot.updated_by.avatar_url ?? ""}/>
-                                                    <AvatarFallback className="text-xs bg-primary text-primary-foreground">
-                                                        {robot.updated_by.user_name.toUpperCase().slice(0, 2)}
-                                                    </AvatarFallback>
-                                                </Avatar>
-                                                <span className="text-sm text-muted-foreground truncate max-w-[120px]">
-                                                    <Link href={`/user/${robot.updated_by.auth_id}`} className="hover:underline hover:text-foreground">
+                                        </TableCell>
+                                        <TableCell className="text-sm text-muted-foreground">
+                                            {robot.robot_type}
+                                        </TableCell>
+                                        <TableCell className="text-sm text-muted-foreground">
+                                            {robot.warehouse || <Minus size={14} className="text-muted-foreground/40"/>}
+                                        </TableCell>
+                                        <TableCell>
+                                            <div className="flex items-center gap-1.5">
+                                                <ArrowRight size={12} className="text-muted-foreground shrink-0"/>
+                                                <Badge variant={getStatusVariant(robot.status)} className="text-[11px] px-2 py-0">
+                                                    {robot.status}
+                                                </Badge>
+                                            </div>
+                                        </TableCell>
+                                        <TableCell>
+                                            <p>{timeToString(robot.updated_at)}</p>
+                                        </TableCell>
+                                        <TableCell>
+                                            <PartsCell parts_history={robot.parts_history?.sort((a, b) => dayjs(b.created_at).valueOf() - dayjs(a.created_at).valueOf())}/>
+                                        </TableCell>
+                                        <TableCell>
+                                            {robot.updated_by ? (
+                                                <div className="flex items-center gap-2">
+                                                    <div className={`w-8 h-8 rounded-xl overflow-hidden`}>
+                                                        <UserAvatar user={robot.updated_by} allowFullscreen />
+                                                    </div>
+                                                    <span className="text-sm text-muted-foreground truncate max-w-[120px]">
+                                                    <Link href={`/user/${robot.updated_by.auth_id}`} className="hover:underline hover:text-blue-500">
                                                         {robot.updated_by.user_name}
                                                     </Link>
                                                 </span>
-                                            </div>
-                                        ) : (
-                                            <span className="text-xs text-muted-foreground/40">None</span>
-                                        )}
-                                    </TableCell>
-                                </TableRow>
-                            ))}
+                                                </div>
+                                            ) : (
+                                                <span className="text-xs text-muted-foreground/40">None</span>
+                                            )}
+                                        </TableCell>
+                                    </TableRow>
+                                )
+                            })}
                         </TableBody>
                     </Table>
                     <Pagination/>
